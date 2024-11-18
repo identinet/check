@@ -1,0 +1,3 @@
+[submodule "docs/styles"]
+	path = docs/styles
+	url = git@github.com:identinet/plantuml-styles.git
