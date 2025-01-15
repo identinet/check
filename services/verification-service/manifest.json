@@ -3,20 +3,17 @@
   "version": "0.0.1",
   "description": "Docker image that packages CHECK verification service",
   "author": "identinet GmbH <support@identinet.io>",
-  "contributors":
-  [
+  "contributors": [
     "Jan Christoph Ebersbach <jan-christoph.ebersbach@identinet.io>",
     "Simon Mang <simon.mang@viinet.de>"
   ],
   "homepage": "https://github.com/identinet/check",
-  "license": "AGPL-3.0-or-later",
-  "repository":
-  {
+  "license": "Apache-2.0",
+  "repository": {
     "type": "git",
     "url": "https://github.com/identinet/check"
   },
-  "registry":
-  {
+  "registry": {
     "type": "docker",
     "name": "docker.io/identinet",
     "url": "https://hub.docker.com/r/identinet/check-tbd"
