@@ -1,0 +1,13 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+authors = ["identinet GmbH"]
+categories = ["web-programming::http-server"]
+description = "API for Check Verifiable Data Service"
+edition = "2021"
+keywords = ["ssi", "http"]
+name = "verifiable-data-service"
+repository = "https://github.com/identinet/check"
+version = "0.0.1"
+
+[features]
+fail-on-warnings = []
