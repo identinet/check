@@ -137,7 +137,7 @@ dev: githooks
     print "Caddy is up and running. Visit:"
     $services | $in.host | each {print $"- https://($in)(if $https_port != 443 {$":($https_port)"})"}
     print ""
-    sudo caddy run --config $"($certs_directory)/../caddy.json"
+    sudo (which caddy).0.path run --config $"($certs_directory)/../caddy.json"
 
 # Run tests
 test:
