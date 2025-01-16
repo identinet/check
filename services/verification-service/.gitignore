@@ -21,3 +21,5 @@ target/
 
 /.direnv
 /result
+
+.githooks
