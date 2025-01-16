@@ -150,7 +150,7 @@ docker-inspect: docker-build
       Name: $"($manifest.registry.name)/($manifest.name)",
       Digest: $"Refer to just inspect-registry after pushing the image",
     }
-    ./result | skopeo inspect --config docker-archive:/dev/stdin | from json | merge $image
+    ./result | skopeo inspect --config docker-archive:/dev/stdin | from json | merge $image | table -e
 
 # Inspect image
 inspect-registry:
@@ -158,7 +158,7 @@ inspect-registry:
     let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name)"
     let data = skopeo inspect $"docker://($image):($manifest.version)" | from json
-    $data | merge { Image: $"($image):($manifest.version)@($data | get -i Digest)" }
+    $data | merge { Image: $"($image):($manifest.version)@($data | get -i Digest)" } | table -e
 
 # Push image
 docker-push: docker-build
