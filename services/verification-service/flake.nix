@@ -47,7 +47,6 @@
             gh
             git-cliff
             just
-            # TODO: add rust
             unstable.cargo-watch
             unstable.nushell
             unstable.skopeo
