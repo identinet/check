@@ -6,7 +6,6 @@
 # set shell := ['nu', '-c']
 # See https://hub.docker.com/r/nixos/nix/tags
 
-MANIFEST := "manifest.json"
 NIXOS_VERSION := '2.25.1'
 DIST_FOLDER := "target"
 
@@ -116,7 +115,7 @@ update-flake:
 # Build image
 docker-build: githooks
     #!/usr/bin/env nu
-    let manifest = (open "{{ MANIFEST }}")
+    let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name):($manifest.version)"
     print -e $"Building image ($image)"
     # INFO: ?submodules=1 is required, see https://discourse.nixos.org/t/get-nix-flake-to-include-git-submodule/30324/3
@@ -131,21 +130,21 @@ docker-load: docker-build
 # Run image locally
 docker-run: docker-load
     #!/usr/bin/env nu
-    let manifest = (open "{{ MANIFEST }}")
+    let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name):($manifest.version)"
     docker run --name $manifest.name -it --rm $image
 
 # Run shell image locally
 docker-run-sh: docker-load
     #!/usr/bin/env nu
-    let manifest = (open "{{ MANIFEST }}")
+    let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name):($manifest.version)"
     docker run --name $manifest.name -it --rm --entrypoint /bin/sh $image
 
 # Inspect image
 docker-inspect: docker-build
     #!/usr/bin/env nu
-    let manifest = (open "{{ MANIFEST }}")
+    let manifest = (open manifest.json)
     let image = {
       RepoTags: [$manifest.version],
       Name: $"($manifest.registry.name)/($manifest.name)",
@@ -156,7 +155,7 @@ docker-inspect: docker-build
 # Inspect image
 inspect-registry:
     #!/usr/bin/env nu
-    let manifest = (open "{{ MANIFEST }}")
+    let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name)"
     let data = skopeo inspect $"docker://($image):($manifest.version)" | from json
     $data | merge { Image: $"($image):($manifest.version)@($data | get -i Digest)" } | table -e
@@ -164,14 +163,14 @@ inspect-registry:
 # Push image
 docker-push: docker-build
     #!/usr/bin/env nu
-    let manifest = (open "{{ MANIFEST }}")
+    let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name)"
     ./result | skopeo copy docker-archive:/dev/stdin $"docker://($image):($manifest.version)"
     just inspect-registry
 
 _bump_local CURRENT_VERSION NEW_VERSION:
-    let manifest = (open "{{ MANIFEST }}")
-    open "{{ MANIFEST }}" | upsert version "{{ NEW_VERSION }}" | save -f "{{ MANIFEST }}"; git add "{{ MANIFEST }}"
+    let manifest = (open manifest.json)
+    open manifest.json | upsert version "{{ NEW_VERSION }}" | save -f manifest.json; git add manifest.json
     open Cargo.toml | upsert package.version "{{ NEW_VERSION }}" | to toml | lines | insert 0 "# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html" | to text | collect | save -f Cargo.toml; git add Cargo.toml
     cargo update $manifest.name; git add Cargo.lock
     open README.md | str replace -a "{{ CURRENT_VERSION }}" "{{ NEW_VERSION }}" | collect | save -f README.md; git add README.md
@@ -188,7 +187,7 @@ bump LEVEL="patch" NEW_VERSION="":
       exit 1
     }
     # str replace -r "-.*" "" - strips git's automatic prerelease version
-    let manifest = (open "{{ MANIFEST }}")
+    let manifest = (open manifest.json)
     # let current_version = (git describe | str replace -r "-.*" "" | deno run npm:semver $in)
     let current_version = ($manifest.version |  deno run npm:semver $in)
     let new_version = if "{{ NEW_VERSION }}" == "" {$current_version | deno run npm:semver -i "{{ LEVEL }}" $in | lines | get 0} else {"{{ NEW_VERSION }}"}
