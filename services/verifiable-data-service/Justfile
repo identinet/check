@@ -197,7 +197,7 @@ bump LEVEL="patch" NEW_VERSION="":
     just _bump_local $current_version $new_version
     git cliff -t $new_version -o CHANGELOG.md; git add CHANGELOG.md
     git commit -n -m $"Release version ($new_version)"
-    let new_tag = (pwd | path split | reverse | drop (git rev-parse --show-toplevel | path split | length) | reverse | append $new_version | str join "/")
+    let new_tag = pwd | path split | reverse | drop (git rev-parse --show-toplevel | path split | length) | reverse | append $new_version | str join "/"
     git tag -s -m $new_tag $new_tag
     git push --atomic origin refs/heads/main $"refs/tags/($new_tag)"
     git cliff --strip all --current | gh release create -F - $new_tag
