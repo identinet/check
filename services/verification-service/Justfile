@@ -139,7 +139,7 @@ docker-run-sh: docker-load
     #!/usr/bin/env nu
     let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name):($manifest.version)"
-    docker run --name $manifest.name -it --rm --entrypoint /bin/sh $image --
+    docker run --name $manifest.name -it --rm --entrypoint /bin/sh $image
 
 # Inspect image
 docker-inspect: docker-build
@@ -168,6 +168,13 @@ docker-push: docker-build
     ./result | skopeo copy docker-archive:/dev/stdin $"docker://($image):($manifest.version)"
     just inspect-registry
 
+_bump_local CURRENT_VERSION NEW_VERSION:
+    let manifest = (open manifest.json)
+    open manifest.json | upsert version "{{ NEW_VERSION }}" | save -f manifest.json; git add manifest.json
+    open Cargo.toml | upsert package.version "{{ NEW_VERSION }}" | to toml | lines | insert 0 "# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html" | to text | collect | save -f Cargo.toml; git add Cargo.toml
+    cargo update $manifest.name; git add Cargo.lock
+    open README.md | str replace -a "{{ CURRENT_VERSION }}" "{{ NEW_VERSION }}" | collect | save -f README.md; git add README.md
+
 # Bump version. LEVEL can be one of: major, minor, patch, premajor, preminor, prepatch, or prerelease.
 bump LEVEL="patch" NEW_VERSION="":
     #!/usr/bin/env nu
@@ -187,10 +194,7 @@ bump LEVEL="patch" NEW_VERSION="":
     print "\nChangelog:\n"
     git cliff --strip all -u -t $new_version
     input -s $"Version will be bumped from ($current_version) to ($new_version)\nPress enter to confirm.\n"
-    open manifest.json | upsert version $new_version | save -f manifest.json; git add manifest.json
-    open Cargo.toml | upsert package.version $new_version | to toml | lines | insert 0 "# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html" | to text | collect | save -f Cargo.toml; git add Cargo.toml
-    cargo update $manifest.name; git add Cargo.lock
-    open README.md | str replace -a $current_version $new_version | collect | save -f README.md; git add README.md
+    just _bump_local $current_version $new_version
     git cliff -t $new_version -o CHANGELOG.md; git add CHANGELOG.md
     git commit -n -m $"Release version ($new_version)"
     git tag -s -m $new_version $new_version
