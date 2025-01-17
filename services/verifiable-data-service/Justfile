@@ -125,7 +125,9 @@ docker-build: githooks
 # Load image locally
 docker-load: docker-build
     #!/usr/bin/env nu
-    ./result | docker image load
+    # support pre-built image and streamed
+    let mimetype = file -L -i result | parse --regex "result: (?P<mimetype>[^;]+)" | $in.0.mimetype
+    if $mimetype == "application/gzip" { cat ./result } else { ./result } | docker image load
 
 # Run image locally
 docker-run: docker-load
@@ -150,7 +152,9 @@ docker-inspect: docker-build
       Name: $"($manifest.registry.name)/($manifest.name)",
       Digest: $"Refer to just inspect-registry after pushing the image",
     }
-    ./result | skopeo inspect --config docker-archive:/dev/stdin | from json | merge $image | table -e
+    # support pre-built image and streamed
+    let mimetype = file -L -i result | parse --regex "result: (?P<mimetype>[^;]+)" | $in.0.mimetype
+    if $mimetype == "application/gzip" { cat ./result } else { ./result } | skopeo inspect --config docker-archive:/dev/stdin | from json | merge $image | table -e
 
 # Inspect image
 inspect-registry:
