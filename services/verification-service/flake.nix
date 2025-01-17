@@ -43,7 +43,7 @@
         devShells.default = pkgs.mkShell {
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
-            just
+            deno
             gh
             git-cliff
             just
@@ -92,7 +92,6 @@
           fakeRootCommands = ''
             set -exuo pipefail
             mkdir -p /run/verification-service
-            ls -la
             # chown 65534:65534 /run/verification-service
             # mkdir /tmp
             # chmod 1777 /tmp
