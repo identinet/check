@@ -1,0 +1,147 @@
+#!/usr/bin/env just --justfile
+# Documentation: https://just.systems/man/en/
+# Documentation: https://www.nushell.sh/book/
+#
+# Shell decativated so that bash is used by default. This simplifies CI integration
+# set shell := ['nu', '-c']
+# See https://hub.docker.com/r/nixos/nix/tags
+
+NIXOS_VERSION := '2.25.1'
+DIST_FOLDER := "dist"
+
+# Print this help
+default:
+    @just -l
+
+# Format Justfile
+format:
+    @just --fmt --unstable
+
+# Install git commit hooks
+githooks:
+    #!/usr/bin/env nu
+    $env.config = { use_ansi_coloring: false, error_style: "plain" }
+    let hooks_folder = '.githooks'
+    let git_hooks_folder = do {git config core.hooksPath} | complete
+    if $git_hooks_folder.exit_code == 0 and $git_hooks_folder.stdout != $hooks_folder {
+      print -e 'Installing git commit hooks'
+      git config core.hooksPath $hooks_folder
+      # npm install -g @commitlint/config-conventional
+    }
+    if not ($hooks_folder | path exists) {
+      mkdir $hooks_folder
+      "#!/usr/bin/env -S sh
+    set -eu
+    just test" | save $"($hooks_folder)/pre-commit"
+      chmod 755 $"($hooks_folder)/pre-commit"
+      "#!/usr/bin/env -S sh
+    set -eu
+    MSG_FILE=\"$1\"
+    PATTERN='^(fix|feat|docs|style|chore|test|refactor|ci|build)(\\([a-z0-9/-]+\\))?!?: [a-z].+$'
+    if ! head -n 1 \"${MSG_FILE}\" | grep -qE \"${PATTERN}\"; then
+            echo \"Your commit message:\" 1>&2
+            cat \"${MSG_FILE}\" 1>&2
+            echo 1>&2
+            echo \"The commit message must conform to this pattern: ${PATTERN}\" 1>&2
+            echo \"Contents:\" 1>&2
+            echo \"- follow the conventional commits style (https://www.conventionalcommits.org/)\" 1>&2
+            echo 1>&2
+            echo \"Example:\" 1>&2
+            echo \"feat: add super awesome feature\" 1>&2
+            exit 1
+    fi" | save $"($hooks_folder)/commit-msg"
+      chmod 755 $"($hooks_folder)/commit-msg"
+      # if not (".commitlintrc.yaml" | path exists) {
+      # "extends:\n  - '@commitlint/config-conventional'" | save ".commitlintrc.yaml"
+      # }
+      # git add $hooks_folder ".commitlintrc.yaml"
+      git add $hooks_folder
+    }
+
+# Continuously run and build application for development purposes
+dev: githooks
+    #!/usr/bin/env nu
+    deno run dev
+
+# Fast check to verify that the codes still compiles
+# TODO: build?
+#check:
+
+# Continuously verify that the codes still compiles
+# TODO continuously build?
+# dev-check: githooks
+
+# Build release version of application
+build:
+    deno run build
+
+# Preview the build
+preview: build
+    deno run preview
+
+
+# Build debug version of application
+# TODO with source-maps
+#dev-build: githooks
+
+# Test application
+# TODO once solid, uno, flowbite are set up
+#test tests='':
+
+# Continuously test application
+# TODO
+dev-test tests='': githooks
+
+# Lint code
+# TODO use deno for lint?
+# lint:
+
+# Lint code and fix issues
+# TODO use deno for lint?
+#lint-fix:
+
+# Update dependencies
+# TODO deno update
+# update-deps:
+
+# Update repository
+update-repo:
+    git pull --rebase
+    git submodule update --init --recursive
+
+# Update flake
+update-flake:
+    nix flake update
+
+# Bump version. LEVEL can be one of: major, minor, patch, premajor, preminor, prepatch, or prerelease.
+bump LEVEL="patch" NEW_VERSION="":
+    #!/usr/bin/env nu
+    if (git rev-parse --abbrev-ref HEAD) != "main" {
+      print -e "ERROR: A new release can only be created on the main branch."
+      exit 1
+    }
+    if (git status --porcelain | wc -l) != "0" {
+      print -e "ERROR: Repository contains uncommited changes."
+      exit 1
+    }
+    # str replace -r "-.*" "" - strips git's automatic prerelease version
+    let manifest = (open manifest.json)
+    # let current_version = (git describe | str replace -r "-.*" "" | deno run npm:semver $in)
+    let current_version = ($manifest.version |  deno run npm:semver $in)
+    let new_version = if "{{ NEW_VERSION }}" == "" {$current_version | deno run npm:semver -i "{{ LEVEL }}" $in | lines | get 0} else {"{{ NEW_VERSION }}"}
+    print "\nChangelog:\n"
+    git cliff --strip all -u -t $new_version
+    input -s $"Version will be bumped from ($current_version) to ($new_version)\nPress enter to confirm.\n"
+    open manifest.json | upsert version $new_version | save -f manifest.json; git add manifest.json
+    open Cargo.toml | upsert package.version $new_version | to toml | lines | insert 0 "# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html" | to text | collect | save -f Cargo.toml; git add Cargo.toml
+    cargo update $manifest.name; git add Cargo.lock
+    open README.md | str replace -a $current_version $new_version | collect | save -f README.md; git add README.md
+    git cliff -t $new_version -o CHANGELOG.md; git add CHANGELOG.md
+    git commit -n -m $"Release version ($new_version)"
+    git tag -s -m $new_version $new_version
+    git push --atomic origin refs/heads/main $"refs/tags/($new_version)"
+    git cliff --strip all --current | gh release create -F - $new_version
+
+# Clean build folder
+clean:
+    @rm -rvf {{ DIST_FOLDER }}

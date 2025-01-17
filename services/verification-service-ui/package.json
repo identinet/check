@@ -1,0 +1,24 @@
+{
+  "name": "verification-service-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "flowbite": "^2.5.2",
+    "solid-js": "^1.9.3"
+  },
+  "devDependencies": {
+    "@unocss/preset-mini": "^65.4.2",
+    "@unocss/reset": "^65.4.2",
+    "@unocss/vite": "^65.4.2",
+    "@vonagam/unocss-preset-flowbite": "^0.0.1",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.5",
+    "vite-plugin-solid": "^2.11.0"
+  }
+}
