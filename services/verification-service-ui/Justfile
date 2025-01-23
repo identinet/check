@@ -60,58 +60,47 @@ githooks:
 
 # Continuously run and build application for development purposes
 dev: githooks
-    #!/usr/bin/env nu
-    deno run dev
-
-# Fast check to verify that the codes still compiles
-# TODO: build?
-#check:
-
-# Continuously verify that the codes still compiles
-# TODO continuously build?
-# dev-check: githooks
+    deno task dev
 
 # Build release version of application
-build:
-    deno run build
+build: githooks
+    deno task build
 
 # Preview the build
 preview: build
-    deno run preview
-
+    deno task preview
 
 # Build debug version of application
 # TODO with source-maps
 #dev-build: githooks
-
 # Test application
 # TODO once solid, uno, flowbite are set up
 #test tests='':
 
-# Continuously test application
 # TODO
 dev-test tests='': githooks
+    # Continuously test application
 
 # Lint code
-# TODO use deno for lint?
-# lint:
+lint: githooks
+    deno lint
 
 # Lint code and fix issues
-# TODO use deno for lint?
-#lint-fix:
+lint-fix: githooks
+    deno lint --fix
 
 # Update dependencies
-# TODO deno update
-# update-deps:
-
-# Update repository
-update-repo:
-    git pull --rebase
-    git submodule update --init --recursive
+update-deps: githooks
+    deno outdated --update --latest
 
 # Update flake
 update-flake:
     nix flake update
+
+_bump_files CURRENT_VERSION NEW_VERSION:
+    # let manifest = (open manifest.json)
+    open manifest.json | upsert version "{{ NEW_VERSION }}" | save -f manifest.json; git add manifest.json
+    open package.json | upsert version "{{ NEW_VERSION }}" | save -f package.json; git add package.json
 
 # Bump version. LEVEL can be one of: major, minor, patch, premajor, preminor, prepatch, or prerelease.
 bump LEVEL="patch" NEW_VERSION="":
@@ -132,16 +121,14 @@ bump LEVEL="patch" NEW_VERSION="":
     print "\nChangelog:\n"
     git cliff --strip all -u -t $new_version
     input -s $"Version will be bumped from ($current_version) to ($new_version)\nPress enter to confirm.\n"
-    open manifest.json | upsert version $new_version | save -f manifest.json; git add manifest.json
-    open Cargo.toml | upsert package.version $new_version | to toml | lines | insert 0 "# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html" | to text | collect | save -f Cargo.toml; git add Cargo.toml
-    cargo update $manifest.name; git add Cargo.lock
-    open README.md | str replace -a $current_version $new_version | collect | save -f README.md; git add README.md
+    just _bump_files $current_version $new_version
     git cliff -t $new_version -o CHANGELOG.md; git add CHANGELOG.md
     git commit -n -m $"Release version ($new_version)"
-    git tag -s -m $new_version $new_version
-    git push --atomic origin refs/heads/main $"refs/tags/($new_version)"
-    git cliff --strip all --current | gh release create -F - $new_version
+    let new_tag = pwd | path split | reverse | drop (git rev-parse --show-toplevel | path split | length) | reverse | append $new_version | str join "/"
+    git tag -s -m $new_tag $new_tag
+    git push --atomic origin refs/heads/main $"refs/tags/($new_tag)"
+    git cliff --strip all --current | gh release create -F - $new_tag
 
 # Clean build folder
 clean:
-    @rm -rvf {{ DIST_FOLDER }}
+    @rm -rvf "{{ DIST_FOLDER }}"

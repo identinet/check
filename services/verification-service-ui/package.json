@@ -1,24 +1,25 @@
 {
   "name": "verification-service-ui",
-  "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "dev": "vinxi dev",
+    "build": "vinxi build",
+    "start": "vinxi start",
+    "preview": "cd .output && deno run --allow-read=./ -E -N server/index.mjs"
   },
   "dependencies": {
-    "flowbite": "^2.5.2",
-    "solid-js": "^1.9.3"
+    "@solidjs/router": "^0.15.0",
+    "@solidjs/start": "^1.0.11",
+    "@unocss/preset-wind": "^65.4.3",
+    "@unocss/reset": "^65.4.3",
+    "solid-js": "^1.9.2",
+    "unocss": "^65.4.3",
+    "vinxi": "^0.5.1"
   },
-  "devDependencies": {
-    "@unocss/preset-mini": "^65.4.2",
-    "@unocss/reset": "^65.4.2",
-    "@unocss/vite": "^65.4.2",
-    "@vonagam/unocss-preset-flowbite": "^0.0.1",
-    "typescript": "~5.6.2",
-    "vite": "^6.0.5",
-    "vite-plugin-solid": "^2.11.0"
+  "overrides": {
+    "vite": "5.4.10"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
