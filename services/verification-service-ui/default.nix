@@ -19,7 +19,7 @@ let
       (import (
         (builtins.fetchGit {
           # url = "https://github.com/nekowinston/nix-deno.git";
-          url = "https://github.com/jceb/nix-deno.git";
+          url = "https://github.com/identinet/nix-deno.git";
           # ref = "main";
           rev = "890e958e0d7ab974c1557a0107e2f191ab5c7b52";
         })
