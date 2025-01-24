@@ -58,12 +58,15 @@ githooks:
       git add $hooks_folder
     }
 
+install: githooks
+    deno install --frozen --lock
+
 # Continuously run and build application for development purposes
-dev: githooks
+dev: install
     deno task dev
 
 # Build release version of application
-build: githooks
+build: install
     deno task build
 
 # Preview the build
@@ -97,6 +100,66 @@ update-deps: githooks
 update-flake:
     nix flake update
 
+# Build image
+docker-build: githooks
+    #!/usr/bin/env nu
+    let manifest = (open manifest.json)
+    let image = $"($manifest.registry.name)/($manifest.name):($manifest.version)"
+    print -e $"Building image ($image)"
+    # INFO: ?submodules=1# is required, see https://discourse.nixos.org/t/get-nix-flake-to-include-git-submodule/30324/3
+    # Due to a bug, TMPDIR must be unset when running nix build inside a nix develop shell https://github.com/NixOS/nix/issues/10753
+    TMPDIR= nix build '.?submodules=1#'
+
+# Load image locally
+docker-load: docker-build
+    #!/usr/bin/env nu
+    # support pre-built image and streamed
+    let mimetype = file -L -i result | parse --regex "result: (?P<mimetype>[^;]+)" | $in.0.mimetype
+    if $mimetype == "application/gzip" { cat ./result } else { ./result } | docker image load
+
+# Run image locally
+docker-run: docker-load
+    #!/usr/bin/env nu
+    let manifest = (open manifest.json)
+    let image = $"($manifest.registry.name)/($manifest.name):($manifest.version)"
+    docker run --name $manifest.name -it --rm $image
+
+# Run shell image locally
+docker-run-sh: docker-load
+    #!/usr/bin/env nu
+    let manifest = (open manifest.json)
+    let image = $"($manifest.registry.name)/($manifest.name):($manifest.version)"
+    docker run --name $manifest.name -it --rm --entrypoint /bin/sh $image
+
+# Inspect image
+docker-inspect: docker-build
+    #!/usr/bin/env nu
+    let manifest = (open manifest.json)
+    let image = {
+      RepoTags: [$manifest.version],
+      Name: $"($manifest.registry.name)/($manifest.name)",
+      Digest: $"Refer to just docker-inspect-registry after pushing the image",
+    }
+    # support pre-built image and streamed
+    let mimetype = file -L -i result | parse --regex "result: (?P<mimetype>[^;]+)" | $in.0.mimetype
+    if $mimetype == "application/gzip" { cat ./result } else { ./result } | skopeo inspect --config docker-archive:/dev/stdin | from json | merge $image | table -e
+
+# Inspect image
+docker-inspect-registry:
+    #!/usr/bin/env nu
+    let manifest = (open manifest.json)
+    let image = $"($manifest.registry.name)/($manifest.name)"
+    let data = skopeo inspect $"docker://($image):($manifest.version)" | from json
+    $data | merge { Image: $"($image):($manifest.version)@($data | get -i Digest)" } | table -e
+
+# Push image
+docker-push: docker-build
+    #!/usr/bin/env nu
+    let manifest = (open manifest.json)
+    let image = $"($manifest.registry.name)/($manifest.name)"
+    ./result | skopeo copy docker-archive:/dev/stdin $"docker://($image):($manifest.version)"
+    just docker-inspect-registry
+
 _bump_files CURRENT_VERSION NEW_VERSION:
     # let manifest = (open manifest.json)
     open manifest.json | upsert version "{{ NEW_VERSION }}" | save -f manifest.json; git add manifest.json
@@ -128,6 +191,25 @@ bump LEVEL="patch" NEW_VERSION="":
     git tag -s -m $new_tag $new_tag
     git push --atomic origin refs/heads/main $"refs/tags/($new_tag)"
     git cliff --strip all --current | gh release create -F - $new_tag
+
+# Release application
+release: docker-push
+
+# CI pipeline task that will create a release of the package
+ci:
+    docker run -w "/app" -v "${PWD}:/app" -v "${DOCKER_CONFIG:-${HOME}/.docker}/config.json:/root/.docker/config.json" "nixos/nix:{{ NIXOS_VERSION }}" /bin/sh -c "nix-env -iA nixpkgs.just; just _ci"
+
+# Release task that can only be executed within a NixOS environment
+_ci:
+    # Enable experimental flakes feature
+    echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+    # Workaround if git directory doesn't belong to the current user, see bug https://github.com/NixOS/nix/issues/10202
+    git config --global --add safe.directory "/app"
+    mkdir -p /etc/containers
+    # See https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md
+    # Disable all container security by default
+    echo '{ "default": [ { "type": "insecureAcceptAnything" } ] }' > /etc/containers/policy.json
+    nix develop .#ci --command just release
 
 # Clean build folder
 clean:
