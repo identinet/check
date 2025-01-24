@@ -118,9 +118,9 @@ docker-build: githooks
     let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name):($manifest.version)"
     print -e $"Building image ($image)"
-    # INFO: ?submodules=1 is required, see https://discourse.nixos.org/t/get-nix-flake-to-include-git-submodule/30324/3
+    # INFO: ?submodules=1# is required, see https://discourse.nixos.org/t/get-nix-flake-to-include-git-submodule/30324/3
     # Due to a bug, TMPDIR must be unset when running nix build inside a nix develop shell https://github.com/NixOS/nix/issues/10753
-    TMPDIR= nix build '.?submodules=1'
+    TMPDIR= nix build '.?submodules=1#'
 
 # Load image locally
 docker-load: docker-build
@@ -172,12 +172,11 @@ docker-push: docker-build
     ./result | skopeo copy docker-archive:/dev/stdin $"docker://($image):($manifest.version)"
     just docker-inspect-registry
 
-_bump_local CURRENT_VERSION NEW_VERSION:
+_bump_files CURRENT_VERSION NEW_VERSION:
     let manifest = (open manifest.json)
     open manifest.json | upsert version "{{ NEW_VERSION }}" | save -f manifest.json; git add manifest.json
     open Cargo.toml | upsert package.version "{{ NEW_VERSION }}" | to toml | lines | insert 0 "# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html" | to text | collect | save -f Cargo.toml; git add Cargo.toml
     cargo update $manifest.name; git add Cargo.lock
-    open README.md | str replace -a "{{ CURRENT_VERSION }}" "{{ NEW_VERSION }}" | collect | save -f README.md; git add README.md
 
 # Bump version. LEVEL can be one of: major, minor, patch, premajor, preminor, prepatch, or prerelease.
 bump LEVEL="patch" NEW_VERSION="":
@@ -198,7 +197,7 @@ bump LEVEL="patch" NEW_VERSION="":
     print "\nChangelog:\n"
     git cliff --strip all -u -t $new_version
     input -s $"Version will be bumped from ($current_version) to ($new_version)\nPress enter to confirm.\n"
-    just _bump_local $current_version $new_version
+    just _bump_files $current_version $new_version
     git cliff -t $new_version -o CHANGELOG.md; git add CHANGELOG.md
     git commit -n -m $"Release version ($new_version)"
     let new_tag = pwd | path split | reverse | drop (git rev-parse --show-toplevel | path split | length) | reverse | append $new_version | str join "/"
@@ -239,4 +238,4 @@ clean-bloat:
 
 # Clean build folder
 clean:
-    @rm -rvf {{ DIST_FOLDER }}
+    @rm -rvf "{{ DIST_FOLDER }}"

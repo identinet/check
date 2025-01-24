@@ -20,6 +20,5 @@ target/
 # End of https://www.toptal.com/developers/gitignore/api/rust
 
 /.direnv
+/.githooks
 /result
-
-.githooks
