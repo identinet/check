@@ -12,6 +12,8 @@
     "@solidjs/start": "^1.0.11",
     "@unocss/preset-wind": "^65.4.3",
     "@unocss/reset": "^65.4.3",
+    "@vonagam/unocss-preset-flowbite": "^0.0.1",
+    "flowbite": "^3.0.0",
     "solid-js": "^1.9.2",
     "unocss": "^65.4.3",
     "vinxi": "^0.5.1"
