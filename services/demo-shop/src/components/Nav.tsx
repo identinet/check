@@ -10,10 +10,23 @@ export default function Nav() {
     <nav class="bg-sky-800">
       <ul class="container flex items-center p-3 text-gray-200">
         <li class={`border-b-2 ${active("/")} mx-1.5 sm:mx-6`}>
-          <a href="/">Home</a>
+          <a href="/">
+            <div class="i-flowbite:cart-outline" />&nbsp; Shopping Cart
+          </a>
         </li>
-        <li class={`border-b-2 ${active("/about")} mx-1.5 sm:mx-6`}>
-          <a href="/about">About</a>
+        <li
+          class={`border-b-2 ${active("/credentials")} mx-1.5 sm:mx-6`}
+        >
+          <a href="/credentials">
+            <div class="i-flowbite:address-book-outline" />&nbsp; Credentials
+          </a>
+        </li>
+        <li
+          class={`border-b-2 ${active("/checkout")} mx-1.5 sm:mx-6`}
+        >
+          <a href="/checkout">
+            <div class="i-flowbite:credit-card-outline" />&nbsp; Checkout
+          </a>
         </li>
       </ul>
     </nav>

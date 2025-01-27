@@ -1,12 +1,15 @@
 {
   "version": "4",
   "specifiers": {
+    "npm:@iconify-json/flowbite@^1.2.4": "1.2.4",
     "npm:@solidjs/router@0.15": "0.15.3_solid-js@1.9.4__seroval@1.2.0",
     "npm:@solidjs/start@^1.0.11": "1.0.11_seroval@1.2.0_solid-js@1.9.4__seroval@1.2.0",
+    "npm:@unocss/preset-icons@^65.4.3": "65.4.3",
     "npm:@unocss/preset-wind@^65.4.3": "65.4.3",
     "npm:@unocss/reset@^65.4.3": "65.4.3",
     "npm:@vonagam/unocss-preset-flowbite@^0.0.1": "0.0.1_@unocss+core@0.65.4",
     "npm:flowbite@3": "3.0.0",
+    "npm:lean-qr@^2.3.5": "2.3.5",
     "npm:solid-js@^1.9.2": "1.9.4_seroval@1.2.0",
     "npm:unocss@^65.4.3": "65.4.3",
     "npm:vinxi@~0.5.1": "0.5.1_@babel+core@7.26.0"
@@ -474,6 +477,12 @@
     },
     "@esbuild/win32-x64@0.24.2": {
       "integrity": "sha512-7VTgWzgMGvup6aSqDPLiW5zHaxYJGTO4OokMjIlrCtf+VpEL+cXKtCvg723iguPYI5oaUNdS+/V7OU2gvXVWEg=="
+    },
+    "@iconify-json/flowbite@1.2.4": {
+      "integrity": "sha512-xKzfqhcxKAd+oF1zL8OQYMNwdE78kxDlR9ulcdK7J5x3UZ+VZp2//t76O+Mtpzgpn87TIcBiRcYIi4uK0wgTQg==",
+      "dependencies": [
+        "@iconify/types"
+      ]
     },
     "@iconify/types@2.0.0": {
       "integrity": "sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg=="
@@ -2368,6 +2377,9 @@
         "readable-stream@2.3.8"
       ]
     },
+    "lean-qr@2.3.5": {
+      "integrity": "sha512-H1ncXDcc00T42dtrDy2xIm7VGvf8TF2JnWdGsOEh//TlAmgQmq7Suxhrwtu8akzqzOXlcUiWEA4fDkSrk2aHJg=="
+    },
     "listhen@1.9.0": {
       "integrity": "sha512-I8oW2+QL5KJo8zXNWX046M134WchxsXC7SawLPvRQpogCbkyQIaFxPE89A2HiwR7vAK2Dm2ERBAmyjTYGYEpBg==",
       "dependencies": [
@@ -3692,12 +3704,13 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@iconify-json/flowbite@^1.2.4",
         "npm:@solidjs/router@0.15",
         "npm:@solidjs/start@^1.0.11",
-        "npm:@unocss/preset-wind@^65.4.3",
         "npm:@unocss/reset@^65.4.3",
         "npm:@vonagam/unocss-preset-flowbite@^0.0.1",
         "npm:flowbite@3",
+        "npm:lean-qr@^2.3.5",
         "npm:solid-js@^1.9.2",
         "npm:unocss@^65.4.3",
         "npm:vinxi@~0.5.1"
