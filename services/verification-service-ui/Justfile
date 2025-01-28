@@ -73,16 +73,13 @@ build: install
 preview: build
     deno task preview
 
-# Build debug version of application
-# TODO with source-maps
-#dev-build: githooks
 # Test application
-# TODO once solid, uno, flowbite are set up
-#test tests='':
+test tests='': githooks
+    npm test -- --run
 
-# TODO
 dev-test tests='': githooks
     # Continuously test application
+    npm test
 
 # Lint code
 lint: githooks
