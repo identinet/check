@@ -75,11 +75,11 @@ preview: build
 
 # Test application
 test tests='': githooks
-    npm test -- --run
+    deno task test --run
 
 dev-test tests='': githooks
     # Continuously test application
-    npm test
+    deno task test
 
 # Lint code
 lint: githooks
