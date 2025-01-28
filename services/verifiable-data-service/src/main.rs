@@ -1,11 +1,14 @@
+// Fail build if feature is requsted, see https://www.reddit.com/r/rust/comments/8oz7md/make_cargo_fail_on_warning/
+#![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
+
 use axum::{routing::get, Router};
 use std::env;
 use std::net::SocketAddr;
 
 // Function to get configuration from environment variables with defaults
 fn get_config() -> (String, u16) {
-    let host = env::var("VDS_HOST").unwrap_or_else(|_| "::".to_string());
-    let port = env::var("VDS_PORT")
+    let host = env::var("HOST").unwrap_or_else(|_| "::".to_string());
+    let port = env::var("PORT")
         .ok()
         .and_then(|p| p.parse().ok())
         .unwrap_or(3000);

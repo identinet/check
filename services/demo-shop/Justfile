@@ -76,16 +76,6 @@ open:
     #!/usr/bin/env nu
     deno run -A npm:open-cli $"https://($env.EXTERNAL_HOST)"
 
-# Open a cloudflare tunnel. WARNING: requires configuration that is NOT part of this project
-tunnel:
-    #!/usr/bin/env nu
-    # Steps to set up tunnel
-    # cloudflared tunnel login
-    # cloudflared tunnel create check-shop
-    # cloudflared tunnel route dns check-shop test-shop.theidentinet.com
-    let caddy = open caddy.json
-    cloudflared tunnel run --url $"http://localhost:($caddy.port)" check-shop
-
 # Build release version of application
 build: install
     deno task build
@@ -223,4 +213,4 @@ _ci:
 
 # Clean build folder
 clean:
-    @rm -rvf "{{ DIST_FOLDER }}"
+    @rm -rvf "{{ DIST_FOLDER }}" app.config.timestamp*.js

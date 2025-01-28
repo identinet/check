@@ -1,4 +1,4 @@
 {
-  "host": "check.identinet.io.localhost",
+  "tunnelprefix": "shop",
   "port": 3021
 }

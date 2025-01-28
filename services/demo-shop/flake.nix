@@ -37,7 +37,6 @@
             gh
             git-cliff
             just
-            cloudflared # Cloudflare Tunnel daemon https://www.cloudflare.com/products/tunnel
             nushell
             skopeo
             # default_pkg.nativeBuildInputs

@@ -47,9 +47,9 @@
             gh
             git-cliff
             just
-            unstable.cargo-watch
-            unstable.nushell
-            unstable.skopeo
+            cargo-watch
+            nushell
+            skopeo
             default_pkg.nativeBuildInputs
           ];
         };
@@ -58,8 +58,8 @@
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
             just
-            unstable.nushell
-            unstable.skopeo
+            nushell
+            skopeo
           ];
         };
 

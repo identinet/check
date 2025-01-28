@@ -1,3 +1,4 @@
 .*.bkp
 /.caddy
 .direnv
+.env.local
