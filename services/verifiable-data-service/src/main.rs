@@ -4,11 +4,16 @@ use std::net::SocketAddr;
 
 // Function to get configuration from environment variables with defaults
 fn get_config() -> (String, u16) {
-    let host = env::var("VDS_HOST").unwrap_or_else(|_| "[::]".to_string());
+    let host = env::var("VDS_HOST").unwrap_or_else(|_| "::".to_string());
     let port = env::var("VDS_PORT")
         .ok()
         .and_then(|p| p.parse().ok())
         .unwrap_or(3000);
+    let host = if host.contains(':') {
+        format!("[{}]", host)
+    } else {
+        host
+    };
     (host, port)
 }
 
