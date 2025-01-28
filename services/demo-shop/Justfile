@@ -82,7 +82,7 @@ tunnel:
     # Steps to set up tunnel
     # cloudflared tunnel login
     # cloudflared tunnel create check-shop
-    # cloudflared tunnel route dns check-shop shop.theidentinet.com
+    # cloudflared tunnel route dns check-shop test-shop.theidentinet.com
     let caddy = open caddy.json
     cloudflared tunnel run --url $"http://localhost:($caddy.port)" check-shop
 
