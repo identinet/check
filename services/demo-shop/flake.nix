@@ -18,7 +18,7 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        unstable = nixpkgs_unstable.legacyPackages.${system};
+        # unstable = nixpkgs_unstable.legacyPackages.${system};
         default_pkg = pkgs.callPackage ./default.nix {
           inherit pkgs;
           nodejs = pkgs.nodejs_22;
@@ -31,18 +31,15 @@
         # Development environment: nix develop
         devShells.default = pkgs.mkShell {
           name = manifest.name;
-          shellHook = ''
-            export MOIN=123
-          '';
           nativeBuildInputs = with pkgs; [
             deno
             nodejs_22
             gh
             git-cliff
             just
-            unstable.cargo-watch
-            unstable.nushell
-            unstable.skopeo
+            cloudflared # Cloudflare Tunnel daemon https://www.cloudflare.com/products/tunnel
+            nushell
+            skopeo
             # default_pkg.nativeBuildInputs
           ];
         };
@@ -51,8 +48,8 @@
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
             just
-            unstable.nushell
-            unstable.skopeo
+            nushell
+            skopeo
           ];
         };
 

@@ -63,7 +63,28 @@ install: githooks
 
 # Continuously run and build application for development purposes
 dev: install
-    deno task dev
+    #!/usr/bin/env nu
+    # Sometime vinxi crashes, run it in a loop to work around this issue
+    while true { do -i {deno task dev}; sleep 1sec }
+
+# TODO
+dev-test tests='': githooks
+    # Continuously test application
+
+# Open URL in browser. WARNING: requires configuration that is NOT part of this project
+open:
+    #!/usr/bin/env nu
+    deno run -A npm:open-cli $"https://($env.EXTERNAL_HOST)"
+
+# Open a cloudflare tunnel. WARNING: requires configuration that is NOT part of this project
+tunnel:
+    #!/usr/bin/env nu
+    # Steps to set up tunnel
+    # cloudflared tunnel login
+    # cloudflared tunnel create check-shop
+    # cloudflared tunnel route dns check-shop shop.theidentinet.com
+    let caddy = open caddy.json
+    cloudflared tunnel run --url $"http://localhost:($caddy.port)" check-shop
 
 # Build release version of application
 build: install
@@ -72,17 +93,6 @@ build: install
 # Preview the build
 preview: build
     deno task preview
-
-# Build debug version of application
-# TODO with source-maps
-#dev-build: githooks
-# Test application
-# TODO once solid, uno, flowbite are set up
-#test tests='':
-
-# TODO
-dev-test tests='': githooks
-    # Continuously test application
 
 # Lint code
 lint: githooks

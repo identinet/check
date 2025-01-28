@@ -8,9 +8,41 @@ import { presetIcons, presetWind } from "unocss";
  * in the official tailwind plugin at https://github.com/themesberg/flowbite/blob/main/plugin.js
  */
 import { presetFlowbite } from "@vonagam/unocss-preset-flowbite";
+const host = process.env.HOST || "::";
+const external_host = process.env.EXTERNAL_HOST || host;
+const vds_host = process.env.VDS_HOST || host;
+const port = parseInt(process.env.PORT || "3000");
 
 export default defineConfig({
   vite: {
+    server: {
+      host,
+      port,
+      allowedHosts: [
+        external_host,
+      ],
+      strictProt: true,
+      hmr: {
+        // See https://vite.dev/config/server-options.html#server-hmr
+        host: "localhost",
+        protocol: "ws",
+      },
+      cors: {
+        origin: [
+          `https://${external_host}`,
+          `https://${vds_host}`,
+        ],
+      },
+      watch: {
+        ignored: [
+          // speed up vite by ignoring nixos directory contents
+          "**/.direnv/**",
+          "**/.output/**",
+          "**/.vinxi/**",
+          "**/.git/**",
+        ],
+      },
+    },
     plugins: [UnoCSS({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
@@ -56,14 +88,5 @@ export default defineConfig({
         },
       },
     })],
-    server: {
-      watch: {
-        ignored: [
-          // speed up vite by ignoring nixos directory contents
-          "**/.direnv/**",
-          "**/.output/**",
-        ],
-      },
-    },
   },
 });
