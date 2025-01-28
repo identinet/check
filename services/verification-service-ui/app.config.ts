@@ -1,7 +1,8 @@
 // Documentation: https://vite.dev/config/
 import { defineConfig } from "@solidjs/start/config";
 import UnoCSS from "unocss/vite";
-import { presetWind } from "@unocss/preset-wind";
+import { presetIcons, presetWind } from "unocss";
+
 /**
  * TODO flowbite preset is outdated, we probably want to update the included preflight CSS results with the CSS provided
  * in the official tailwind plugin at https://github.com/themesberg/flowbite/blob/main/plugin.js
@@ -14,8 +15,38 @@ export default defineConfig({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
         presetWind(),
+        presetIcons({
+          // Documentation: https://unocss.dev/presets/icons
+          collections: {
+            flowbite: () =>
+              import("@iconify-json/flowbite/icons.json", {
+                with: { type: "json" },
+              }).then((i) => i.default),
+          },
+          extraProperties: {
+            "display": "inline-block",
+            "vertical-align": "middle",
+          },
+        }),
         presetFlowbite(),
       ],
+      theme: {
+        colors: {
+          primary: {
+            "50": "#eff6ff",
+            "100": "#dbeafe",
+            "200": "#bfdbfe",
+            "300": "#93c5fd",
+            "400": "#60a5fa",
+            "500": "#3b82f6",
+            "600": "#2563eb",
+            "700": "#1d4ed8",
+            "800": "#1e40af",
+            "900": "#1e3a8a",
+            "950": "#172554",
+          },
+        },
+      },
       content: {
         pipeline: {
           include: [

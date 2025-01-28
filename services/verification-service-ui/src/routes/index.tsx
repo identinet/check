@@ -15,6 +15,7 @@ export default function Home() {
         </div>
       </h1>
       <ConfirmButton />
+      <div class="i-flowbite-check-circle-outline" />
       <p class="mt-8">
         Visit{" "}
         <a

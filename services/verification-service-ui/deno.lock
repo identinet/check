@@ -1,6 +1,7 @@
 {
   "version": "4",
   "specifiers": {
+    "npm:@iconify-json/flowbite@^1.2.4": "1.2.4",
     "npm:@solidjs/router@0.15": "0.15.3_solid-js@1.9.4__seroval@1.2.0",
     "npm:@solidjs/start@^1.0.11": "1.0.11_seroval@1.2.0_solid-js@1.9.4__seroval@1.2.0",
     "npm:@solidjs/testing-library@~0.8.10": "0.8.10_@solidjs+router@0.15.3__solid-js@1.9.4___seroval@1.2.0_solid-js@1.9.4__seroval@1.2.0",
@@ -14,7 +15,7 @@
     "npm:solid-js@^1.9.2": "1.9.4_seroval@1.2.0",
     "npm:unocss@^65.4.3": "65.4.3",
     "npm:vinxi@~0.5.1": "0.5.1_@babel+core@7.26.0",
-    "npm:vite-plugin-solid@2.10.2": "2.10.2_@testing-library+jest-dom@6.6.3_solid-js@1.9.4__seroval@1.2.0_vite@5.4.14_@babel+core@7.26.0",
+    "npm:vite-plugin-solid@^2.10.2": "2.11.0_@testing-library+jest-dom@6.6.3_solid-js@1.9.4__seroval@1.2.0_vite@6.0.11_@babel+core@7.26.0",
     "npm:vitest@^3.0.4": "3.0.4_jsdom@25.0.1_vite@6.0.11"
   },
   "npm": {
@@ -527,6 +528,12 @@
     },
     "@esbuild/win32-x64@0.24.2": {
       "integrity": "sha512-7VTgWzgMGvup6aSqDPLiW5zHaxYJGTO4OokMjIlrCtf+VpEL+cXKtCvg723iguPYI5oaUNdS+/V7OU2gvXVWEg=="
+    },
+    "@iconify-json/flowbite@1.2.4": {
+      "integrity": "sha512-xKzfqhcxKAd+oF1zL8OQYMNwdE78kxDlR9ulcdK7J5x3UZ+VZp2//t76O+Mtpzgpn87TIcBiRcYIi4uK0wgTQg==",
+      "dependencies": [
+        "@iconify/types"
+      ]
     },
     "@iconify/types@2.0.0": {
       "integrity": "sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg=="
@@ -3970,8 +3977,8 @@
         "vite@6.0.11"
       ]
     },
-    "vite-plugin-solid@2.10.2_@testing-library+jest-dom@6.6.3_solid-js@1.9.4__seroval@1.2.0_vite@5.4.14_@babel+core@7.26.0": {
-      "integrity": "sha512-AOEtwMe2baBSXMXdo+BUwECC8IFHcKS6WQV/1NEd+Q7vHPap5fmIhLcAzr+DUJ04/KHx/1UBU0l1/GWP+rMAPQ==",
+    "vite-plugin-solid@2.11.0_@testing-library+jest-dom@6.6.3_solid-js@1.9.4__seroval@1.2.0_vite@6.0.11_@babel+core@7.26.0": {
+      "integrity": "sha512-G+NiwDj4EAeUE0wt3Ur9f+Lt9oMUuLd0FIxYuqwJSqRacKQRteCwUFzNy8zMEt88xWokngQhiFjfJMhjc1fDXw==",
       "dependencies": [
         "@babel/core",
         "@testing-library/jest-dom",
@@ -3980,8 +3987,8 @@
         "merge-anything",
         "solid-js",
         "solid-refresh",
-        "vite@5.4.14",
-        "vitefu@0.2.5_vite@5.4.14"
+        "vite@6.0.11",
+        "vitefu"
       ]
     },
     "vite-plugin-solid@2.11.0_solid-js@1.9.4__seroval@1.2.0_vite@6.0.11_@babel+core@7.26.0": {
@@ -3994,7 +4001,7 @@
         "solid-js",
         "solid-refresh",
         "vite@6.0.11",
-        "vitefu@1.0.5_vite@6.0.11"
+        "vitefu"
       ]
     },
     "vite@5.4.14": {
@@ -4013,12 +4020,6 @@
         "fsevents",
         "postcss",
         "rollup"
-      ]
-    },
-    "vitefu@0.2.5_vite@5.4.14": {
-      "integrity": "sha512-SgHtMLoqaeeGnd2evZ849ZbACbnwQCIwRH57t18FxcXoZop0uQu0uzlIhJBlF/eWVzuce0sHeqPcDo+evVcg8Q==",
-      "dependencies": [
-        "vite@5.4.14"
       ]
     },
     "vitefu@1.0.5_vite@6.0.11": {
@@ -4205,6 +4206,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@iconify-json/flowbite@^1.2.4",
         "npm:@solidjs/router@0.15",
         "npm:@solidjs/start@^1.0.11",
         "npm:@solidjs/testing-library@~0.8.10",
@@ -4218,7 +4220,7 @@
         "npm:solid-js@^1.9.2",
         "npm:unocss@^65.4.3",
         "npm:vinxi@~0.5.1",
-        "npm:vite-plugin-solid@2.10.2",
+        "npm:vite-plugin-solid@^2.10.2",
         "npm:vitest@^3.0.4"
       ]
     }
