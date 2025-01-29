@@ -1,0 +1,79 @@
+# OpenAPI Specification Explained: https://learn.openapis.org/specification/
+# Documentation: https://spec.openapis.org/oas/v3.1.1.html
+# Learning OpenAPI: https://redoc.ly/docs/resources/learning-openapi/
+# HTTP status codes: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+# HTTP methods: https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods
+openapi: 3.1.1
+info:
+  version: "0.0.1"
+  title: Verifiable Data Service
+  description: Verifiable Data Service
+  license:
+    name: Apache-2.0
+  contact:
+    name: Jan Christoph Ebersbach
+    url: https://identinet.io
+
+servers:
+  - url: http://localhost:3011
+    description: Local development server
+
+paths:
+  /v1/session/initiate:
+    put:
+      operationId: initiate
+      summary: Initiates a new session.
+      description: Initiates a new session.
+      responses:
+        "201":
+          description: Session created.
+          content:
+            application/json:
+              example: { id: 50aa4fe7-975e-42cd-8919-de16a527c9e8 }
+        "401":
+          description: Unauthorized
+
+components:
+  # parameters:
+  #   forwardPathParam:
+  #     name: path
+  #     in: query
+  #     required: true
+  #     description: Path on the agent's API, e.g. /connections
+  #     schema:
+  #       type: string
+
+  schemas:
+    # UserId:
+    #   type: string
+    #   description: "User ID."
+
+    # ForwardRequest:
+    #   type: object
+    #   description: "Data format depends on the aries-go request."
+
+    # ConnectRequest:
+    #   type: object
+    #   properties:
+    #     user:
+    #       $ref: "#/components/schemas/UserId"
+    #     url:
+    #       type: string
+    #       description: "URL of the agent."
+    #   example:
+    #     user: "user1"
+    #     url: "http://test.1234.com:1234"
+
+    # DeploymentRequest:
+    #   type: object
+    #   properties:
+    #     user:
+    #       $ref: "#/components/schemas/UserId"
+    #   example:
+    #     user: "user1"
+
+    DID:
+      type: string
+      description: "Decentralized Identifier."
+      # minLength: 5
+      # maxLength: 64
