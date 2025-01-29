@@ -173,7 +173,7 @@ tunnel:
     # cloudflared tunnel create $env.TUNNEL_USER
     # cloudflared tunnel route dns $env.TUNNEL_USER $"shop-($env.TUNNEL_USER).($env.TUNNEL_DOMAIN)"
     # cloudflared tunnel route dns $env.TUNNEL_USER $"vds-($env.TUNNEL_USER).($env.TUNNEL_DOMAIN)"
-    cloudflared tunnel run --cred-file ~/.cloudflared/tunnel.json --url $"http://localhost:80" $env.TUNNEL_USER
+    cloudflared tunnel run --cred-file .cloudflared/tunnel.json --url $"http://localhost:80" $env.TUNNEL_USER
 
 # Run tests
 test:
