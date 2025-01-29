@@ -2,3 +2,7 @@
 /.caddy
 .direnv
 .env.local
+/.cloudflared
+
+node_modules
+target
