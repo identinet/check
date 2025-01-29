@@ -85,7 +85,7 @@ test tests='':
 
 # Continuously test application
 dev-test tests='': githooks
-    cargo watch -w src -x 'test {{ tests }}'
+    cargo watch -w src -x 'test --features=fail-on-warnings {{ tests }}'
 
 # Lint code
 lint:
