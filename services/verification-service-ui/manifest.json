@@ -1,0 +1,21 @@
+{
+  "name": "verification-service-ui",
+  "version": "0.0.1",
+  "description": "Docker image that packages CHECK Verification Service UI",
+  "author": "identinet GmbH <support@identinet.io>",
+  "contributors": [
+    "Jan Christoph Ebersbach <jan-christoph.ebersbach@identinet.io>",
+    "Simon Mang <simon.mang@viinet.de>"
+  ],
+  "homepage": "https://identinet.io/projects/check",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/identinet/check"
+  },
+  "registry": {
+    "type": "docker",
+    "name": "docker.io/identinet",
+    "url": "https://hub.docker.com/r/identinet/verification-service-ui"
+  }
+}
