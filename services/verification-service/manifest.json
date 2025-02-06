@@ -1,7 +1,7 @@
 {
   "name": "verification-service",
   "version": "0.0.1",
-  "description": "Docker image that packages CHECK Verification Service",
+  "description": "Docker image that packages the Verification Service",
   "author": "identinet GmbH <support@identinet.io>",
   "contributors": [
     "Jan Christoph Ebersbach <jan-christoph.ebersbach@identinet.io>",

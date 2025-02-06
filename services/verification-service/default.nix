@@ -1,7 +1,5 @@
 # Build with NIXPKGS_ALLOW_UNFREE=1 nix-build -E 'with import <nixpkgs> {}; callPackage ./default.nix {}'
-{
-  pkgs ? import <nixpkgs> { },
-}:
+{ pkgs ? import <nixpkgs> { }, }:
 let
   gitignoreSrc = pkgs.fetchFromGitHub {
     # Documentation: https://github.com/hercules-ci/gitignore.nix
@@ -13,8 +11,7 @@ let
   };
   inherit (import gitignoreSrc { inherit (pkgs) lib; }) gitignoreSource;
   manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
-in
-pkgs.rustPlatform.buildRustPackage {
+in pkgs.rustPlatform.buildRustPackage {
   pname = manifest.name;
   version = manifest.version;
   cargoLock.lockFile = ./Cargo.lock;
@@ -27,10 +24,12 @@ pkgs.rustPlatform.buildRustPackage {
     filter = path: type: !(baseNameOf path == "target");
   };
   nativeBuildInputs = with pkgs; [
-    rustc
-    rust-analyzer
     cargo
     clippy
+    openssl.dev
+    pkg-config
+    rust-analyzer
+    rustc
     rustfmt
   ];
   meta = with pkgs.lib; {

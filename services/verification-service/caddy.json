@@ -1,4 +1,5 @@
 {
+  "tunnelprefix": "api.check",
   "host": "api.check.identinet.io.localhost",
   "port": 3010
 }
