@@ -4,15 +4,11 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use fqdn::FQDN;
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 pub enum VerificationResponse {
     OK(VerificationResponseDto),
-}
-
-pub enum VerificationError {
-    BadRequestJson(VerificationErrorResponseDto),
 }
 
 impl IntoResponse for VerificationResponse {
@@ -21,6 +17,10 @@ impl IntoResponse for VerificationResponse {
             Self::OK(data) => (StatusCode::OK, Json(data)).into_response(),
         }
     }
+}
+
+pub enum VerificationError {
+    BadRequestJson(VerificationErrorResponseDto),
 }
 
 impl VerificationError {
@@ -44,19 +44,22 @@ impl IntoResponse for VerificationError {
     }
 }
 
-#[derive(Serialize)]
+// TODO deserialize is only required during controller tests - can we conditionally derive?
+#[derive(Serialize, Deserialize)]
 pub struct VerificationResponseDto {
     pub status: String,
 }
 
-#[derive(Serialize)]
+// TODO deserialize is only required during controller tests - can we conditionally derive?
+#[derive(Serialize, Deserialize)]
 pub struct VerificationErrorResponseDto {
     pub error: String,
 }
 
-#[derive(Deserialize)]
+// TODO Debug is only required during tests - can we conditionally derive?
+#[derive(Deserialize, Debug)]
 pub struct VerificationRequestDto {
-    pub domain: String,
+    pub url: String,
 }
 
 impl<S> FromRequestParts<S> for VerificationRequestDto
@@ -77,17 +80,17 @@ where
                         failed_to_deserialize_query_string.to_string(),
                     )
                 }
-                _ => VerificationError::bad_request("failed to parse query params"),
+                _ => VerificationError::bad_request(
+                    "Failed to deserialize query string: unknown error",
+                ),
             })?;
 
-        if query.domain.is_empty() {
-            return Err(VerificationError::bad_request(
-                "missing required 'domain' param",
-            )); // TODO mute in prod
+        if query.url.is_empty() {
+            return Err(VerificationError::bad_request("empty 'url' param")); // TODO mute in prod
         }
 
-        if !is_valid_domain(&query.domain) {
-            return Err(VerificationError::bad_request("invalid 'domain' param"));
+        if !is_valid_url(&query.url) {
+            return Err(VerificationError::bad_request("invalid 'url' param"));
             // TODO mute in prod
         }
 
@@ -95,10 +98,97 @@ where
     }
 }
 
-// Helper function to validate domain host
-fn is_valid_domain(domain: &str) -> bool {
-    domain
-        .parse::<FQDN>()
-        .map(|p| !p.is_tld()) // Returns true if not TLD, false otherwise
-        .unwrap_or(false) // Returns false if parsing fails
+fn is_valid_url(url: &str) -> bool {
+    Url::parse(url)
+        .map(|url| url.scheme() == "https")
+        .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{body::Body, http::Request};
+    use std::fmt::Debug;
+
+    #[test]
+    fn url_validation() {
+        assert_eq!(is_valid_url("https://identinet.io"), true);
+        assert_eq!(is_valid_url("https://identinet.io/"), true);
+        assert_eq!(is_valid_url("https://identinet.io:3000/"), true);
+        assert_eq!(is_valid_url("https://localhost:3000/"), true);
+
+        assert_eq!(is_valid_url("ftp://acme.co"), false);
+        assert_eq!(is_valid_url("http://acme.co"), false);
+    }
+
+    impl Debug for VerificationError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                // _ => Ok(()),
+                Self::BadRequestJson(arg0) => f.debug_struct(&arg0.error).finish(),
+            }
+        }
+    }
+
+    impl PartialEq for VerificationRequestDto {
+        fn eq(&self, other: &Self) -> bool {
+            self.url == other.url
+        }
+    }
+
+    async fn check_ok(uri: impl AsRef<str>, value: VerificationRequestDto) {
+        let req = Request::builder()
+            .uri(uri.as_ref())
+            .body(Body::empty())
+            .unwrap();
+
+        let (mut parts, _body) = req.into_parts();
+
+        assert_eq!(
+            VerificationRequestDto::from_request_parts(&mut parts, &())
+                .await
+                .unwrap(),
+            value
+        );
+    }
+
+    async fn check_err(uri: impl AsRef<str>, value: &str) {
+        let req = Request::builder()
+            .uri(uri.as_ref())
+            .body(Body::empty())
+            .unwrap();
+
+        let (mut parts, _body) = req.into_parts();
+
+        assert_eq!(
+            VerificationRequestDto::from_request_parts(&mut parts, &())
+                .await
+                .map_err(|err| match err {
+                    VerificationError::BadRequestJson(json) => json.error,
+                })
+                .unwrap_err(),
+            value
+        );
+    }
+
+    #[tokio::test]
+    async fn test_query() {
+        check_ok(
+            "http://ver.svc/verify?url=https://www.abc.com",
+            VerificationRequestDto {
+                url: "https://www.abc.com".to_string(),
+            },
+        )
+        .await;
+
+        check_err(
+            "http://ver.svc/verify",
+            "Failed to deserialize query string: missing field `url`",
+        )
+        .await;
+
+        check_err("http://ver.svc/verify?url=", "empty 'url' param").await;
+
+        check_err("http://ver.svc/verify?url=abc.com", "invalid 'url' param").await;
+    }
 }
