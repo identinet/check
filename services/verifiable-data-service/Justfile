@@ -67,12 +67,9 @@ dev: githooks
 check:
     cargo check --all-targets --features=fail-on-warnings
 
-# Continuously test application
-dev-test tests='': githooks
-    #   - no `--fail-on-warnings` to allow for easier debugging
-    #   - `--nocaptur` to allow print!(...) output
-    # - `RUST_BACKTRACE=1` shows reasons for failing tests
-    RUST_BACKTRACE=1 cargo watch -w src -x 'test {{ tests }} -- --nocapture'
+# Continuously verify that the codes still compiles
+dev-check: githooks
+    cargo watch -w src -x check
 
 # Build release version of application
 build: test
@@ -88,7 +85,10 @@ test tests='':
 
 # Continuously test application
 dev-test tests='': githooks
-    cargo watch -w src -x 'test --features=fail-on-warnings {{ tests }}'
+    #   - no `--fail-on-warnings` to allow for easier debugging
+    #   - `--nocaptur` to allow print!(...) output
+    # - `RUST_BACKTRACE=1` shows reasons for failing tests
+    RUST_BACKTRACE=1 cargo watch -w src -x 'test {{ tests }} -- --nocapture'
 
 # Lint code
 lint:
