@@ -67,9 +67,12 @@ dev: githooks
 check:
     cargo check --all-targets --features=fail-on-warnings
 
-# Continuously verify that the codes still compiles
-dev-check: githooks
-    cargo watch -w src -x check
+# Continuously test application
+dev-test tests='': githooks
+    #   - no `--fail-on-warnings` to allow for easier debugging
+    #   - `--nocaptur` to allow print!(...) output
+    # - `RUST_BACKTRACE=1` shows reasons for failing tests
+    RUST_BACKTRACE=1 cargo watch -w src -x 'test {{ tests }} -- --nocapture'
 
 # Build release version of application
 build: test
@@ -169,10 +172,12 @@ docker-push: docker-build
     #!/usr/bin/env nu
     let manifest = (open manifest.json)
     let image = $"($manifest.registry.name)/($manifest.name)"
-    ./result | skopeo copy docker-archive:/dev/stdin $"docker://($image):($manifest.version)"
+    let mimetype = file -L -i result | parse --regex "result: (?P<mimetype>[^;]+)" | $in.0.mimetype
+    if $mimetype == "application/gzip" { cat ./result } else { ./result } | skopeo copy docker-archive:/dev/stdin $"docker://($image):($manifest.version)"
     just docker-inspect-registry
 
 _bump_files CURRENT_VERSION NEW_VERSION:
+    #!/usr/bin/env nu
     let manifest = (open manifest.json)
     open manifest.json | upsert version "{{ NEW_VERSION }}" | save -f manifest.json; git add manifest.json
     open Cargo.toml | upsert package.version "{{ NEW_VERSION }}" | to toml | lines | insert 0 "# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html" | to text | collect | save -f Cargo.toml; git add Cargo.toml
