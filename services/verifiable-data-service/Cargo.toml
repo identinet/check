@@ -13,17 +13,20 @@ version = "0.0.1"
 fail-on-warnings = []
 
 [dependencies]
-axum = "^0.8.1"
-openid4vp = { version = "^0.1.0" }
-serde = { version = "^1", features = ["derive"] }
-tokio = { version = "^1.43.0", features = ["full"] }
-tower = "^0.5.2"
-uuid = { version = "^1.12.1", features = ["v4"] }
+axum = "0.8.1"
+openid4vp = { version = "0.1.0" }
+serde = { version = "1", features = ["derive"] }
+ssi = "0.10.2"
+tokio = { version = "1.43.0", features = ["full"] }
+tower = "0.5.2"
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+serde_json = "1.0"
+p256 = "0.13.2"
 
 [dev-dependencies]
-tower = { version = "^0.5.2", features = ["util"] }
-http-body-util = "^0.1.0"
-serde_json = "^1.0"
+tower = { version = "0.5.2", features = ["util"] }
+http-body-util = "0.1.0"
 
 [patch.crates-io]
 openid4vp = { git = "https://github.com/identinet/openid4vp.git" }

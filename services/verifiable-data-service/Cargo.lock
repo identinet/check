@@ -5433,10 +5433,13 @@ dependencies = [
  "axum",
  "http-body-util",
  "openid4vp",
+ "p256",
  "serde",
  "serde_json",
+ "ssi",
  "tokio",
  "tower",
+ "url",
  "uuid",
 ]
 
