@@ -1,17 +1,28 @@
-import { onMount } from "solid-js";
-import { generate } from "lean-qr";
+import { createEffect, createSignal, onMount, Suspense } from "solid-js";
+import { createAsync, query } from "@solidjs/router";
+import QRCode from "~/components/QRCode";
+
+const createSession = query(() => {
+  "use server";
+  console.log("called quer");
+  return fetch(`https://${process.env.VDS_HOST}/v1/sessions`, {
+    method: "PUT",
+  }).then((
+    r,
+  ) => {
+    console.log("go", r.body);
+    return r.json().then((res) => {
+      console.log("res", res);
+      return res;
+    });
+  });
+});
 
 export default function Credentials() {
-  let qrcode: any;
-  const code = generate("go for it");
+  const session = createAsync(() => createSession());
 
-  onMount(() => {
-    try {
-      code.toCanvas(qrcode);
-    } catch (err) {
-      console.error(err);
-    }
-  });
+  const [value, setvalue] = createSignal("moin");
+  /* setInterval(() => setvalue(new Date().toString()), 150); */
 
   return (
     <section class="bg-white py-8 antialiased dark:bg-gray-900 md:py-16">
@@ -20,12 +31,10 @@ export default function Credentials() {
           Requesting Credentials
         </h2>
 
-        <canvas
-          ref={qrcode}
-          class="w-80 y-80"
-          style="image-rendering: pixelated;"
-        >
-        </canvas>
+        <Suspense fallback={<div>Loading...</div>}>
+          <QRCode>{session()?.url}</QRCode>
+          URL: {JSON.stringify(session()?.url)}
+        </Suspense>
       </div>
     </section>
   );
