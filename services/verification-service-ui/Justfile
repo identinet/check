@@ -1,4 +1,4 @@
-#!/usr/bin/env just --justfile
+#!/usr/bin/env -S just --justfile
 # Documentation: https://just.systems/man/en/
 # Documentation: https://www.nushell.sh/book/
 #
@@ -21,9 +21,16 @@ format:
 githooks:
     #!/usr/bin/env nu
     $env.config = { use_ansi_coloring: false, error_style: "plain" }
+    # Only install githooks in the repository's root folder
+    let git_root = pwd | path split | reverse | drop (git rev-parse --show-toplevel | path split | length) | str join "/"
+    if $git_root != "" {
+        cd (git rev-parse --show-toplevel)
+        just githooks
+        return
+    }
     let hooks_folder = '.githooks'
     let git_hooks_folder = do {git config core.hooksPath} | complete
-    if $git_hooks_folder.exit_code == 0 and $git_hooks_folder.stdout != $hooks_folder {
+    if $git_hooks_folder.stdout != $hooks_folder {
       print -e 'Installing git commit hooks'
       git config core.hooksPath $hooks_folder
       # npm install -g @commitlint/config-conventional
