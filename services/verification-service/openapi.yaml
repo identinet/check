@@ -1,0 +1,45 @@
+# OpenAPI Specification Explained: https://learn.openapis.org/specification/
+# Documentation: https://spec.openapis.org/oas/v3.1.1.html
+# Learning OpenAPI: https://redoc.ly/docs/resources/learning-openapi/
+# HTTP status codes: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+# HTTP methods: https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods
+openapi: 3.1.1
+info:
+  version: "0.0.1"
+  title: Verification Service
+  description: Verification Service
+  license:
+    name: Apache-2.0
+  contact:
+    name: Jan Christoph Ebersbach
+    url: https://identinet.io
+
+servers:
+  - url: http://localhost:3010
+    description: Local development server
+
+paths:
+  /v1/verification:
+    get:
+      operationId: getVerification
+      tags:
+        - verification
+      summary: Verify URL
+      description: Verifies the given URL.
+      parameters:
+        - name: url
+          in: query
+          description: URL to verify. MUST be a HTTPS URL.
+          example: https://www.identinet.com
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        "200":
+          description: URL verified.
+          content:
+            application/json:
+              example: { status: "OK" }
+        "400":
+          description: Bad request
