@@ -91,10 +91,10 @@ test tests='':
     cargo test --features=fail-on-warnings {{ tests }}
 
 # Continuously test application
-#   - no `--fail-on-warnings` to allow for easier debugging
-#   - `--nocaptur` to allow print!(...) output
-#   - `RUST_BACKTRACE=1` shows reasons for failing tests
 dev-test tests='': githooks
+    #   - no `--fail-on-warnings` to allow for easier debugging
+    #   - `--nocapture` to allow print!(...) output
+    #   - `RUST_BACKTRACE=1` shows reasons for failing tests
     RUST_BACKTRACE=1 cargo watch -w src -x 'test {{ tests }} -- --nocapture'
 
 # Lint code
