@@ -1,5 +1,5 @@
 import { A } from "@solidjs/router";
-import ConfirmButton from "~/components/ConfirmButton";
+import VerificationSearch from "~/components/VerificationSearch";
 
 export default function Home() {
   return (
@@ -14,30 +14,7 @@ export default function Home() {
           />!
         </div>
       </h1>
-      <ConfirmButton />
-      <div class="i-flowbite-check-circle-outline" />
-      <p class="mt-8">
-        Visit{" "}
-        <a
-          href="https://solidjs.com"
-          target="_blank"
-          class="text-sky-600 hover:underline"
-        >
-          solidjs.com
-        </a>{" "}
-        to learn how to build Solid apps.
-      </p>
-      <p class="mt-2">
-        Visit{" "}
-        <a
-          href="https://unocss.dev"
-          target="_blank"
-          class="text-sky-600 hover:underline"
-        >
-          unocss.dev
-        </a>{" "}
-        to learn how to style your app.
-      </p>
+      <VerificationSearch />
       <p class="my-4">
         <span>Home</span>
         {" - "}
