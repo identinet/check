@@ -28,5 +28,4 @@ gitignore
 Thumbs.db
 
 /.direnv
-/.githooks
 /result

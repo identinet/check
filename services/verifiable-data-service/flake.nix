@@ -37,7 +37,6 @@
             abort "Version mismatch: ${y} doesn't start with ${x}";
         version = pkgVersionsEqual default_pkg.version manifest.version;
       in
-
       rec {
         # Development environment: nix develop
         devShells.default = pkgs.mkShell {
@@ -47,19 +46,26 @@
             gh
             git-cliff
             just
-            unstable.cargo-watch
-            unstable.nushell
-            unstable.skopeo
+            cargo-watch
+            nushell
+            skopeo
             default_pkg.nativeBuildInputs
           ];
+          env = {
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.openssl ];
+          };
+          # shellHook = ''
+          #   # If not set, libssl.so.3 not found error is displayed
+          #   export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.openssl ]}";
+          # '';
         };
 
         devShells.ci = pkgs.mkShell {
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
             just
-            unstable.nushell
-            unstable.skopeo
+            nushell
+            skopeo
           ];
         };
 

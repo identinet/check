@@ -1,21 +1,84 @@
 // Documentation: https://vite.dev/config/
 import { defineConfig } from "@solidjs/start/config";
 import UnoCSS from "unocss/vite";
-import { presetWind } from "@unocss/preset-wind";
+import { presetIcons, presetWind } from "unocss";
+
 /**
  * TODO flowbite preset is outdated, we probably want to update the included preflight CSS results with the CSS provided
  * in the official tailwind plugin at https://github.com/themesberg/flowbite/blob/main/plugin.js
  */
 import { presetFlowbite } from "@vonagam/unocss-preset-flowbite";
+const host = process.env.HOST || "::";
+const external_host = process.env.EXTERNAL_HOST || host;
+const vds_host = process.env.VDS_HOST || host;
+const port = parseInt(process.env.PORT || "3000");
 
 export default defineConfig({
   vite: {
+    server: {
+      host,
+      port,
+      allowedHosts: [
+        external_host,
+      ],
+      strictProt: true,
+      hmr: {
+        // See https://vite.dev/config/server-options.html#server-hmr
+        host: "localhost",
+        protocol: "ws",
+      },
+      cors: {
+        origin: [
+          `https://${external_host}`,
+          `https://${vds_host}`,
+        ],
+      },
+      watch: {
+        ignored: [
+          // speed up vite by ignoring nixos directory contents
+          "**/.direnv/**",
+          "**/.output/**",
+          "**/.vinxi/**",
+          "**/.git/**",
+        ],
+      },
+    },
     plugins: [UnoCSS({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
         presetWind(),
+        presetIcons({
+          // Documentation: https://unocss.dev/presets/icons
+          collections: {
+            flowbite: () =>
+              import("@iconify-json/flowbite/icons.json", {
+                with: { type: "json" },
+              }).then((i) => i.default),
+          },
+          extraProperties: {
+            "display": "inline-block",
+            "vertical-align": "middle",
+          },
+        }),
         presetFlowbite(),
       ],
+      theme: {
+        colors: {
+          primary: {
+            "50": "#eff6ff",
+            "100": "#dbeafe",
+            "200": "#bfdbfe",
+            "300": "#93c5fd",
+            "400": "#60a5fa",
+            "500": "#3b82f6",
+            "600": "#2563eb",
+            "700": "#1d4ed8",
+            "800": "#1e40af",
+            "900": "#1e3a8a",
+            "950": "#172554",
+          },
+        },
+      },
       content: {
         pipeline: {
           include: [
@@ -25,14 +88,5 @@ export default defineConfig({
         },
       },
     })],
-    server: {
-      watch: {
-        ignored: [
-          // speed up vite by ignoring nixos directory contents
-          "**/.direnv/**",
-          "**/.output/**",
-        ],
-      },
-    },
   },
 });

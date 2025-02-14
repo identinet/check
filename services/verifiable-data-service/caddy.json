@@ -1,4 +1,4 @@
 {
-  "host": "vds.shop.com.localhost",
+  "tunnelprefix": "vds",
   "port": 3011
 }

@@ -1,7 +1,7 @@
 {
   "name": "verifiable-data-service",
   "version": "0.0.1",
-  "description": "Docker image that packages CHECK Verifiable Data Service",
+  "description": "Docker image that packages the Verifiable Data Service",
   "author": "identinet GmbH <support@identinet.io>",
   "contributors": [
     "Jan Christoph Ebersbach <jan-christoph.ebersbach@identinet.io>",

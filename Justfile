@@ -23,9 +23,16 @@ format:
 githooks:
     #!/usr/bin/env nu
     $env.config = { use_ansi_coloring: false, error_style: "plain" }
+    # Only install githooks in the repository's root folder
+    let git_root = pwd | path split | reverse | drop (git rev-parse --show-toplevel | path split | length) | str join "/"
+    if $git_root != "" {
+        cd (git rev-parse --show-toplevel)
+        just githooks
+        return
+    }
     let hooks_folder = '.githooks'
     let git_hooks_folder = do {git config core.hooksPath} | complete
-    if $git_hooks_folder.exit_code == 0 and $git_hooks_folder.stdout != $hooks_folder {
+    if $git_hooks_folder.stdout != $hooks_folder {
       print -e 'Installing git commit hooks'
       git config core.hooksPath $hooks_folder
       # npm install -g @commitlint/config-conventional
@@ -67,16 +74,26 @@ dev: githooks
     mkdir $certs_directory
     # load configuration from files
     let services = glob "services/*/caddy.json" | each {open $in}
-    $services | $in.host | each {|host|
+    $services | filter {$in | get -i host | is-not-empty} | $in.host | each {|host|
       if not ($"($certs_directory)/($host).pem" | path exists) {
         mkcert -cert-file $"($certs_directory)/($host).pem" -key-file $"($certs_directory)/($host).pem" $host
+      }
+    }
+    def getHost [] {
+      let service = $in
+      if ($service | get -i host | is-not-empty) {
+        $service.host
+      } else {
+        $"($env.TUNNEL_USER)-($service.tunnelprefix).($env.TUNNEL_DOMAIN)"
       }
     }
     let http_port = 80
     let https_port = 443
     # let http_port = 8080
     # let https_port = 8443
+    # Documentation: https://caddyserver.com/docs/json/
     {
+      # acme_ca: "https://acme-staging-v02.api.letsencrypt.org/directory"
       admin: {
         disabled: true
       }
@@ -85,6 +102,15 @@ dev: githooks
           certificates: {
             load_folders: [$certs_directory]
           }
+          # automation: {
+          #   policies: [{
+          #     issuers: [{
+          #       module: "acme",
+          #       ca: "https://acme-staging-v02.api.letsencrypt.org/directory"
+          #       # certificate_lifetime: 4d
+          #     }]
+          #   }]
+          # }
         }
         http: {
           # http_port: $http_port
@@ -95,15 +121,19 @@ dev: githooks
               listen: [$":($http_port)"]
               routes: ($services | each {|service|
                 {
-                  match: [{host: [$service.host]}]
+                  match: [{host: [($service | getHost)]}]
                   handle: [
                     {
-                      handler: "static_response",
-                      status_code: 308,
-                      headers: {
-                        Location: [$"https://{http.request.host}:($https_port){http.request.uri}"]
-                      }
+                        handler: "reverse_proxy"
+                        upstreams: [{dial: $"localhost:($service.port)"}]
                     }
+                    # {
+                    #   handler: "static_response",
+                    #   status_code: 308,
+                    #   headers: {
+                    #     Location: [$"https://{http.request.host}:($https_port){http.request.uri}"]
+                    #   }
+                    # }
                   ]
                 }
               })
@@ -116,13 +146,13 @@ dev: githooks
               listen: [$":($https_port)"]
               routes: ($services | each {|service|
                 {
-                  match: [{host: [$service.host]}]
+                  match: [{host: [($service | getHost)]}]
                   handle: [{
                     handler: "subroute"
                     routes: [{
                       handle: [{
                         handler: "reverse_proxy"
-                        upstreams: [{dial: $":($service.port)"}]
+                        upstreams: [{dial: $"localhost:($service.port)"}]
                       }]
                     }]
                   }]
@@ -135,9 +165,22 @@ dev: githooks
       }
     } | save -f $"($certs_directory)/../caddy.json"
     print "Caddy is up and running. Visit:"
-    $services | $in.host | each {print $"- https://($in)(if $https_port != 443 {$":($https_port)"})"}
+    $services | each {|service|
+      let host = $service | getHost
+      print $"- https://($host)(if $https_port != 443 {$":($https_port)"})"
+    }
     print ""
     sudo (which caddy).0.path run --config $"($certs_directory)/../caddy.json"
+
+# Open a cloudflare tunnel. WARNING: requires configuration that is NOT part of this project
+tunnel:
+    #!/usr/bin/env nu
+    # Steps to create tunnel
+    # cloudflared tunnel login
+    # cloudflared tunnel create $env.TUNNEL_USER
+    # cloudflared tunnel route dns $env.TUNNEL_USER $"shop-($env.TUNNEL_USER).($env.TUNNEL_DOMAIN)"
+    # cloudflared tunnel route dns $env.TUNNEL_USER $"vds-($env.TUNNEL_USER).($env.TUNNEL_DOMAIN)"
+    cloudflared tunnel run --cred-file .cloudflared/tunnel.json --url $"http://localhost:80" $env.TUNNEL_USER
 
 # Run tests
 test:

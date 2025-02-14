@@ -7,8 +7,7 @@ dist
 app.config.timestamp_*.js
 
 # Environment
-.env
-.env*.local
+.env.local
 
 # dependencies
 /node_modules
@@ -28,5 +27,4 @@ gitignore
 Thumbs.db
 
 /.direnv
-/.githooks
 /result

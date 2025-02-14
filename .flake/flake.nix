@@ -21,6 +21,7 @@
         allOsPackages = with pkgs; [
           bashInteractive # bash used in scripts
           caddy # HTTP server https://caddyserver.com/
+          cloudflared # Cloudflare Tunnel daemon https://www.cloudflare.com/products/tunnel
           just # Simple make replacement https://just.systems/
           mkcert # Locally trusted development certificates https://github.com/FiloSottile/mkcert
           unstable.nushell # Nu Shell https://www.nushell.sh/

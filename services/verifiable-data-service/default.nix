@@ -27,10 +27,12 @@ pkgs.rustPlatform.buildRustPackage {
     filter = path: type: !(baseNameOf path == "target");
   };
   nativeBuildInputs = with pkgs; [
-    rustc
-    rust-analyzer
     cargo
     clippy
+    openssl.dev
+    pkg-config
+    rust-analyzer
+    rustc
     rustfmt
   ];
   meta = with pkgs.lib; {
