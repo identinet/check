@@ -93,7 +93,7 @@ test tests='':
 # Continuously test application
 dev-test tests='': githooks
     #   - no `--fail-on-warnings` to allow for easier debugging
-    #   - `--nocaptur` to allow print!(...) output
+    #   - `--nocapture` to allow print!(...) output
     # - `RUST_BACKTRACE=1` shows reasons for failing tests
     RUST_BACKTRACE=1 cargo watch -w src -x 'test {{ tests }} -- --nocapture'
 
