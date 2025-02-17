@@ -11,27 +11,174 @@ info:
   license:
     name: Apache-2.0
   contact:
-    name: Jan Christoph Ebersbach
+    name: identinet GmbH
     url: https://identinet.io
+    email: support@identinet.io
 
 servers:
   - url: http://localhost:3011
     description: Local development server
 
 paths:
-  /v1/session/initiate:
-    put:
-      operationId: initiate
-      summary: Initiates a new session.
-      description: Initiates a new session.
+  /v1/authrequests:
+    post:
+      parameters:
+        - name: Authorization
+          in: header
+          schema: string
+          description: Client bearer token
+          required: true
+      operationId: createRequest
+      summary: Creates a new OpenID4VP Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-11.5.
+      description: Returns Authorziation Request transaction ID and request URI for submitting the response. The authorization URI needs to be extended with the nonce generated on the side of the verifier.
+      # requestBody: # TODO: maybe allow the client to define the presentation definition
       responses:
         "201":
-          description: Session created.
+          description: Session created, returns session details.
           content:
             application/json:
-              example: { id: 50aa4fe7-975e-42cd-8919-de16a527c9e8 }
+              example:
+                {
+                  requestId: 50aa4fe7-975e-42cd-8919-de16a527c9e8,
+                  transactionId: c83d73d7-a5df-4cdc-aa0e-d295d38ee143,
+                  url: openid://localhost:3011/authorize?request=xxx,
+                }
         "401":
-          description: Unauthorized
+          description: Unauthorized.
+
+  /v1/authrequests/{requestId}?tid={transactionId}&rcode={responseCode}:
+    parameters:
+      - name: requestId
+        in: path
+        required: true
+        description: Authorization Request ID.
+        schema:
+          type: string
+      - name: transactionId
+        in: query
+        required: true
+        description: Response code.
+        schema:
+          type: string
+      - name: responseCode
+        in: query
+        required: true
+        description: Response code.
+        schema:
+          type: string
+    get:
+      operationId: getResponse
+      summary: Retrieves the submitted OpenID4VP data.
+      description: Returns the submitted data and the verification result.
+      responses:
+        "200":
+          description: Submitted data and verification result.
+          content:
+            application/json:
+              example: { data: {}, verification_result: {} }
+        "204":
+          description: No content has been submitted, yet.
+        "401":
+          description: Unauthorized.
+
+  /v1/authorize/{requestId}:
+    parameters:
+      - name: requestId
+        in: path
+        required: true
+        description: Authorization Request ID.
+        schema:
+          type: string
+    get:
+      operationId: getRequest
+      summary: Retrieves the OpenID4VP Authorization Request.
+      description: Returns the OpenID4VP Authorization Request.
+      responses:
+        "200":
+          description: Returns Authorization Request.
+          content:
+            application/json:
+              example: { TODO: {} }
+    post:
+      operationId: submitResponse
+      summary: Accepts data for this Authorization Request.
+      description: Returns redirect to callback URL.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            description: See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-6.2
+            # schema: {}
+            # examples: {}
+      responses:
+        "200":
+          description: Data submission successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - redirect_uri
+                properties:
+                  redirect_uri:
+                    type: string
+              example:
+                {
+                  "redirect_uri": "https://client.example.org/callback#response_code=091535f699ea575c7937fa5f0f454aee",
+                }
+        "400":
+          description: Bad Request.
+
+  /vp:
+    get:
+      operationId: getVp
+      summary: Retrieves the published Verifiable Presentation, see https://identity.foundation/linked-vp/.
+      description: Returns the published Verifiable Presentation.
+      responses:
+        "200":
+          description: Returns Authorization Request.
+          content:
+            # TODO: add support for additional linked-vp types like jwt+vp
+            application/json:
+              example:
+                {
+                  "@context":
+                    [
+                      "https://www.w3.org/ns/did/v1",
+                      "https://identity.foundation/linked-vp/contexts/v1",
+                    ],
+                  "id": "did:example:123",
+                  "verificationMethod":
+                    [
+                      {
+                        "id": "did:example:123#_Qq0UL2Fq651Q0Fjd6TvnYE-faHiOpRlPVQcY_-tA4A",
+                        "type": "JsonWebKey2020",
+                        "controller": "did:example:123",
+                        "publicKeyJwk":
+                          {
+                            "kty": "OKP",
+                            "crv": "Ed25519",
+                            "x": "VCpo2LMLhn6iWku8MKvSLg2ZAoC-nlOyPVQaO3FxVeQ",
+                          },
+                      },
+                    ],
+                  "service":
+                    [
+                      {
+                        "id": "did:example:123#foo",
+                        "type": "LinkedVerifiablePresentation",
+                        "serviceEndpoint":
+                          [
+                            "https://bar.example.com/verifiable-presentation.jsonld",
+                          ],
+                      },
+                      {
+                        "id": "did:example:123#baz",
+                        "type": "LinkedVerifiablePresentation",
+                        "serviceEndpoint": "ipfs://bafybeihkoviema7g3gxyt6la7vd5ho32ictqbilu3wnlo3rs7ewhnp7lly/verifiable-presentation.jwt",
+                      },
+                    ],
+                }
 
 components:
   # parameters:
