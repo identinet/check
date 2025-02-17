@@ -3,6 +3,7 @@
 # Learning OpenAPI: https://redoc.ly/docs/resources/learning-openapi/
 # HTTP status codes: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 # HTTP methods: https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods
+# Graphical editor and test service: https://editor-next.swagger.io/
 openapi: 3.1.1
 info:
   version: "0.0.1"
@@ -25,7 +26,8 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          schema: string
+          schema:
+            type: string
           description: Client bearer token
           required: true
       operationId: createRequest
@@ -37,16 +39,16 @@ paths:
           description: Session created, returns session details.
           content:
             application/json:
-              example:
+              example: |
                 {
-                  requestId: 50aa4fe7-975e-42cd-8919-de16a527c9e8,
-                  transactionId: c83d73d7-a5df-4cdc-aa0e-d295d38ee143,
-                  url: openid://localhost:3011/authorize?request=xxx,
+                  "requestId": "50aa4fe7-975e-42cd-8919-de16a527c9e8",
+                  "transactionId": "c83d73d7-a5df-4cdc-aa0e-d295d38ee143",
+                  "url": "openid://localhost:3011/authorize?request=xxx"
                 }
         "401":
           description: Unauthorized.
 
-  /v1/authrequests/{requestId}?tid={transactionId}&rcode={responseCode}:
+  /v1/authrequests/{requestId}:
     parameters:
       - name: requestId
         in: path
@@ -107,7 +109,8 @@ paths:
         required: true
         content:
           application/x-www-form-urlencoded:
-            description: See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-6.2
+            {}
+            # description: See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-6.2
             # schema: {}
             # examples: {}
       responses:
@@ -140,12 +143,12 @@ paths:
           content:
             # TODO: add support for additional linked-vp types like jwt+vp
             application/json:
-              example:
+              example: |
                 {
                   "@context":
                     [
                       "https://www.w3.org/ns/did/v1",
-                      "https://identity.foundation/linked-vp/contexts/v1",
+                      "https://identity.foundation/linked-vp/contexts/v1"
                     ],
                   "id": "did:example:123",
                   "verificationMethod":
@@ -158,9 +161,9 @@ paths:
                           {
                             "kty": "OKP",
                             "crv": "Ed25519",
-                            "x": "VCpo2LMLhn6iWku8MKvSLg2ZAoC-nlOyPVQaO3FxVeQ",
-                          },
-                      },
+                            "x": "VCpo2LMLhn6iWku8MKvSLg2ZAoC-nlOyPVQaO3FxVeQ"
+                          }
+                      }
                     ],
                   "service":
                     [
@@ -169,15 +172,15 @@ paths:
                         "type": "LinkedVerifiablePresentation",
                         "serviceEndpoint":
                           [
-                            "https://bar.example.com/verifiable-presentation.jsonld",
+                            "https://bar.example.com/verifiable-presentation.jsonld"
                           ],
                       },
                       {
                         "id": "did:example:123#baz",
                         "type": "LinkedVerifiablePresentation",
-                        "serviceEndpoint": "ipfs://bafybeihkoviema7g3gxyt6la7vd5ho32ictqbilu3wnlo3rs7ewhnp7lly/verifiable-presentation.jwt",
-                      },
-                    ],
+                        "serviceEndpoint": "ipfs://bafybeihkoviema7g3gxyt6la7vd5ho32ictqbilu3wnlo3rs7ewhnp7lly/verifiable-presentation.jwt"
+                      }
+                    ]
                 }
 
 components:
