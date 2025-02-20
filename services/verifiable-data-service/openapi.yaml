@@ -38,7 +38,7 @@ paths:
           required: true
       operationId: createRequest
       summary: Creates a new OpenID4VP Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-11.5.
-      description: Returns Authorziation Request transaction ID and request URI for submitting the response. The authorization URI needs to be extended with the nonce generated on the side of the verifier.
+      description: Returns Authorization Request transaction ID and request URI for submitting the response. The authorization URI needs to be extended with the nonce generated on the side of the verifier.
       # requestBody: # TODO: maybe allow the client to define the presentation definition
       responses:
         "201":
