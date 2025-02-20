@@ -151,7 +151,7 @@ paths:
           content:
             # TODO: add support for additional linked-vp types like jwt+vp
             application/json:
-              example: |
+              example:
                 {
                   "@context":
                     [
