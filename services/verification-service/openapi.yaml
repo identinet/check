@@ -13,6 +13,7 @@ info:
   contact:
     name: Jan Christoph Ebersbach
     url: https://identinet.io
+    email: support@identinet.io
 
 servers:
   - url: http://localhost:3010
@@ -24,22 +25,44 @@ paths:
       operationId: getVerification
       tags:
         - verification
-      summary: Verify URL
-      description: Verifies the given URL.
+      summary: Verifies a URL based on the did:web method
+      description: |
+        Resolves the DID document at the given URL.
+        See https://w3c-ccg.github.io/did-method-web/#read-resolve.
+        The verification result of the DID document and the included Linked Verifiable Presentations is returned.
       parameters:
         - name: url
           in: query
-          description: URL to verify. MUST be a HTTPS URL.
+          description: |
+            URL to verify.
+            MUST be a HTTPS URL.
+            If no path has been specified in the URL, `/.well-known` is appended.
+            `/did.json` is appended to complete the URL in any case.
           example: https://www.identinet.com
           required: true
-          style: form
           schema:
             type: string
+            format: url
       responses:
         "200":
           description: URL verified.
           content:
             application/json:
-              example: { status: "OK" }
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - OK
+                      - NOT_VERIFIED
+                      - ERROR
+                    description: >
+                      Verification result:
+                        * `OK` - Verification successful
+                        * `NOT_VERIFIED` - Verification failed
+                        * `ERROR` - Verification not possible, e.g. due to timeout
+                    example: "OK"
+
         "400":
           description: Bad request
