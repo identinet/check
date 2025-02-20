@@ -45,12 +45,8 @@ paths:
           description: Session created, returns session details.
           content:
             application/json:
-              example: |
-                {
-                  "requestId": "50aa4fe7-975e-42cd-8919-de16a527c9e8",
-                  "transactionId": "c83d73d7-a5df-4cdc-aa0e-d295d38ee143",
-                  "url": "openid://localhost:3011/authorize?request=xxx"
-                }
+              schema:
+                $ref: '#/components/schemas/AuthorizationRequest'
         "401":
           description: Unauthorized.
 
@@ -239,3 +235,23 @@ components:
       description: "Decentralized Identifier."
       # minLength: 5
       # maxLength: 64
+
+    AuthorizationRequest:
+      type: object
+      properties:
+        requestId:
+          type: string
+          description: Id of the request
+          example: 777cab68-3666-4bcb-be11-8f264dc6fa1b
+        transactionId:
+          type: string
+          description: Id of the transaction
+          example: 9989e29c-89af-4cc8-b0de-af19767e67ab
+        url:
+          type: string
+          description: FIXME
+          example: "openid://localhost:3011/authorize?request=xxx"
+      required:
+        - requestId
+        - transactionId
+        - url
