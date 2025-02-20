@@ -21,14 +21,17 @@ servers:
     description: Local development server
 
 tags:
-  - name: OpenID4VP
-    description: Operations related to OpenID4VP
-
+  - name: openid4vp-wallet
+    description: OpenID4VP Operations used by Wallets
+  - name: openid4vp-verifier
+    description: OpenID4VP Operations used by Verifiers
+  - name: linked-vp
+    description: Operations used to interact with Linked Verifiable Presentations
 paths:
   /v1/authrequests:
     post:
       tags:
-        - OpenID4VP
+        - openid4vp-verifier
       parameters:
         - name: Authorization
           in: header
@@ -46,7 +49,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthorizationRequest'
+                $ref: "#/components/schemas/AuthorizationRequest"
         "401":
           description: Unauthorized.
 
@@ -72,7 +75,7 @@ paths:
           type: string
     get:
       tags:
-        - OpenID4VP
+        - openid4vp-verifier
       operationId: getResponse
       summary: Retrieves the submitted OpenID4VP data.
       description: Returns the submitted data and the verification result.
@@ -81,7 +84,10 @@ paths:
           description: Submitted data and verification result.
           content:
             application/json:
-              example: { data: {}, verification_result: {} }
+              schema:
+                type: object
+              example: |
+                { "data": {}, "verification_result": {} }
         "204":
           description: No content has been submitted, yet.
         "401":
@@ -97,7 +103,7 @@ paths:
           type: string
     get:
       tags:
-        - OpenID4VP
+        - openid4vp-wallet
       operationId: getRequest
       summary: Retrieves the OpenID4VP Authorization Request.
       description: Returns the OpenID4VP Authorization Request.
@@ -106,10 +112,13 @@ paths:
           description: Returns Authorization Request.
           content:
             application/json:
-              example: { TODO: {} }
+              example: |
+                { "TODO": {} }
+              schema:
+                type: object
     post:
       tags:
-        - OpenID4VP
+        - openid4vp-wallet
       operationId: submitResponse
       summary: Accepts data for this Authorization Request.
       description: Returns redirect to callback URL.
@@ -133,15 +142,17 @@ paths:
                 properties:
                   redirect_uri:
                     type: string
-              example:
+              example: |
                 {
-                  "redirect_uri": "https://client.example.org/callback#response_code=091535f699ea575c7937fa5f0f454aee",
+                  "redirect_uri": "https://client.example.org/callback#response_code=091535f699ea575c7937fa5f0f454aee"
                 }
         "400":
           description: Bad Request.
 
   /vp:
     get:
+      tags:
+        - linked-vp
       operationId: getVp
       summary: Retrieves the published Verifiable Presentation, see https://identity.foundation/linked-vp/.
       description: Returns the published Verifiable Presentation.
@@ -151,7 +162,9 @@ paths:
           content:
             # TODO: add support for additional linked-vp types like jwt+vp
             application/json:
-              example:
+              schema:
+                type: object
+              example: |
                 {
                   "@context":
                     [
@@ -181,7 +194,7 @@ paths:
                         "serviceEndpoint":
                           [
                             "https://bar.example.com/verifiable-presentation.jsonld"
-                          ],
+                          ]
                       },
                       {
                         "id": "did:example:123#baz",
