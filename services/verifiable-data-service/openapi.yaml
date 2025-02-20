@@ -20,9 +20,15 @@ servers:
   - url: http://localhost:3011
     description: Local development server
 
+tags:
+  - name: OpenID4VP
+    description: Operations related to OpenID4VP
+
 paths:
   /v1/authrequests:
     post:
+      tags:
+        - OpenID4VP
       parameters:
         - name: Authorization
           in: header
@@ -69,6 +75,8 @@ paths:
         schema:
           type: string
     get:
+      tags:
+        - OpenID4VP
       operationId: getResponse
       summary: Retrieves the submitted OpenID4VP data.
       description: Returns the submitted data and the verification result.
@@ -92,6 +100,8 @@ paths:
         schema:
           type: string
     get:
+      tags:
+        - OpenID4VP
       operationId: getRequest
       summary: Retrieves the OpenID4VP Authorization Request.
       description: Returns the OpenID4VP Authorization Request.
@@ -102,6 +112,8 @@ paths:
             application/json:
               example: { TODO: {} }
     post:
+      tags:
+        - OpenID4VP
       operationId: submitResponse
       summary: Accepts data for this Authorization Request.
       description: Returns redirect to callback URL.
