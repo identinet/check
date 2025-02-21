@@ -27,6 +27,7 @@ tags:
     description: OpenID4VP Operations used by Verifiers
   - name: linked-vp
     description: Operations used to interact with Linked Verifiable Presentations
+
 paths:
   /v1/authrequests:
     post:
