@@ -4,6 +4,7 @@ import { useForm } from "~/utils/forms/validation";
 import VerificationResult from "~/components/VerificationResult";
 
 const verifyUrlAction = action(async (formData: FormData) => {
+  "use server";
   const input = formData.get("url") as string;
   try {
     // TODO remove test dataa
@@ -13,9 +14,11 @@ const verifyUrlAction = action(async (formData: FormData) => {
       };
     }
 
-    // TODO get VS URL from config
-    return await fetch(`http://localhost:3010/v1/verification?url=${input}`)
-      .then((r) => r.json());
+    return await fetch(
+      `https://${process.env.API_HOST}/v1/verification?url=${input}`,
+    ).then((r) => {
+      return r.json();
+    });
   } catch (e) {
     console.error(e);
     return {
