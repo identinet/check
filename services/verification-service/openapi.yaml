@@ -33,7 +33,7 @@ paths:
         - verification
       summary: Verifies a URL based on associated Decentralized Identifier and Linked Verifiable Presentations.
       description: |
-        Resolves the Decentralized Identifier and for the given DNS Domain name or DID
+        Resolves the Decentralized Identifier for the given DNS Domain name or DID
         and discovers and verifies Linked Verifiable Presentations and Credentials.
         Information about the identifier, the linked presentations and credentials and the verification result are returned.
 
