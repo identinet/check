@@ -116,8 +116,8 @@ paths:
                   verified:
                     type: boolean
                     description: |
-                      Set to `True` if an identfier was found, at least one Verifiable Presentation with one Verifiable
-                      Credentials has been found and all Linked Verifiable Presentations and Credentials were verified
+                      `True` if an identifier was found AND at least one Verifiable Presentation with one Verifiable
+                      Credentials has been found AND all Linked Verifiable Presentations and Credentials were verified
                       successfully, otherwise `False`.
                   status:
                     type: string
