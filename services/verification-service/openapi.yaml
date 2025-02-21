@@ -45,7 +45,7 @@ paths:
         - name: q
           in: query
           description: |
-            DNS domain name  or DID to verify.
+            DNS domain name or DID to verify.
             If no path has been specified in the URL, `/.well-known` is appended.
             `/did.json` is appended to complete the URL in any case.
 
