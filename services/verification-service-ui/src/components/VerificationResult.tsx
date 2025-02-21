@@ -1,6 +1,10 @@
 import { Show } from "solid-js";
 import { action, query, useAction, useSubmission } from "@solidjs/router";
 import { useForm } from "~/utils/forms/validation";
+import {
+  VerificationResultDetailNotVerified,
+  VerificationResultDetailSuccess,
+} from "./VerificationResultDetailDummies";
 
 const greyClasses = "bg-gray-50 border-gray-300 dark:border-gray-600";
 const greenClasses =
@@ -10,9 +14,9 @@ const yellowClasses =
 const redClasses =
   "bg-red-50 border-red-300 dark:border-red-800 dark:text-red-400 text-red-800";
 
-const resultElement = ({ classes, icon, title, desc }) => {
+const resultElement = ({ classes, icon, title, desc, details }) => {
   const commonClasses =
-    "border dark:bg-gray-800 mb-4 p-4 rounded-lg max-w-md mt-8 mx-auto";
+    "text-left border dark:bg-gray-800 mb-4 p-4 rounded-lg max-w-md mt-8 mx-auto";
 
   return (
     <div class={`${commonClasses} ${classes}`} role="alert">
@@ -23,6 +27,8 @@ const resultElement = ({ classes, icon, title, desc }) => {
       </div>
       {desc &&
         <div class="mt-2 mb-4 text-sm">{desc}</div>}
+      {details &&
+        <div class="mt-2 mb-4">{details}</div>}
     </div>
   );
 };
@@ -40,9 +46,9 @@ export default function VerificationResult({ pending, result }) {
     return resultElement({
       classes: greenClasses,
       icon: "i-flowbite-badge-check-solid",
-      title: "Sucess",
-      desc:
-        "More info about this info success goes here. This example text is going to run a bit longer so that you can see how spacing within an alert works with this kind of content.",
+      title: "Success",
+      desc: "Address verified successfully!",
+      details: VerificationResultDetailSuccess,
     });
   }
 
@@ -52,6 +58,7 @@ export default function VerificationResult({ pending, result }) {
       icon: "i-flowbite-exclamation-circle-solid",
       title: "Not verified",
       desc: "Uh oh! This address could not be verified.",
+      details: VerificationResultDetailNotVerified,
     });
   }
 
