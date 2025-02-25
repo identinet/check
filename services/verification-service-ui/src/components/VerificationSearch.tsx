@@ -6,25 +6,20 @@ import VerificationResult from "~/components/VerificationResult";
 const verifyUrlAction = action(async (formData: FormData) => {
   "use server";
   const input = formData.get("url") as string;
-  try {
-    // TODO remove test dataa
-    if (input == "https://bad.shop") {
-      return {
-        status: "NOT_VERIFIED",
-      };
-    }
-
-    return await fetch(
-      `https://${process.env.API_HOST}/v1/verification?url=${input}`,
-    ).then((r) => {
-      return r.json();
-    });
-  } catch (e) {
-    console.error(e);
+  // TODO remove test data
+  if (input == "https://bad.shop") {
     return {
-      status: "ERROR",
+      status: "NOT_VERIFIED",
     };
   }
+
+  const response = await fetch(
+    `https://${process.env.API_HOST}/v1/verification?url=${input}`,
+  );
+
+  if (!response.ok) throw new Error(response.statusText);
+
+  return response.json();
 }, "verifyUrl");
 
 const ErrorMessage = (props) => (
@@ -34,13 +29,12 @@ const ErrorMessage = (props) => (
 );
 
 export default function ConfirmButton() {
+  const verifyUrl = useAction(verifyUrlAction);
   const submission = useSubmission(verifyUrlAction);
-  const verify = useAction(verifyUrlAction);
 
   const { validate, formSubmit, errors } = useForm({
     errorClass: "error-input",
   });
-
   const isHttpsUrl = ({ value }) => {
     try {
       const url = new URL(value);
@@ -49,13 +43,13 @@ export default function ConfirmButton() {
       return `${value} is not a valid URL`;
     }
   };
+  const submit = (form) => {
+    verifyUrl(new FormData(form));
+  };
 
   return (
     <>
-      <form
-        use:formSubmit={(f) => verify(new FormData(f))}
-        class="max-w-md mx-auto"
-      >
+      <form use:formSubmit={submit} class="max-w-md mx-auto">
         <label
           for="url-input"
           class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
@@ -91,7 +85,7 @@ export default function ConfirmButton() {
           />
           <button
             type="submit"
-            disabled={submission.pending}
+            disabled={submission.pending || errors.url}
             class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           >
             CHECK!
@@ -102,6 +96,10 @@ export default function ConfirmButton() {
 
       <Show when={submission.pending}>
         {() => <VerificationResult pending="true" />}
+      </Show>
+
+      <Show when={submission.error}>
+        {(error) => <VerificationResult error={error()} />}
       </Show>
 
       <Show when={submission.result}>

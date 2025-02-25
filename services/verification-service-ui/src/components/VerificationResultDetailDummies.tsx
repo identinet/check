@@ -63,37 +63,37 @@ export function VerificationResultDetailSuccess() {
 
 export function VerificationResultDetailNotVerified() {
   return (
-      <table class="table table-sm table-zebra">
-        <tbody>
-          <tr>
-            <th class="p-0 pt-2 pb-1 text-bold">Result</th>
-            <th class="p-0 pt-2 pb-1"></th>
-          </tr>
-          <tr>
-            <td class="p-0">Credential</td>
-            <td class="p-0 px-2">No credential ID.</td>
-          </tr>
-          <tr>
-            <td class="p-0">Subject</td>
-            <td class="p-0 px-2">did:web:broken-example.identinet.io</td>
-          </tr>
-          <tr>
-            <td class="p-0">Issuer</td>
-            <td class="p-0 px-2">did:web:broken-example.identinet.io</td>
-          </tr>
-          <tr>
-            <td class="p-0">Issued</td>
-            <td class="p-0 px-2">Apr 6, 2024, 6:42:36 PM</td>
-          </tr>
-          <tr>
-            <th class="p-0 pt-2 pb-1 text-bold">Claims</th>
-            <th class="p-0 pt-2 pb-1"></th>
-          </tr>
-          <tr>
-            <td class="p-0">Tampered</td>
-            <td class="p-0 px-2">attribute</td>
-          </tr>
-        </tbody>
-      </table>
+    <table class="table table-sm table-zebra">
+      <tbody>
+        <tr>
+          <th class="p-0 pt-2 pb-1 text-bold">Result</th>
+          <th class="p-0 pt-2 pb-1"></th>
+        </tr>
+        <tr>
+          <td class="p-0">Credential</td>
+          <td class="p-0 px-2">No credential ID.</td>
+        </tr>
+        <tr>
+          <td class="p-0">Subject</td>
+          <td class="p-0 px-2">did:web:broken-example.identinet.io</td>
+        </tr>
+        <tr>
+          <td class="p-0">Issuer</td>
+          <td class="p-0 px-2">did:web:broken-example.identinet.io</td>
+        </tr>
+        <tr>
+          <td class="p-0">Issued</td>
+          <td class="p-0 px-2">Apr 6, 2024, 6:42:36 PM</td>
+        </tr>
+        <tr>
+          <th class="p-0 pt-2 pb-1 text-bold">Claims</th>
+          <th class="p-0 pt-2 pb-1"></th>
+        </tr>
+        <tr>
+          <td class="p-0">Tampered</td>
+          <td class="p-0 px-2">attribute</td>
+        </tr>
+      </tbody>
+    </table>
   );
 }

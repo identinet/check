@@ -33,7 +33,16 @@ const resultElement = ({ classes, icon, title, desc, details }) => {
   );
 };
 
-export default function VerificationResult({ pending, result }) {
+const errorElement = ({ error }) => {
+  return resultElement({
+    classes: yellowClasses,
+    icon: "i-flowbite-fire-solid",
+    title: "Error",
+    desc: `There was an error while verifying the address: ${error.message}.`,
+  });
+};
+
+export default function VerificationResult({ pending, result, error }) {
   if (pending) {
     return resultElement({
       classes: greyClasses,
@@ -42,17 +51,11 @@ export default function VerificationResult({ pending, result }) {
     });
   }
 
-  if (result.status == "OK") {
-    return resultElement({
-      classes: greenClasses,
-      icon: "i-flowbite-badge-check-solid",
-      title: "Success",
-      desc: "Address verified successfully!",
-      details: VerificationResultDetailSuccess,
-    });
+  if (error) {
+    return errorElement({ error });
   }
 
-  if (result.status == "NOT_VERIFIED") {
+  if (result.status == "NOT_VERIFIED" || result.status == "NO_CREDENTIAL") {
     return resultElement({
       classes: redClasses,
       icon: "i-flowbite-exclamation-circle-solid",
@@ -62,12 +65,11 @@ export default function VerificationResult({ pending, result }) {
     });
   }
 
-  if (result.status == "ERROR") {
-    return resultElement({
-      classes: yellowClasses,
-      icon: "i-flowbite-fire-solid",
-      title: "Error",
-      desc: "There was an error while verifying the address.",
-    });
-  }
+  return resultElement({
+    classes: greenClasses,
+    icon: "i-flowbite-badge-check-solid",
+    title: "Success",
+    desc: "Address verified successfully!",
+    details: VerificationResultDetailSuccess,
+  });
 }
