@@ -1,5 +1,11 @@
-import { Show } from "solid-js";
-import { action, query, useAction, useSubmission } from "@solidjs/router";
+import { onMount, Show } from "solid-js";
+import {
+  action,
+  query,
+  useAction,
+  useSearchParams,
+  useSubmission,
+} from "@solidjs/router";
 import { useForm } from "~/utils/forms/validation";
 import VerificationResult from "~/components/VerificationResult";
 
@@ -31,6 +37,7 @@ const ErrorMessage = (props) => (
 export default function ConfirmButton() {
   const verifyUrl = useAction(verifyUrlAction);
   const submission = useSubmission(verifyUrlAction);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { validate, formSubmit, errors } = useForm({
     errorClass: "error-input",
@@ -44,8 +51,21 @@ export default function ConfirmButton() {
     }
   };
   const submit = (form) => {
-    verifyUrl(new FormData(form));
+    const formData = new FormData(form);
+    const url = formData.get("url") as string;
+    setSearchParams({ url });
+    verifyUrl(formData);
   };
+
+  // when the component is mounted...
+  onMount(() => {
+    // ... and a URL is provided it's automatically verified
+    if (searchParams.url) {
+      const formData = new FormData();
+      formData.set("url", searchParams.url);
+      verifyUrl(formData);
+    }
+  });
 
   return (
     <>
@@ -80,6 +100,7 @@ export default function ConfirmButton() {
             name="url"
             class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             placeholder="https://www.acme.co"
+            value={searchParams.url}
             required
             use:validate={[isHttpsUrl]}
           />
