@@ -12,12 +12,9 @@ import VerificationResult from "~/components/VerificationResult";
 const verifyUrlAction = action(async (formData: FormData) => {
   "use server";
   const input = formData.get("url") as string;
-  // TODO remove test data
-  if (input == "https://bad.shop") {
-    return {
-      status: "NOT_VERIFIED",
-    };
-  }
+
+  const demoResult = handleDemoUrl(input);
+  if (demoResult) return demoResult;
 
   const response = await fetch(
     `https://${process.env.API_HOST}/v1/verification?url=${input}`,
@@ -27,6 +24,21 @@ const verifyUrlAction = action(async (formData: FormData) => {
 
   return response.json();
 }, "verifyUrl");
+
+const handleDemoUrl = (url: string) => {
+  // TODO remove test data handler
+  if (url == "https://no-id-example.identinet.io") {
+    throw new Error("Not found");
+  } else if (url == "https://id-example.identinet.io") {
+    return {
+      status: "NO_CREDENTIAL",
+    };
+  } else if (url == "https://broken-example.identinet.io") {
+    return {
+      status: "NOT_VERIFIED",
+    };
+  }
+};
 
 const ErrorMessage = (props) => (
   <p class="mt-2 text-sm text-red-600 dark:text-red-500">

@@ -34,11 +34,12 @@ const resultElement = ({ classes, icon, title, desc, details }) => {
 };
 
 const errorElement = ({ error }) => {
+  const msg = error.message ? error.message : "Unknown error";
   return resultElement({
     classes: yellowClasses,
     icon: "i-flowbite-fire-solid",
     title: "Error",
-    desc: `There was an error while verifying the address: ${error.message}.`,
+    desc: `There was an error while verifying the address: ${msg}.`,
   });
 };
 
@@ -55,7 +56,7 @@ export default function VerificationResult({ pending, result, error }) {
     return errorElement({ error });
   }
 
-  if (result.status == "NOT_VERIFIED" || result.status == "NO_CREDENTIAL") {
+  if (result.status == "NOT_VERIFIED") {
     return resultElement({
       classes: redClasses,
       icon: "i-flowbite-exclamation-circle-solid",
@@ -65,6 +66,17 @@ export default function VerificationResult({ pending, result, error }) {
     });
   }
 
+  if (result.status == "NO_CREDENTIAL") {
+    return resultElement({
+      classes: greenClasses,
+      icon: "i-flowbite-badge-check-solid",
+      title: "Success",
+      desc: "Address verified successfully!",
+      details: VerificationResultDetailSuccess(false),
+    });
+  }
+
+  // VERIFED, NO_CREDENTIAL
   return resultElement({
     classes: greenClasses,
     icon: "i-flowbite-badge-check-solid",
