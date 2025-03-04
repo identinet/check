@@ -73,7 +73,7 @@ paths:
       - name: transactionId
         in: query
         required: true
-        description: Response code.
+        description: Transaction ID.
         schema:
           type: string
       - name: responseCode
@@ -181,7 +181,7 @@ paths:
       description: Returns the published Verifiable Presentation.
       responses:
         "200":
-          description: Returns Authorization Request.
+          description: Returns Linked Verifiable Presentation.
           content:
             # TODO: add support for additional linked-vp types like jwt+vp
             application/json:
