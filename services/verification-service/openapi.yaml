@@ -23,7 +23,7 @@ servers:
 
 tags:
   - name: verification
-    description: Operations releated to verification
+    description: Operations related to verification
 
 paths:
   /v1/verification:
