@@ -54,7 +54,6 @@ export default function Nav() {
                     <li>
                       <a
                         href="/?url=https://no-id-example.identinet.io"
-                        target="_self"
                         class="block px-4 py-2 hover:bg-sky-500"
                       >
                         No DID document available
@@ -63,7 +62,6 @@ export default function Nav() {
                     <li>
                       <a
                         href="/?url=https://id-plus-example.identinet.io"
-                        target="_self"
                         class="block px-4 py-2 hover:bg-sky-500"
                       >
                         DID document and credentials available
@@ -72,7 +70,6 @@ export default function Nav() {
                     <li>
                       <a
                         href="/?url=https://id-example.identinet.io"
-                        target="_self"
                         class="block px-4 py-2 hover:bg-sky-500"
                       >
                         DID document available, no credentials
@@ -81,7 +78,6 @@ export default function Nav() {
                     <li>
                       <a
                         href="/?url=https://broken-example.identinet.io"
-                        target="_self"
                         class="block px-4 py-2 hover:bg-sky-500"
                       >
                         DID document incorrect or verification of credentials

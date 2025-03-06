@@ -1,4 +1,4 @@
-import { onMount, Show } from "solid-js";
+import { createEffect, Show } from "solid-js";
 import {
   action,
   query,
@@ -69,9 +69,7 @@ export default function ConfirmButton() {
     verifyUrl(formData);
   };
 
-  // when the component is mounted...
-  onMount(() => {
-    // ... and a URL is provided it's automatically verified
+  createEffect(() => {
     if (searchParams.url) {
       const formData = new FormData();
       formData.set("url", searchParams.url);
