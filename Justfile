@@ -79,13 +79,16 @@ dev: githooks
         mkcert -cert-file $"($certs_directory)/($host).pem" -key-file $"($certs_directory)/($host).pem" $host
       }
     }
-    def getHost [] {
+    def getHosts [--no-tunnel] {
       let service = $in
-      if ($service | get -i host | is-not-empty) {
-        $service.host
-      } else {
-        $"($env.TUNNEL_USER)-($service.tunnelprefix).($env.TUNNEL_DOMAIN)"
-      }
+      let hosts = []
+      let hosts = if ($service | get -i host | is-not-empty) {
+        $hosts | append $service.host
+      } else { $hosts }
+      let hosts = if (not $no_tunnel) and ($service | get -i tunnelprefix | is-not-empty) {
+        $hosts | append $"($env.TUNNEL_USER)-($service.tunnelprefix).($env.TUNNEL_DOMAIN)"
+      } else { $hosts }
+      $hosts
     }
     let http_port = 80
     let https_port = 443
@@ -121,7 +124,7 @@ dev: githooks
               listen: [$":($http_port)"]
               routes: ($services | each {|service|
                 {
-                  match: [{host: [($service | getHost)]}]
+                  match: ($service | getHosts | each {|host| {host: [$host]}})
                   handle: [
                     {
                         handler: "reverse_proxy"
@@ -146,7 +149,7 @@ dev: githooks
               listen: [$":($https_port)"]
               routes: ($services | each {|service|
                 {
-                  match: [{host: [($service | getHost)]}]
+                  match: ($service | getHosts --no-tunnel | each {|host| {host: [$host]}})
                   handle: [{
                     handler: "subroute"
                     routes: [{
@@ -165,10 +168,10 @@ dev: githooks
       }
     } | save -f $"($certs_directory)/../caddy.json"
     print "Caddy is up and running. Visit:"
-    $services | each {|service|
-      let host = $service | getHost
-      print $"- https://($host)(if $https_port != 443 {$":($https_port)"})"
-    }
+    print ($services | each {|service|
+      let hosts = $service | getHosts
+      $hosts | each {|host| $"https://($host)(if $https_port != 443 {$":($https_port)"})" } | fill -c ' ' -w 40 | str join "or " | prepend "-" | str join " "
+    } | str join "\n")
     print ""
     sudo (which caddy).0.path run --config $"($certs_directory)/../caddy.json"
 
