@@ -33,6 +33,10 @@ const handleDemoUrl = (url: string) => {
     return {
       status: "NO_CREDENTIAL",
     };
+  } else if (url == "https://id-plus-example.identinet.io") {
+    return {
+      status: "CREDENTIAL",
+    };
   } else if (url == "https://broken-example.identinet.io") {
     return {
       status: "NOT_VERIFIED",

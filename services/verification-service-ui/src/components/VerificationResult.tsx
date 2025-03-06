@@ -76,7 +76,7 @@ export default function VerificationResult({ pending, result, error }) {
     });
   }
 
-  // VERIFED, NO_CREDENTIAL
+  // VERIFED, CREDENTIALS
   return resultElement({
     classes: greenClasses,
     icon: "i-flowbite-badge-check-solid",
