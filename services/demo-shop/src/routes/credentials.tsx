@@ -4,13 +4,11 @@ import QRCode from "~/components/QRCode";
 
 const createSession = query(() => {
   "use server";
-  console.log("called quer");
-  return fetch(`https://${process.env.VDS_HOST}/v1/sessions`, {
-    method: "PUT",
+  return fetch(`https://${process.env.VDS_HOST}/v1/authrequests`, {
+    method: "POST",
   }).then((
     r,
   ) => {
-    console.log("go", r.body);
     return r.json().then((res) => {
       console.log("res", res);
       return res;

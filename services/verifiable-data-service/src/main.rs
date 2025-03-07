@@ -3,7 +3,13 @@
 
 use std::{collections::HashMap, env, net::SocketAddr, sync::Arc};
 
-use axum::{extract::State, http::StatusCode, response::Json, routing::put, Router};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    response::Json,
+    routing::{get, post},
+    Router,
+};
 use openid4vp::{
     core::{
         self, authorization_request, credential_format, input_descriptor,
@@ -267,7 +273,7 @@ pub fn create_app() -> Router {
     let store: SessionStore = Arc::new(Mutex::new(HashMap::new()));
     Router::new()
         // TODO: add authorization to route
-        .route("/v1/sessions", put(session_create))
+        .route("/v1/authrequests", post(authrequest_create))
         // TODO: add authorization to route
         // .route("/v1/sessions/{uuid}", get(session_status))
         // .route("/v1/sessions/{uuid}", post(session_submit))
@@ -306,7 +312,7 @@ mod tests {
 
         // Create test request
         let request = Request::builder()
-            .method("PUT")
+            .method("POST")
             .uri("/v1/sessions")
             .body(Body::empty())
             .unwrap();
