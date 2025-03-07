@@ -12,15 +12,26 @@ use axum::{
 };
 use openid4vp::{
     core::{
-        self, authorization_request, credential_format, input_descriptor,
-        metadata::{self, WalletMetadata},
-        object::{self, UntypedObject},
+        authorization_request::{
+            self,
+            parameters::{ClientIdScheme, ResponseType},
+        },
+        credential_format::{self, ClaimFormatDesignation, ClaimFormatPayload},
+        input_descriptor,
+        metadata::{
+            parameters::wallet::{
+                AuthorizationEndpoint, RequestObjectSigningAlgValuesSupported,
+                ResponseTypesSupported, VpFormatsSupported,
+            },
+            WalletMetadata,
+        },
+        object::UntypedObject,
         presentation_definition,
     },
-    verifier,
+    verifier::{self, Verifier},
 };
 use serde::{Deserialize, Serialize};
-use ssi::{dids, jwk::JWK, verification_methods};
+use ssi::{crypto::Algorithm, dids, jwk::JWK, verification_methods};
 use tokio::sync::Mutex;
 use url::Url;
 use uuid::Uuid;
@@ -41,30 +52,42 @@ fn get_config() -> (String, u16) {
 }
 
 // Shared session store
-type SessionStore = Arc<Mutex<HashMap<String, String>>>;
+// type SessionStore = Arc<Mutex<HashMap<String, WalletMetadata>>>;
+type SessionStore = Arc<verifier::session::MemoryStore>;
 
-// Response structure
+// Authorization Request URI Response.
+// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
 #[derive(Serialize, Deserialize)]
-struct SessionResponse {
+struct AuthRequestURIResponse {
     id: String,
     url: Url,
 }
 
-// Create the session initiation handler
-async fn session_create(State(store): State<SessionStore>) -> (StatusCode, Json<SessionResponse>) {
+// Authorization Request Object Response.
+// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
+#[derive(Serialize, Deserialize)]
+struct AuthRequestObjectResponse {
+    id: String,
+    url: Url,
+}
+
+// Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
+async fn authrequest_create(
+    State(store): State<SessionStore>,
+) -> (StatusCode, Json<AuthRequestURIResponse>) {
     let id = Uuid::new_v4().to_string();
     // TODO: get hostname from environment variable
     let external_hostname = "jceb-vds.theidentinet.com";
     let url = Url::parse(
         format!(
-            "https://{host}/v1/sessions/{uuid}",
+            "https://{host}/v1/authrequests/{uuid}",
             host = external_hostname,
             uuid = id.as_str()
         )
         .as_str(),
     )
     .unwrap();
-    let verifier_builder = verifier::Verifier::builder();
+    let verifier_builder = Verifier::builder();
     // TODO: build request and return object
     // TODO: then, gradually move initialization elements to other parts of application
 
@@ -108,16 +131,21 @@ async fn session_create(State(store): State<SessionStore>) -> (StatusCode, Json<
         .unwrap();
     let aclient = Arc::new(client);
 
-    let verifier_builder = verifier_builder.with_client(aclient);
+    let urlref =
+        Url::parse(format!("https://{host}/v1/authorize", host = external_hostname).as_str())
+            .unwrap();
     // TODO: initate session store
-    let session_store = verifier::session::MemoryStore::default();
-    let session_store = Arc::new(session_store);
-    let verifier_builder = verifier_builder.with_session_store(session_store);
-    // TODO: initate submission endpoint
-    let verifier_builder = verifier_builder.with_submission_endpoint(url.clone());
+    // let session_store = verifier::session::MemoryStore::default();
+    // let session_store = Arc::new(session_store);
+    let verifier_builder = verifier_builder
+        .with_session_store(store)
+        .by_reference(urlref.clone()) // GET request to retrieve session parameters
+        .with_submission_endpoint(urlref.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
+        .with_client(aclient);
     // TODO: initate request parameters
-    // verifier_builder.with_default_request_parameter(t)
+    // .with_default_request_parameter(t)
     let verifier = verifier_builder.build().await.unwrap();
+
     let authz_request_builder = verifier::Verifier::build_authorization_request(&verifier);
     // TODO: initate presentation definition
     let pd_id = "did-key-id-proof"; // TODO: make id unique
@@ -174,6 +202,7 @@ async fn session_create(State(store): State<SessionStore>) -> (StatusCode, Json<
         authz_request_builder.with_presentation_definition(presentation_definition);
     // TODO: initate request parameter
 
+    // Take Nonce from query parameters
     let nonce = authorization_request::parameters::Nonce::from("random_nonce");
     let client_metadata = UntypedObject::default();
     let authz_request_builder = authz_request_builder
@@ -186,10 +215,10 @@ async fn session_create(State(store): State<SessionStore>) -> (StatusCode, Json<
     // TODO: create session
     // let authorization_endpoint =
     //     Url::parse(format!("https://{host}/v1/auth", host = external_hostname,).as_str()).unwrap();
-    let mut wallet_metadata = WalletMetadata::openid4vp_scheme_static();
-    // let metadata = serde_json::from_value(json!(
+    // let mut wallet_metadata = WalletMetadata::openid4vp_scheme_static();
+    // let wallet_metadata: WalletMetadata = serde_json::from_value(serde_json::json!(
     //   {
-    //     "authorization_endpoint": "openid4vp:",
+    //     "authorization_endpoint": "openid4vp://",
     //     "client_id_schemes_supported": [
     //       "did"
     //     ],
@@ -200,6 +229,9 @@ async fn session_create(State(store): State<SessionStore>) -> (StatusCode, Json<
     //       "vp_token"
     //     ],
     //     "vp_formats_supported": {
+    //       "jwt_vp_json": {
+    //         "alg_values_supported": ["ES256"]
+    //       },
     //       "jwt_vc_json": {
     //         "alg_values_supported": ["ES256"]
     //       }
@@ -207,76 +239,163 @@ async fn session_create(State(store): State<SessionStore>) -> (StatusCode, Json<
     //   }
     // ))
     // .unwrap();
-    //
-    // let authorization_endpoint = Url::parse("openid4vp:").unwrap();
-    // let mut vp_formats_supported = openid4vp::core::credential_format::ClaimFormatMap::new();
-    // vp_formats_supported.insert(
-    //     openid4vp::core::credential_format::ClaimFormatDesignation::JwtVpJson,
-    //     openid4vp::core::credential_format::ClaimFormatPayload::Alg(vec![
-    //         ssi::crypto::Algorithm::ES256.to_string(),
-    //     ]),
-    // );
-    // vp_formats_supported.insert(
-    //     openid4vp::core::credential_format::ClaimFormatDesignation::LdpVp,
-    //     openid4vp::core::credential_format::ClaimFormatPayload::Alg(vec![
-    //         ssi::crypto::Algorithm::ES256.to_string(),
-    //     ]),
-    // );
-    // let mut wallet_metadata = openid4vp::core::metadata::WalletMetadata::new(
-    //     openid4vp::core::metadata::parameters::wallet::AuthorizationEndpoint(
-    //         authorization_endpoint,
-    //     ),
-    //     openid4vp::core::metadata::parameters::wallet::VpFormatsSupported(vp_formats_supported),
-    //     None,
-    // );
+
+    let authorization_endpoint = AuthorizationEndpoint("openid4vp://".parse().unwrap());
+    // let authorization_endpoint = Url::parse("openid4vp://").unwrap();
+    // let authorization_endpoint = urlref.clone();
+    let mut vp_formats_supported = openid4vp::core::credential_format::ClaimFormatMap::new();
+    let alg_values_supported = vec![Algorithm::ES256.to_string()];
+    vp_formats_supported.insert(
+        ClaimFormatDesignation::JwtVpJson,
+        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
+    );
+    vp_formats_supported.insert(
+        ClaimFormatDesignation::JwtVcJson,
+        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
+    );
+    vp_formats_supported.insert(
+        ClaimFormatDesignation::LdpVp,
+        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
+    );
+    vp_formats_supported.insert(
+        ClaimFormatDesignation::LdpVc,
+        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
+    );
+    let response_types_supported = ResponseTypesSupported(vec![ResponseType::VpToken]);
+    let request_object_signing_alg_values_supported =
+        RequestObjectSigningAlgValuesSupported(alg_values_supported);
+    let mut object = UntypedObject::default();
+    object.insert(response_types_supported);
+    object.insert(request_object_signing_alg_values_supported);
+    object.insert(authorization_endpoint.clone()); // BUG: Due to https://github.com/spruceid/openid4vp/issues/55 the endpoint has to be provided twice
+    let mut wallet_metadata = WalletMetadata::new(
+        authorization_endpoint,
+        VpFormatsSupported(vp_formats_supported),
+        Some(object),
+    );
     wallet_metadata
-        .add_client_id_schemes_supported(&[authorization_request::parameters::ClientIdScheme::Did])
+        .add_client_id_schemes_supported(&[ClientIdScheme::Did])
         .unwrap();
     // client_metadata.insert(
     //     openid4vp::core::metadata::parameters::wallet::ClientIdSchemesSupported(vec![
     //         openid4vp::core::authorization_request::parameters::ClientIdScheme::Did,
     //     ]),
     // );
-    let (_uuid, _url) = authz_request_builder.build(wallet_metadata).await.unwrap();
+    let (_uuid, _url) = authz_request_builder
+        .build(wallet_metadata.clone())
+        .await
+        .unwrap();
     // let request = AuthorizationRequestObject {};
     // TODO: expose poll status via uuid
 
     // Store the session (optional, based on your needs)
-    let mut sessions = store.lock().await;
-    sessions.insert(id.clone(), "TODO some session data".to_string());
+    // let mut sessions = store.lock().await;
+    // sessions.insert(_uuid.into(), wallet_metadata);
 
     // Return the session UUID and URL with 201 Created status
     (
         StatusCode::CREATED,
-        Json(SessionResponse {
+        Json(AuthRequestURIResponse {
             id: _uuid.into(),
             url: _url,
         }),
     )
 }
 
+// Retrieves the submitted OpenID4VP data.
+async fn authrequest_get(
+    State(store): State<SessionStore>,
+) -> (StatusCode, Json<AuthRequestObjectResponse>) {
+    println!("authrequest_get");
+    let id = Uuid::new_v4().to_string();
+    let external_hostname = "jceb-vds.theidentinet.com";
+    let url = Url::parse(
+        format!(
+            "https://{host}/v1/authrequests/{uuid}",
+            host = external_hostname,
+            uuid = id.as_str()
+        )
+        .as_str(),
+    )
+    .unwrap();
+    (
+        StatusCode::CREATED,
+        Json(AuthRequestObjectResponse { id: id, url: url }),
+    )
+}
+
+// Retrieves the OpenID4VP Authorization Request.
+// TODO: URL is only valid once.
+async fn authorize_get(
+    State(store): State<SessionStore>,
+    Path(request_id): Path<Uuid>,
+) -> (StatusCode, Json<AuthRequestObjectResponse>) {
+    println!("authorize_get {}", request_id);
+    let id = Uuid::new_v4().to_string();
+    let external_hostname = "jceb-vds.theidentinet.com";
+    let url = Url::parse(
+        format!(
+            "https://{host}/v1/authorize/{uuid}",
+            host = external_hostname,
+            uuid = id.as_str()
+        )
+        .as_str(),
+    )
+    .unwrap();
+    (
+        StatusCode::CREATED,
+        Json(AuthRequestObjectResponse { id: id, url: url }),
+    )
+}
+
+// Accepts data for this Authorization Request.
+// TODO: URL is only valid once.
+async fn authorize_submit(
+    State(store): State<SessionStore>,
+) -> (StatusCode, Json<AuthRequestObjectResponse>) {
+    println!("authorize_submit");
+    let id = Uuid::new_v4().to_string();
+    let external_hostname = "jceb-vds.theidentinet.com";
+    let url = Url::parse(
+        format!(
+            "https://{host}/v1/authorize/{uuid}",
+            host = external_hostname,
+            uuid = id.as_str()
+        )
+        .as_str(),
+    )
+    .unwrap();
+    (
+        StatusCode::CREATED,
+        Json(AuthRequestObjectResponse { id: id, url: url }),
+    )
+}
+
 // // Retrieve session status
-// async fn session_status(State(store): State<SessionStore>) -> (StatusCode, Json<SessionResponse>) {
+// async fn session_status(State(store): State<SessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
 //     let id = Uuid::new_v4().to_string();
 //     // Return the session ID with 201 Created status
-//     (StatusCode::CREATED, Json(SessionResponse { id }))
+//     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
 // }
 
 // // Retrieve session status
-// async fn session_submit(State(store): State<SessionStore>) -> (StatusCode, Json<SessionResponse>) {
+// async fn session_submit(State(store): State<SessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
 //     let id = Uuid::new_v4().to_string();
 //     // Return the session ID with 201 Created status
-//     (StatusCode::CREATED, Json(SessionResponse { id }))
+//     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
 // }
 
 pub fn create_app() -> Router {
-    let store: SessionStore = Arc::new(Mutex::new(HashMap::new()));
+    // let store: SessionStore = Arc::new(Mutex::new(HashMap::new()));
+    let store = verifier::session::MemoryStore::default();
+    let store = Arc::new(store);
     Router::new()
         // TODO: add authorization to route
         .route("/v1/authrequests", post(authrequest_create))
         // TODO: add authorization to route
-        // .route("/v1/sessions/{uuid}", get(session_status))
-        // .route("/v1/sessions/{uuid}", post(session_submit))
+        .route("/v1/authrequests/{requestId}", get(authrequest_get))
+        .route("/v1/authorize/{requestId}", get(authorize_get))
+        .route("/v1/authorize/{requestId}", post(authorize_submit))
         .with_state(store)
 }
 
@@ -325,7 +444,7 @@ mod tests {
 
         // Get and parse response body
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        let response: SessionResponse = serde_json::from_slice(&body).unwrap();
+        let response: AuthRequestURIResponse = serde_json::from_slice(&body).unwrap();
 
         // Verify that the session_id is a valid UUID
         assert!(Uuid::parse_str(&response.id).is_ok());
