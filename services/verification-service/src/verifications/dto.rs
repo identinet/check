@@ -21,16 +21,24 @@ impl IntoResponse for VerificationResponse {
 
 pub enum VerificationError {
     BadRequestJson(VerificationErrorResponseDto),
+    NotFoundJson(VerificationErrorResponseDto),
 }
 
 impl VerificationError {
-    fn bad_request(message: &str) -> Self {
+    // fn not_found(message: &str) -> Self {
+    //     Self::not_found_from(message.to_string())
+    // }
+    pub fn not_found_from(message: String) -> Self {
+        let error = VerificationErrorResponseDto { error: message };
+        VerificationError::NotFoundJson(error)
+    }
+    pub fn bad_request(message: &str) -> Self {
         let error = VerificationErrorResponseDto {
             error: message.to_string(),
         };
         VerificationError::BadRequestJson(error)
     }
-    fn bad_request_from(message: String) -> Self {
+    pub fn bad_request_from(message: String) -> Self {
         let error = VerificationErrorResponseDto { error: message };
         VerificationError::BadRequestJson(error)
     }
@@ -40,6 +48,8 @@ impl IntoResponse for VerificationError {
     fn into_response(self) -> Response {
         match self {
             Self::BadRequestJson(data) => (StatusCode::BAD_REQUEST, Json(data)).into_response(),
+
+            Self::NotFoundJson(data) => (StatusCode::NOT_FOUND, Json(data)).into_response(),
         }
     }
 }
@@ -126,6 +136,7 @@ mod tests {
             match self {
                 // _ => Ok(()),
                 Self::BadRequestJson(arg0) => f.debug_struct(&arg0.error).finish(),
+                Self::NotFoundJson(arg0) => f.debug_struct(&arg0.error).finish(),
             }
         }
     }
@@ -165,6 +176,7 @@ mod tests {
                 .await
                 .map_err(|err| match err {
                     VerificationError::BadRequestJson(json) => json.error,
+                    VerificationError::NotFoundJson(json) => json.error,
                 })
                 .unwrap_err(),
             value
