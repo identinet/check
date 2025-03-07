@@ -15,15 +15,17 @@ pub async fn verify_domain(
     // save to unwrap, URL has been parsed during DTO validation already
     let url = Url::parse(&params.url).unwrap();
 
-    let did_document = service::verify_by_url(url).await.map_err(|err| match err {
-        Error::UrlNotSupported(s) => VerificationError::bad_request_from(s),
-        Error::ResolutionError(error) => match error {
-            ssi::dids::resolution::Error::NotFound => {
-                VerificationError::not_found_from(error.to_string())
-            }
-            _ => VerificationError::bad_request_from(error.to_string()),
-        },
-    })?;
+    let did_document = service::verify_by_url(&url)
+        .await
+        .map_err(|err| match err {
+            Error::UrlNotSupported(s) => VerificationError::bad_request_from(s),
+            Error::ResolutionError(error) => match error {
+                ssi::dids::resolution::Error::NotFound => {
+                    VerificationError::not_found_from(error.to_string())
+                }
+                _ => VerificationError::bad_request_from(error.to_string()),
+            },
+        })?;
     println!("did doc: {:?}", did_document);
 
     let json = VerificationResponseDto {
@@ -40,7 +42,6 @@ mod tests {
     use axum::{http::StatusCode, routing::get, test_helpers::TestClient, Extension, Router};
 
     #[tokio::test]
-    #[ignore]
     async fn test_verify_domain() {
         #[derive(Clone)]
         struct Ext;

@@ -4973,6 +4973,7 @@ version = "0.0.1"
 dependencies = [
  "axum",
  "http-body-util",
+ "reqwest 0.12.15",
  "serde",
  "serde_json",
  "ssi",
