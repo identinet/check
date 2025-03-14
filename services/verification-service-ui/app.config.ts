@@ -9,6 +9,10 @@ import { presetIcons, presetWind } from "unocss";
  */
 import { presetFlowbite } from "@vonagam/unocss-preset-flowbite";
 
+const host = process.env.HOST || "::";
+const api_host = process.env.API_HOST || host;
+const port = parseInt(process.env.PORT || "3000");
+
 export default defineConfig({
   vite: {
     plugins: [UnoCSS({
@@ -57,11 +61,26 @@ export default defineConfig({
       },
     })],
     server: {
+      host,
+      port,
+      strictProt: true,
+      hmr: {
+        // See https://vite.dev/config/server-options.html#server-hmr
+        host: "localhost",
+        protocol: "ws",
+      },
+      cors: {
+        origin: [
+          `https://${api_host}`,
+        ],
+      },
       watch: {
         ignored: [
           // speed up vite by ignoring nixos directory contents
           "**/.direnv/**",
           "**/.output/**",
+          "**/.vinxi/**",
+          "**/.git/**",
         ],
       },
     },
