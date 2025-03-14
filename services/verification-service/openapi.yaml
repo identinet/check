@@ -1,8 +1,10 @@
 # OpenAPI Specification Explained: https://learn.openapis.org/specification/
 # Documentation: https://spec.openapis.org/oas/v3.1.1.html
 # Learning OpenAPI: https://redoc.ly/docs/resources/learning-openapi/
+# Learning JSON-Schema: https://www.learnjsonschema.com/
 # HTTP status codes: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 # HTTP methods: https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods
+# Graphical editor and test service: https://editor-next.swagger.io/
 openapi: 3.1.1
 info:
   version: "0.0.1"
@@ -11,12 +13,17 @@ info:
   license:
     name: Apache-2.0
   contact:
-    name: Jan Christoph Ebersbach
+    name: identinet GmbH
     url: https://identinet.io
+    email: support@identinet.io
 
 servers:
   - url: http://localhost:3010
     description: Local development server
+
+tags:
+  - name: verification
+    description: Operations related to verification
 
 paths:
   /v1/verification:
@@ -24,22 +31,107 @@ paths:
       operationId: getVerification
       tags:
         - verification
-      summary: Verify URL
-      description: Verifies the given URL.
+      summary: Verifies a URL based on associated Decentralized Identifier and Linked Verifiable Presentations.
+      description: |
+        Resolves the Decentralized Identifier for the given DNS Domain name or DID
+        and discovers and verifies Linked Verifiable Presentations and Credentials.
+        Information about the identifier, the linked presentations and credentials and the verification result are returned.
+
+        Related specifications:
+        - DIF Well-Known DID Configuration <https://identity.foundation/.well-known/resources/did-configuration/>
+        - W3C DID Resolution <https://www.w3.org/TR/did-1.0/#did-resolution>
+        - DIF Linked Verifiable Presentation <https://identity.foundation/linked-vp/>
       parameters:
-        - name: url
+        - name: q
           in: query
-          description: URL to verify. MUST be a HTTPS URL.
-          example: https://www.identinet.com
+          description: |
+            DNS domain name or DID to verify.
+            If no path has been specified in the URL, `/.well-known` is appended.
+            `/did.json` is appended to complete the URL in any case.
+
+            Examples:
+            - `https://www.identinet.io`\
+              URL, only the top-level domain will be considered
+            - `identinet.io`\
+              Top-level domain name
+            - `id.identinet.io`\
+              Sub-domain name
+            - `did:web:identinet.io`\
+              Decentralized Identifiers
+            - `did:key:92cbf90d-1410-4a4e-99a5-a1470273ca4f`\
+              Decentralized Identifiers
           required: true
-          style: form
           schema:
             type: string
+            example: identinet.io
+        - name: brief
+          in: query
+          description: If `True`, returns a shortened version of the verification result.
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: traceId
+          in: header
+          description: Optional trace ID for correlating requests across services.
+          schema:
+            type: string
+            format: uuid
+          required: false
       responses:
         "200":
-          description: URL verified.
+          description: Verification result.
           content:
             application/json:
-              example: { status: "OK" }
+              schema:
+                type: object
+                required:
+                  - status
+                  - verified
+                properties:
+                  did:
+                    type: string
+                    format: url
+                    description: |
+                      W3C Decentralized Identifier
+                    example: did:web:identinet.io
+                  presentations:
+                    type: array
+                    description: |
+                      List of Linked Verifiable Presentations and includede Verifiable Credentials.
+
+                      Not included if a brief result has been requested.
+                    items:
+                      type: object
+                      example: { "TODO": {} }
+                  verification_results:
+                    type: array
+                    description: |
+                      Detailed list of verification results per presentation and credential.
+
+                      Not included if a brief result has been requested.
+                    items:
+                      type: object
+                      example: { "TODO": {} }
+                  verified:
+                    type: boolean
+                    description: |
+                      `True` if an identifier was found AND at least one Verifiable Presentation with one Verifiable
+                      Credentials has been found AND all Linked Verifiable Presentations and Credentials were verified
+                      successfully, otherwise `False`.
+                  status:
+                    type: string
+                    enum:
+                      - VERIFIED
+                      - NOT_VERIFIED
+                      - NO_CREDENTIAL
+                    description: |
+                      Verification result:
+                      - `VERIFIED` - All verifications were successful.
+                      - `NOT_VERIFIED` - Verification of a Verifiable Presentation or Credential failed.
+                      - `NO_CREDENTIAL` - No Verifiable Credential found in any Linked Verifiable Presentation for DID.
+                    example: "VERIFIED"
         "400":
           description: Bad request
+        "404":
+          description: Identifier not found for provided domain name / DID.
