@@ -1,5 +1,37 @@
 # Verifiable Data Service
 
+## Usage
+
+[Full example](https://doc.wallet-provider.io/wallet/verifier-configuration#full-verifier-flow-example)
+
+1. Install Talao Wallet: <https://talao.io/talao-wallet/>
+2. Interact with Demo Shop (start tunnel - `just tunnel`, caddy server
+   `just dev` and shop `cd services/demo-shop && just dev`). Then go to the page
+   that requests a credential.
+
+   Subsequently, the following steps are performed internally:
+
+   - Initiate a session/an Authorization Request via Verifiable Data Service,
+     `POST /api/v1/authrequests`
+     - See
+       [Cross Device Flow](https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow)
+   - Receive session URL and render it as a QR code.
+3. Scan QR code that includes the request URL with Talao Wallet.
+4. Wallet retrieves Request Object.
+5. Verifiable Data Service receives and verifies authenticity of data.
+6. Verifiable Data Service forwards client or pings endpoint at demo-shop.
+   - TODO: find out how exactly the shop is being notified
+7. Web shop retrieves data from Verifiable Data Service.
+   - TODO: implement basic authentication or something similar
+8. Process data in show and forward user to the next page.
+
+### User Flow
+
+![Sequence Customer Credential Sharing](../../docs/architecture/figures/sequence_customer_credential_sharing.png)
+
+Source:
+[sequence_customer_credential_sharing.mmd](../../docs/architecture/figures/sequence_customer_credential_sharing.mmd)
+
 ## Developing
 
 `just dev`
@@ -8,28 +40,11 @@
 
 `just build`
 
-## OpenID4VP
+## OpenAPI Endpoint Specification
 
-[Full example](https://doc.wallet-provider.io/wallet/verifier-configuration#full-verifier-flow-example)
+[openapi.yaml](./openapi.yaml)
 
-1. Install Talao Wallet: <https://talao.io/talao-wallet/>
-2. Interact with Demo Shop and go to page that requests a credential. The
-   following steps are then performed.
-   - Initiate a session/an Authorization Request via Verifiable Data Service,
-     `POST /api/v1/authrequests`
-     - See
-       [Cross Device Flow](https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow)
-3. Display session as URL, starting with `POST openid://<VDS_URL>/api/v1/submit`
-   - TODO: find out how the wallet transmits data
-4. Wallet retrieves Request Object
-5. Receive and verify authenticity of data on VDS
-6. Forward client or ping endpoint at demo-shop
-   - TODO: find out how exactly the shop is being notified
-7. Retrieve data from VDS, `GET /api/v1/retrieve`
-   - TODO: implement basic authentication or something similar
-8. Process data in show and forward user to the next page
-
-### Resoruces
+## Resoruces
 
 - Talao Wallet support of OpenID4VP specs:
   <https://doc.wallet-provider.io/wallet/verifier-configuration>
