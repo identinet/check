@@ -18,10 +18,10 @@ export default defineConfig({
     server: {
       host,
       port,
+      strictPort: true,
       allowedHosts: [
         external_host,
       ],
-      strictProt: true,
       hmr: {
         // See https://vite.dev/config/server-options.html#server-hmr
         host: "localhost",
