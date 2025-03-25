@@ -5,8 +5,8 @@ use std::{collections::HashMap, env, net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
-    response::Json,
+    http::{header, StatusCode},
+    response::{IntoResponse, Json},
     routing::{get, post},
     Router,
 };
@@ -19,18 +19,23 @@ use openid4vp::{
         credential_format::{self, ClaimFormatDesignation, ClaimFormatPayload},
         input_descriptor,
         metadata::{
-            parameters::wallet::{
-                AuthorizationEndpoint, RequestObjectSigningAlgValuesSupported,
-                ResponseTypesSupported, VpFormatsSupported,
+            parameters::{
+                verifier::VpFormats,
+                wallet::{
+                    AuthorizationEndpoint, RequestObjectSigningAlgValuesSupported,
+                    ResponseTypesSupported, VpFormatsSupported,
+                },
             },
             WalletMetadata,
         },
         object::UntypedObject,
         presentation_definition,
     },
-    verifier::{self, Verifier},
+    verifier::{self, session::SessionStore, Verifier},
 };
+use openid4vp_frontend::Status;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use ssi::{crypto::Algorithm, dids, jwk::JWK, verification_methods};
 use tokio::sync::Mutex;
 use url::Url;
@@ -52,8 +57,9 @@ fn get_config() -> (String, u16) {
 }
 
 // Shared session store
-// type SessionStore = Arc<Mutex<HashMap<String, WalletMetadata>>>;
-type SessionStore = Arc<verifier::session::MemoryStore>;
+// type OpenID4VPSessionStore = Arc<Mutex<HashMap<String, WalletMetadata>>>;
+// TODO: swap in memory store with a postgres backend
+type OpenID4VPSessionStore = Arc<verifier::session::MemoryStore>;
 
 // Authorization Request URI Response.
 // See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
@@ -73,10 +79,11 @@ struct AuthRequestObjectResponse {
 
 // Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
 async fn authrequest_create(
-    State(store): State<SessionStore>,
+    State(store): State<OpenID4VPSessionStore>,
 ) -> (StatusCode, Json<AuthRequestURIResponse>) {
     let id = Uuid::new_v4().to_string();
     // TODO: get hostname from environment variable
+    let shop_hostname = "jceb-shop.theidentinet.com";
     let external_hostname = "jceb-vds.theidentinet.com";
     let url = Url::parse(
         format!(
@@ -131,6 +138,9 @@ async fn authrequest_create(
         .unwrap();
     let aclient = Arc::new(client);
 
+    // TODO: this is the shop's redirect URL
+    let redirect_uri =
+        Url::parse(format!("https://{host}/checkout", host = shop_hostname).as_str()).unwrap();
     let urlref =
         Url::parse(format!("https://{host}/v1/authorize", host = external_hostname).as_str())
             .unwrap();
@@ -139,7 +149,8 @@ async fn authrequest_create(
     // let session_store = Arc::new(session_store);
     let verifier_builder = verifier_builder
         .with_session_store(store)
-        .by_reference(urlref.clone()) // GET request to retrieve session parameters
+        .by_reference(urlref.clone()) // GET request required to retrieve session parameters - this decreases the
+        // size of the QR code since just the URL needs to be encoded in the QR code!
         .with_submission_endpoint(urlref.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
         .with_client(aclient);
     // TODO: initate request parameters
@@ -148,63 +159,170 @@ async fn authrequest_create(
 
     let authz_request_builder = verifier::Verifier::build_authorization_request(&verifier);
     // TODO: initate presentation definition
-    let pd_id = "did-key-id-proof"; // TODO: make id unique
-    let ipd_id = "did-key-id"; // TODO: make id unique
+    let presentation_definition_id = Uuid::new_v4().to_string();
+    let ipd_id = "did-key-id"; // TODO: make id unique, not sure what the content of this is actually about
     let name = "DID Key Identity Verification"; // TODO: define name
     let purpose = "Check whether your identity key has been verified."; // TODO: define purpose
+                                                                        // Constraints request credentials
+                                                                        // See examples: https://doc.wallet-provider.io/wallet/verifier-configuration/#full-verifier-flow-example
+    let constraint_id_credential =
+            // Add a constraint fields to check if the credential
+            // conforms to a specific path.
+            input_descriptor::ConstraintsField::new("$.credentialSubject.id".parse().unwrap())
+                // Add alternative path(s) to check multiple potential formats.
+                // .add_path(
+                //     "$.vc.credentialSubject.id"
+                //         .parse()
+                //         .unwrap(),
+                // )
+                // .add_path(
+                //     "$.vp.verifiableCredential.vc.credentialSubject.id"
+                //         .parse()
+                //         .unwrap(),
+                // )
+                // .add_path(
+                //     "$.vp.verifiableCredential[0].vc.credentialSubject.id"
+                //         .parse()
+                //         .unwrap(),
+                // )
+                // .add_path("$.vp.verifiableCredential.vc.sub".parse().unwrap())
+                // .add_path("$.vp.verifiableCredential[0].vc.sub".parse().unwrap())
+                // .add_path("$.sub".parse().unwrap())
+                // .add_path("$.iss".parse().unwrap())
+                .set_name("Verify your identity".into())
+                .set_purpose("Check whether your identity has been verified.".into())
+                .set_filter(&serde_json::json!({
+                    "type": "string",
+                    "pattern": "did:(key|jwk):.*" // INFO: test if this works
+                }))
+                .expect("Failed to set filter, invalid validation schema.")
+                // TODO: set field intent_to_retain - currently, there's no setter for this property!
+                // .set_predicate(input_descriptor::Predicate::Required), // TODO: reenable this feature
+                .set_predicate(input_descriptor::Predicate::Preferred);
+    // let constraint_email_credential_fromjson: input_descriptor::ConstraintsField =
+    //     serde_json::from_value(serde_json::json!(
+    //     {
+    //         // "id": "emailpass_1",
+    //         "name": "Verify your email address",
+    //         "porpose": "Check whether your email address has been verified.",
+    //         "required": true,
+    //         "retained": true,
+    //         "constraints": {
+    //             "fields": [
+    //                 {
+    //                     "path": [
+    //                         "$.vc.credentialSubject.type"
+    //                     ],
+    //                     "filter": {
+    //                         "type": "string",
+    //                         "const": "EmailPass"
+    //                     }
+    //                 }
+    //             ]
+    //         }
+    //     }
+    //     ))
+    //     .unwrap();
+    // Add a constraint fields to check if the credential
+    // conforms to a specific path.
+    let constraint_email_credential =
+        input_descriptor::ConstraintsField::new("$.vc.credentialSubject.type".parse().unwrap())
+            .set_filter(&serde_json::json!({
+                "type": "string",
+                "const": "EmailPass"
+            }))
+            .expect("Failed to set filter, invalid validation schema.")
+            .set_name("Verify your email address".into())
+            // .set_id("emailpass".to_string()) // automatically generated
+            .set_purpose("Check whether your email address has been verified.".into())
+            // TODO: set field intent_to_retain - currently, there's no setter for this property!
+            .set_predicate(input_descriptor::Predicate::Required);
+    let constraints = input_descriptor::Constraints::new()
+        // .add_constraint(constraint_id_credential)
+        // .add_constraint(constraint_email_credential_fromjson)
+        .add_constraint(constraint_email_credential)
+        // .set_limit_disclosure(input_descriptor::ConstraintsLimitDisclosure::Required);
+        .set_limit_disclosure(input_descriptor::ConstraintsLimitDisclosure::Preferred);
+    let prooftype_values_supported = vec![
+        ssi_data_integrity_suites::EcdsaRdfc2019::NAME.to_string(),
+        // ssi_data_integrity_suites::EcdsaSd2023::NAME.to_string(),
+        ssi_data_integrity_suites::EcdsaSecp256k1Signature2019::NAME.to_string(),
+        ssi_data_integrity_suites::EcdsaSecp256r1Signature2019::NAME.to_string(),
+        ssi_data_integrity_suites::Ed25519Signature2018::NAME.to_string(),
+        ssi_data_integrity_suites::Ed25519Signature2020::NAME.to_string(),
+        ssi_data_integrity_suites::EdDsa2022::NAME.to_string(),
+        ssi_data_integrity_suites::EdDsaRdfc2022::NAME.to_string(),
+        ssi_data_integrity_suites::EthereumEip712Signature2021::NAME.to_string(),
+        ssi_data_integrity_suites::JsonWebSignature2020::NAME.to_string(),
+        ssi_data_integrity_suites::RsaSignature2018::NAME.to_string(),
+    ];
+    let alg_values_supported = vec![
+        Algorithm::ES256.to_string(),
+        Algorithm::ES256K.to_string(),
+        Algorithm::ES384.to_string(),
+        Algorithm::EdDSA.to_string(),
+        Algorithm::RS256.to_string(),
+        Algorithm::RS384.to_string(),
+        Algorithm::RS512.to_string(),
+    ];
     let presentation_definition = presentation_definition::PresentationDefinition::new(
-        pd_id.into(),
-        input_descriptor::InputDescriptor::new(
-            ipd_id.into(),
-            input_descriptor::Constraints::new()
-                .add_constraint(
-                    // Add a constraint fields to check if the credential
-                    // conforms to a specific path.
-                    input_descriptor::ConstraintsField::new(
-                        "$.credentialSubject.id".parse().unwrap(),
-                    )
-                    // Add alternative path(s) to check multiple potential formats.
-                    .add_path(
-                        "$.vp.verifiableCredential.vc.credentialSubject.id"
-                            .parse()
-                            .unwrap(),
-                    )
-                    .add_path(
-                        "$.vp.verifiableCredential[0].vc.credentialSubject.id"
-                            .parse()
-                            .unwrap(),
-                    )
-                    .set_name("Verify Identity Key".into())
-                    .set_purpose("Check whether your identity key has been verified.".into())
-                    .set_filter(&serde_json::json!({
-                        "type": "string",
-                        "pattern": "did:key:.*"
-                    }))
-                    .expect("Failed to set filter, invalid validation schema.")
-                    .set_predicate(input_descriptor::Predicate::Required),
-                )
-                .set_limit_disclosure(input_descriptor::ConstraintsLimitDisclosure::Required),
-        )
-        .set_name(name.into())
-        .set_purpose(purpose.into())
-        .set_format({
-            let mut map = credential_format::ClaimFormatMap::new();
-            map.insert(
-                credential_format::ClaimFormatDesignation::JwtVcJson,
-                credential_format::ClaimFormatPayload::Alg(vec![
-                    ssi::crypto::Algorithm::ES256.to_string()
-                ]),
-            );
-            map
-        }),
+        presentation_definition_id,
+        input_descriptor::InputDescriptor::new(ipd_id.into(), constraints)
+            .set_name(name.into())
+            .set_purpose(purpose.into())
+            .set_format({
+                let mut map = credential_format::ClaimFormatMap::new();
+                map.insert(
+                    credential_format::ClaimFormatDesignation::JwtVcJson,
+                    credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+                );
+                // map.insert(
+                //     credential_format::ClaimFormatDesignation::JwtVpJson,
+                //     credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+                // );
+                map.insert(
+                    credential_format::ClaimFormatDesignation::JwtVc,
+                    credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+                );
+                map.insert(
+                    credential_format::ClaimFormatDesignation::LdpVc,
+                    ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
+                );
+                // map.insert(
+                //     credential_format::ClaimFormatDesignation::JwtVp,
+                //     ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
+                // );
+                map
+            }),
     );
     let authz_request_builder =
         authz_request_builder.with_presentation_definition(presentation_definition);
     // TODO: initate request parameter
 
-    // Take Nonce from query parameters
+    // TODO: Take Nonce from query parameters
     let nonce = authorization_request::parameters::Nonce::from("random_nonce");
-    let client_metadata = UntypedObject::default();
+    let mut client_metadata = UntypedObject::default();
+    let mut vp_formats = openid4vp::core::credential_format::ClaimFormatMap::new();
+    vp_formats.insert(
+        ClaimFormatDesignation::JwtVpJson,
+        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
+    );
+    vp_formats.insert(
+        ClaimFormatDesignation::JwtVcJson,
+        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
+    );
+    vp_formats.insert(
+        ClaimFormatDesignation::LdpVp,
+        ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
+    );
+    vp_formats.insert(
+        ClaimFormatDesignation::LdpVc,
+        ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
+    );
+    // Must not be present if response_uri is present
+    // https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
+    // client_metadata.insert(authorization_request::parameters::RedirectUri(redirect_uri));
+    client_metadata.insert(VpFormats(vp_formats.clone()));
     let authz_request_builder = authz_request_builder
         .with_request_parameter(authorization_request::parameters::ResponseMode::DirectPost)
         .with_request_parameter(authorization_request::parameters::ResponseType::VpToken)
@@ -241,26 +359,6 @@ async fn authrequest_create(
     // .unwrap();
 
     let authorization_endpoint = AuthorizationEndpoint("openid4vp://".parse().unwrap());
-    // let authorization_endpoint = Url::parse("openid4vp://").unwrap();
-    // let authorization_endpoint = urlref.clone();
-    let mut vp_formats_supported = openid4vp::core::credential_format::ClaimFormatMap::new();
-    let alg_values_supported = vec![Algorithm::ES256.to_string()];
-    vp_formats_supported.insert(
-        ClaimFormatDesignation::JwtVpJson,
-        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
-    );
-    vp_formats_supported.insert(
-        ClaimFormatDesignation::JwtVcJson,
-        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
-    );
-    vp_formats_supported.insert(
-        ClaimFormatDesignation::LdpVp,
-        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
-    );
-    vp_formats_supported.insert(
-        ClaimFormatDesignation::LdpVc,
-        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
-    );
     let response_types_supported = ResponseTypesSupported(vec![ResponseType::VpToken]);
     let request_object_signing_alg_values_supported =
         RequestObjectSigningAlgValuesSupported(alg_values_supported);
@@ -268,9 +366,10 @@ async fn authrequest_create(
     object.insert(response_types_supported);
     object.insert(request_object_signing_alg_values_supported);
     object.insert(authorization_endpoint.clone()); // BUG: Due to https://github.com/spruceid/openid4vp/issues/55 the endpoint has to be provided twice
+    object.insert(VpFormatsSupported(vp_formats.clone())); // BUG: Due to https://github.com/spruceid/openid4vp/issues/55 the endpoint has to be provided twice
     let mut wallet_metadata = WalletMetadata::new(
         authorization_endpoint,
-        VpFormatsSupported(vp_formats_supported),
+        VpFormatsSupported(vp_formats),
         Some(object),
     );
     wallet_metadata
@@ -304,7 +403,7 @@ async fn authrequest_create(
 
 // Retrieves the submitted OpenID4VP data.
 async fn authrequest_get(
-    State(store): State<SessionStore>,
+    State(store): State<OpenID4VPSessionStore>,
 ) -> (StatusCode, Json<AuthRequestObjectResponse>) {
     println!("authrequest_get");
     let id = Uuid::new_v4().to_string();
@@ -325,35 +424,40 @@ async fn authrequest_get(
 }
 
 // Retrieves the OpenID4VP Authorization Request.
-// TODO: URL is only valid once.
 async fn authorize_get(
-    State(store): State<SessionStore>,
+    State(store): State<OpenID4VPSessionStore>,
     Path(request_id): Path<Uuid>,
-) -> (StatusCode, Json<AuthRequestObjectResponse>) {
+) -> impl IntoResponse {
+    // ) -> (StatusCode, std::string::String) {
     println!("authorize_get {}", request_id);
-    let id = Uuid::new_v4().to_string();
-    let external_hostname = "jceb-vds.theidentinet.com";
-    let url = Url::parse(
-        format!(
-            "https://{host}/v1/authorize/{uuid}",
-            host = external_hostname,
-            uuid = id.as_str()
-        )
-        .as_str(),
-    )
-    .unwrap();
+    let x = store.get_session(request_id).await.unwrap();
+    println!("status {:?}", x.status);
+    println!("authorization_request_jwt {}", x.authorization_request_jwt);
+    println!(
+        "authorization_request_object {:?}",
+        x.authorization_request_object
+    );
+    println!("presentation_definition {:?}", x.presentation_definition);
+    store
+        .update_status(x.uuid, Status::SentRequest)
+        .await
+        .unwrap();
+    // TODO: URL is only valid once.
+    // return an error if request has been sent before
     (
-        StatusCode::CREATED,
-        Json(AuthRequestObjectResponse { id: id, url: url }),
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "application/jwt")],
+        x.authorization_request_jwt,
     )
 }
 
 // Accepts data for this Authorization Request.
 // TODO: URL is only valid once.
 async fn authorize_submit(
-    State(store): State<SessionStore>,
+    State(store): State<OpenID4VPSessionStore>,
+    Path(request_id): Path<Uuid>,
 ) -> (StatusCode, Json<AuthRequestObjectResponse>) {
-    println!("authorize_submit");
+    println!("authorize_submit {}", request_id);
     let id = Uuid::new_v4().to_string();
     let external_hostname = "jceb-vds.theidentinet.com";
     let url = Url::parse(
@@ -372,21 +476,21 @@ async fn authorize_submit(
 }
 
 // // Retrieve session status
-// async fn session_status(State(store): State<SessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
+// async fn session_status(State(store): State<OpenID4VPSessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
 //     let id = Uuid::new_v4().to_string();
 //     // Return the session ID with 201 Created status
 //     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
 // }
 
 // // Retrieve session status
-// async fn session_submit(State(store): State<SessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
+// async fn session_submit(State(store): State<OpenID4VPSessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
 //     let id = Uuid::new_v4().to_string();
 //     // Return the session ID with 201 Created status
 //     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
 // }
 
 pub fn create_app() -> Router {
-    // let store: SessionStore = Arc::new(Mutex::new(HashMap::new()));
+    // let store: OpenID4VPSessionStore = Arc::new(Mutex::new(HashMap::new()));
     let store = verifier::session::MemoryStore::default();
     let store = Arc::new(store);
     Router::new()
