@@ -1,7 +1,10 @@
 // Fail build if feature is requsted, see https://www.reddit.com/r/rust/comments/8oz7md/make_cargo_fail_on_warning/
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
-use std::{collections::HashMap, env, net::SocketAddr, sync::Arc};
+mod config; // Import the config module
+use config::AppConfig;
+
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{Path, State},
@@ -35,31 +38,20 @@ use openid4vp::{
 };
 use openid4vp_frontend::Status;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use ssi::{crypto::Algorithm, dids, jwk::JWK, verification_methods};
-use tokio::sync::Mutex;
 use url::Url;
 use uuid::Uuid;
-
-// Function to get configuration from environment variables with defaults
-fn get_config() -> (String, u16) {
-    let host = env::var("HOST").unwrap_or_else(|_| "::".to_string());
-    let port = env::var("PORT")
-        .ok()
-        .and_then(|p| p.parse().ok())
-        .unwrap_or(3000);
-    let host = if host.contains(':') {
-        format!("[{}]", host)
-    } else {
-        host
-    };
-    (host, port)
-}
 
 // Shared session store
 // type OpenID4VPSessionStore = Arc<Mutex<HashMap<String, WalletMetadata>>>;
 // TODO: swap in memory store with a postgres backend
 type OpenID4VPSessionStore = Arc<verifier::session::MemoryStore>;
+
+#[derive(Clone)]
+struct AppState {
+    session_store: OpenID4VPSessionStore,
+    config: AppConfig,
+}
 
 // Authorization Request URI Response.
 // See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
@@ -79,21 +71,8 @@ struct AuthRequestObjectResponse {
 
 // Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
 async fn authrequest_create(
-    State(store): State<OpenID4VPSessionStore>,
+    State(state): State<AppState>,
 ) -> (StatusCode, Json<AuthRequestURIResponse>) {
-    let id = Uuid::new_v4().to_string();
-    // TODO: get hostname from environment variable
-    let shop_hostname = "jceb-shop.theidentinet.com";
-    let external_hostname = "jceb-vds.theidentinet.com";
-    let url = Url::parse(
-        format!(
-            "https://{host}/v1/authrequests/{uuid}",
-            host = external_hostname,
-            uuid = id.as_str()
-        )
-        .as_str(),
-    )
-    .unwrap();
     let verifier_builder = Verifier::builder();
     // TODO: build request and return object
     // TODO: then, gradually move initialization elements to other parts of application
@@ -138,17 +117,19 @@ async fn authrequest_create(
         .unwrap();
     let aclient = Arc::new(client);
 
-    // TODO: this is the shop's redirect URL
-    let redirect_uri =
-        Url::parse(format!("https://{host}/checkout", host = shop_hostname).as_str()).unwrap();
-    let urlref =
-        Url::parse(format!("https://{host}/v1/authorize", host = external_hostname).as_str())
-            .unwrap();
+    let urlref = Url::parse(
+        format!(
+            "https://{host}/v1/authorize",
+            host = state.config.external_hostname
+        )
+        .as_str(),
+    )
+    .unwrap();
     // TODO: initate session store
     // let session_store = verifier::session::MemoryStore::default();
     // let session_store = Arc::new(session_store);
     let verifier_builder = verifier_builder
-        .with_session_store(store)
+        .with_session_store(state.session_store)
         .by_reference(urlref.clone()) // GET request required to retrieve session parameters - this decreases the
         // size of the QR code since just the URL needs to be encoded in the QR code!
         .with_submission_endpoint(urlref.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
@@ -319,9 +300,6 @@ async fn authrequest_create(
         ClaimFormatDesignation::LdpVc,
         ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
     );
-    // Must not be present if response_uri is present
-    // https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
-    // client_metadata.insert(authorization_request::parameters::RedirectUri(redirect_uri));
     client_metadata.insert(VpFormats(vp_formats.clone()));
     let authz_request_builder = authz_request_builder
         .with_request_parameter(authorization_request::parameters::ResponseMode::DirectPost)
@@ -332,7 +310,7 @@ async fn authrequest_create(
         ));
     // TODO: create session
     // let authorization_endpoint =
-    //     Url::parse(format!("https://{host}/v1/auth", host = external_hostname,).as_str()).unwrap();
+    //     Url::parse(format!("https://{host}/v1/auth", host = state.config.external_hostname,).as_str()).unwrap();
     // let mut wallet_metadata = WalletMetadata::openid4vp_scheme_static();
     // let wallet_metadata: WalletMetadata = serde_json::from_value(serde_json::json!(
     //   {
@@ -403,15 +381,14 @@ async fn authrequest_create(
 
 // Retrieves the submitted OpenID4VP data.
 async fn authrequest_get(
-    State(store): State<OpenID4VPSessionStore>,
+    State(state): State<AppState>,
 ) -> (StatusCode, Json<AuthRequestObjectResponse>) {
     println!("authrequest_get");
     let id = Uuid::new_v4().to_string();
-    let external_hostname = "jceb-vds.theidentinet.com";
     let url = Url::parse(
         format!(
             "https://{host}/v1/authrequests/{uuid}",
-            host = external_hostname,
+            host = state.config.external_hostname,
             uuid = id.as_str()
         )
         .as_str(),
@@ -419,18 +396,18 @@ async fn authrequest_get(
     .unwrap();
     (
         StatusCode::CREATED,
-        Json(AuthRequestObjectResponse { id: id, url: url }),
+        Json(AuthRequestObjectResponse { id, url }),
     )
 }
 
 // Retrieves the OpenID4VP Authorization Request.
 async fn authorize_get(
-    State(store): State<OpenID4VPSessionStore>,
+    State(state): State<AppState>,
     Path(request_id): Path<Uuid>,
 ) -> impl IntoResponse {
     // ) -> (StatusCode, std::string::String) {
     println!("authorize_get {}", request_id);
-    let x = store.get_session(request_id).await.unwrap();
+    let x = state.session_store.get_session(request_id).await.unwrap();
     println!("status {:?}", x.status);
     println!("authorization_request_jwt {}", x.authorization_request_jwt);
     println!(
@@ -438,7 +415,8 @@ async fn authorize_get(
         x.authorization_request_object
     );
     println!("presentation_definition {:?}", x.presentation_definition);
-    store
+    state
+        .session_store
         .update_status(x.uuid, Status::SentRequest)
         .await
         .unwrap();
@@ -454,16 +432,15 @@ async fn authorize_get(
 // Accepts data for this Authorization Request.
 // TODO: URL is only valid once.
 async fn authorize_submit(
-    State(store): State<OpenID4VPSessionStore>,
+    State(state): State<AppState>,
     Path(request_id): Path<Uuid>,
 ) -> (StatusCode, Json<AuthRequestObjectResponse>) {
     println!("authorize_submit {}", request_id);
     let id = Uuid::new_v4().to_string();
-    let external_hostname = "jceb-vds.theidentinet.com";
     let url = Url::parse(
         format!(
             "https://{host}/v1/authorize/{uuid}",
-            host = external_hostname,
+            host = state.config.external_hostname,
             uuid = id.as_str()
         )
         .as_str(),
@@ -471,7 +448,7 @@ async fn authorize_submit(
     .unwrap();
     (
         StatusCode::CREATED,
-        Json(AuthRequestObjectResponse { id: id, url: url }),
+        Json(AuthRequestObjectResponse { id, url }),
     )
 }
 
@@ -489,10 +466,13 @@ async fn authorize_submit(
 //     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
 // }
 
-pub fn create_app() -> Router {
+pub fn create_app(config: AppConfig) -> Router {
     // let store: OpenID4VPSessionStore = Arc::new(Mutex::new(HashMap::new()));
-    let store = verifier::session::MemoryStore::default();
-    let store = Arc::new(store);
+    let store = Arc::new(verifier::session::MemoryStore::default());
+    let state = AppState {
+        session_store: store,
+        config,
+    };
     Router::new()
         // TODO: add authorization to route
         .route("/v1/authrequests", post(authrequest_create))
@@ -500,16 +480,23 @@ pub fn create_app() -> Router {
         .route("/v1/authrequests/{requestId}", get(authrequest_get))
         .route("/v1/authorize/{requestId}", get(authorize_get))
         .route("/v1/authorize/{requestId}", post(authorize_submit))
-        .with_state(store)
+        .with_state(state)
 }
 
 #[tokio::main]
 async fn main() {
-    // build our application with a single route
-    let app = create_app();
+    let config = AppConfig::new().unwrap();
 
-    let (host, port) = get_config();
-    let addr = format!("{}:{}", host, port)
+    // build our application with a single route
+    let app = create_app(config.clone());
+
+    let host = if config.host.contains(':') {
+        // Wrap IPv6 addresses in []
+        format!("[{}]", config.host)
+    } else {
+        config.host
+    };
+    let addr = format!("{}:{}", host, config.port)
         .parse::<SocketAddr>()
         .expect("Failed to parse address");
 
@@ -531,7 +518,12 @@ mod tests {
     #[tokio::test]
     async fn test_initiate_session() {
         // Create app
-        let app = create_app();
+        let app = create_app(AppConfig {
+            host: "::1".to_string(),
+            port: 3000,
+            external_hostname: "localhost".to_string(),
+            shop_hostname: "localhost".to_string(),
+        });
 
         // Create test request
         let request = Request::builder()
