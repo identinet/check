@@ -61,7 +61,27 @@ impl AppConfig {
             .set_override_option("port", cli.port)?
             .set_override_option("external_hostname", cli.external_hostname)?
             .set_override_option("shop_hostname", cli.shop_hostname)?;
-        let config = builder.build()?.try_deserialize()?;
+        let config: AppConfig = builder.build()?.try_deserialize()?;
+
+        if config.host.is_empty() {
+            return Err(ConfigError::NotFound(
+                "Error: 'host' is required but missing".into(),
+            ));
+        }
+        if config.port < 1 || config.port > 65536 {
+            return Err(ConfigError::NotFound("Error: 'port' out of bounds".into()));
+        }
+        if config.external_hostname.is_empty() {
+            return Err(ConfigError::NotFound(
+                "Error: 'external_hostname' is required but missing".into(),
+            ));
+        }
+        if config.shop_hostname.is_empty() {
+            return Err(ConfigError::NotFound(
+                "Error: 'shop_hostname' must be a valid non-zero value".into(),
+            ));
+        }
+
         Ok(config)
     }
 }
