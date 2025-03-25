@@ -4,19 +4,24 @@
 
 [Full example](https://doc.wallet-provider.io/wallet/verifier-configuration#full-verifier-flow-example)
 
-1. Install Talao Wallet: <https://talao.io/talao-wallet/>
+1. Install Talao wallet <https://talao.io/talao-wallet/> or Impierce's UniMe
+   wallet
+   ([Android](https://play.google.com/store/apps/details?id=com.impierce.identity_wallet)
+   or
+   [iOS](https://apps.apple.com/us/app/unime-identity-wallet/id6451394321?l=vi))
 2. Interact with Demo Shop (start tunnel - `just tunnel`, caddy server
    `just dev` and shop `cd services/demo-shop && just dev`). Then go to the page
    that requests a credential.
 
-   Subsequently, the following steps are performed internally:
+Subsequently, the following steps are performed internally:
 
-   - Initiate a session/an Authorization Request via Verifiable Data Service,
-     `POST /api/v1/authrequests`
-     - See
-       [Cross Device Flow](https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow)
-   - Receive session URL and render it as a QR code.
-3. Scan QR code that includes the request URL with Talao Wallet.
+- Initiate a session/an Authorization Request via Verifiable Data Service,
+  `POST /api/v1/authrequests`
+  - See
+    [Cross Device Flow](https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow)
+- Receive session URL and render it as a QR code.
+
+3. Scan QR code that includes the request URL with wallet.
 4. Wallet retrieves Request Object.
 5. Verifiable Data Service receives and verifies authenticity of data.
 6. Verifiable Data Service forwards client or pings endpoint at demo-shop.
@@ -46,7 +51,9 @@ Source:
 
 ## Resoruces
 
-- Talao Wallet support of OpenID4VP specs:
+### OpenID4VP
+
+- Talao Wallet configuration for an OpenID4VP verifier:
   <https://doc.wallet-provider.io/wallet/verifier-configuration>
 - OpenID4VP draft 22, implemented by the verifiable data service:
   <https://openid.net/specs/openid-4-verifiable-presentations-1_0-22.html>
