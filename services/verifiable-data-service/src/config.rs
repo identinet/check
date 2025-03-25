@@ -68,7 +68,7 @@ impl AppConfig {
                 "Error: 'host' is required but missing".into(),
             ));
         }
-        if config.port < 1 || config.port > 65536 {
+        if config.port == 0 {
             return Err(ConfigError::NotFound("Error: 'port' out of bounds".into()));
         }
         if config.external_hostname.is_empty() {
