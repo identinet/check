@@ -14,7 +14,7 @@ struct CliConfig {
         long,
         short = 'H',
         default_value = "::1",
-        help = "Server host or set via enviornment variable VDS_HOST"
+        help = "Server host or set via enviornment variable HOST"
     )]
     host: Option<String>,
 
@@ -22,21 +22,21 @@ struct CliConfig {
         long,
         short = 'p',
         default_value = "3000",
-        help = "Server port or set via enviornment variable VDS_PORT"
+        help = "Server port or set via enviornment variable PORT"
     )]
     port: Option<u16>,
 
     #[arg(
         long,
         short = 'e',
-        help = "External hostname or set via enviornment variable VDS_EXTERNAL_HOSTNAME (e.g. vds.example.com)"
+        help = "External hostname or set via enviornment variable EXTERNAL_HOSTNAME (e.g. vds.example.com)"
     )]
     external_hostname: Option<String>,
 
     #[arg(
         long,
         short = 's',
-        help = "Hostname of web shop or set via enviornment variable VDS_SHOP_HOSTNAME (e.g. shop.example.com)"
+        help = "Hostname of web shop or set via enviornment variable SHOP_HOSTNAME (e.g. shop.example.com)"
     )]
     shop_hostname: Option<String>,
 }
@@ -56,7 +56,8 @@ impl AppConfig {
 
         let builder = Config::builder()
             .add_source(File::with_name("config").required(false)) // Read from config file (TOML, YAML, JSON)
-            .add_source(Environment::with_prefix("VDS")) // Read from environment variables (e.g., APP_HOST, APP_PORT)
+            // .add_source(Environment::with_prefix("VDS")) // Read from environment variables (e.g., APP_HOST, APP_PORT)
+            .add_source(Environment::default()) // Read from environment variables (e.g., APP_HOST, APP_PORT)
             .set_override_option("host", cli.host)?
             .set_override_option("port", cli.port)?
             .set_override_option("external_hostname", cli.external_hostname)?
