@@ -10,18 +10,10 @@ use serde::Deserialize;
     long_about = concat!(env!("CARGO_PKG_DESCRIPTION"), "\n\n", "All configuration options can either be specified via command line argument, environment variable or configuration file (config.yaml | config.toml | config.json).")
 )]
 struct CliConfig {
-    #[arg(
-        long,
-        short = 'H',
-        help = "Server host or set via enviornment variable HOST (default: ::1)"
-    )]
+    #[arg(long, short = 'H', help = "Server host or set via enviornment variable HOST (default: ::1)")]
     host: Option<String>,
 
-    #[arg(
-        long,
-        short = 'p',
-        help = "Server port or set via enviornment variable PORT (default: 3000)"
-    )]
+    #[arg(long, short = 'p', help = "Server port or set via enviornment variable PORT (default: 3000)")]
     port: Option<u16>,
 
     #[arg(
@@ -89,22 +81,16 @@ impl AppConfig {
             return Err(ConfigError::NotFound("Error: 'port' out of bounds".into()));
         }
         if config.external_hostname.is_empty() {
-            return Err(ConfigError::NotFound(
-                "Error: 'external_hostname' is required but missing".into(),
-            ));
+            return Err(ConfigError::NotFound("Error: 'external_hostname' is required but missing".into()));
         }
         if config.shop_hostname.is_empty() {
-            return Err(ConfigError::NotFound(
-                "Error: 'shop_hostname' must be a valid non-zero value".into(),
-            ));
+            return Err(ConfigError::NotFound("Error: 'shop_hostname' must be a valid non-zero value".into()));
         }
         if config.key_path.is_empty() {
             return Err(ConfigError::NotFound("Error: 'key_path' is required but missing".into()));
         }
         if config.verification_method.is_empty() {
-            return Err(ConfigError::NotFound(
-                "Error: 'verification_method' is required but missing".into(),
-            ));
+            return Err(ConfigError::NotFound("Error: 'verification_method' is required but missing".into()));
         }
 
         Ok(config)

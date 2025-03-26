@@ -25,8 +25,8 @@ use openid4vp::{
             parameters::{
                 verifier::VpFormats,
                 wallet::{
-                    AuthorizationEndpoint, RequestObjectSigningAlgValuesSupported,
-                    ResponseTypesSupported, VpFormatsSupported,
+                    AuthorizationEndpoint, RequestObjectSigningAlgValuesSupported, ResponseTypesSupported,
+                    VpFormatsSupported,
                 },
             },
             WalletMetadata,
@@ -92,22 +92,14 @@ async fn authrequest_create(
     let vm_resolver: dids::VerificationMethodDIDResolver<_, verification_methods::AnyMethod> =
         dids::VerificationMethodDIDResolver::new(resolver);
     // TODO: determine key type dynamically, depending on the curve and support more key types
-    let signer = verifier::request_signer::P256Signer::new(
-        p256::SecretKey::from_jwk_str(&key).unwrap().into(),
-    )
-    .unwrap();
-    let client = verifier::client::DIDClient::new(
-        state.config.verification_method,
-        Arc::new(signer),
-        vm_resolver,
-    )
-    .await
-    .unwrap();
+    let signer =
+        verifier::request_signer::P256Signer::new(p256::SecretKey::from_jwk_str(&key).unwrap().into()).unwrap();
+    let client = verifier::client::DIDClient::new(state.config.verification_method, Arc::new(signer), vm_resolver)
+        .await
+        .unwrap();
 
-    let direct_post_uri = Url::parse(
-        format!("https://{host}/v1/authorize", host = state.config.external_hostname).as_str(),
-    )
-    .unwrap();
+    let direct_post_uri =
+        Url::parse(format!("https://{host}/v1/authorize", host = state.config.external_hostname).as_str()).unwrap();
     let verifier_builder = verifier_builder
         .with_session_store(state.session_store)
         .by_reference(direct_post_uri.clone()) // GET request required to retrieve session parameters - this decreases the
@@ -254,8 +246,7 @@ async fn authrequest_create(
             .set_purpose(purpose.into())
             .set_format(claim_formats_supported),
     );
-    let authz_request_builder =
-        authz_request_builder.with_presentation_definition(presentation_definition);
+    let authz_request_builder = authz_request_builder.with_presentation_definition(presentation_definition);
     // TODO: initate request parameter
 
     let mut client_metadata = UntypedObject::default();
@@ -268,21 +259,13 @@ async fn authrequest_create(
         ClaimFormatDesignation::JwtVcJson,
         ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
     );
-    vp_formats.insert(
-        ClaimFormatDesignation::LdpVp,
-        ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
-    );
-    vp_formats.insert(
-        ClaimFormatDesignation::LdpVc,
-        ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
-    );
+    vp_formats.insert(ClaimFormatDesignation::LdpVp, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
+    vp_formats.insert(ClaimFormatDesignation::LdpVc, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
     client_metadata.insert(VpFormats(vp_formats.clone()));
     let authz_request_builder = authz_request_builder
         .with_request_parameter(authorization_request::parameters::ResponseMode::DirectPost)
         .with_request_parameter(authorization_request::parameters::ResponseType::VpToken)
-        .with_request_parameter(authorization_request::parameters::Nonce::from(
-            params.nonce.to_string(),
-        ))
+        .with_request_parameter(authorization_request::parameters::Nonce::from(params.nonce.to_string()))
         .with_request_parameter(authorization_request::parameters::ClientMetadata(client_metadata));
     // TODO: create session
     // let authorization_endpoint =
@@ -314,15 +297,13 @@ async fn authrequest_create(
 
     let authorization_endpoint = AuthorizationEndpoint("openid4vp://".parse().unwrap());
     let response_types_supported = ResponseTypesSupported(vec![ResponseType::VpToken]);
-    let request_object_signing_alg_values_supported =
-        RequestObjectSigningAlgValuesSupported(alg_values_supported);
+    let request_object_signing_alg_values_supported = RequestObjectSigningAlgValuesSupported(alg_values_supported);
     let mut object = UntypedObject::default();
     object.insert(response_types_supported);
     object.insert(request_object_signing_alg_values_supported);
     object.insert(authorization_endpoint.clone()); // BUG: Due to https://github.com/spruceid/openid4vp/issues/55 the endpoint has to be provided twice
     object.insert(VpFormatsSupported(vp_formats.clone())); // BUG: Due to https://github.com/spruceid/openid4vp/issues/55 the endpoint has to be provided twice
-    let mut wallet_metadata =
-        WalletMetadata::new(authorization_endpoint, VpFormatsSupported(vp_formats), Some(object));
+    let mut wallet_metadata = WalletMetadata::new(authorization_endpoint, VpFormatsSupported(vp_formats), Some(object));
     wallet_metadata.add_client_id_schemes_supported(&[ClientIdScheme::Did]).unwrap();
     // client_metadata.insert(
     //     openid4vp::core::metadata::parameters::wallet::ClientIdSchemesSupported(vec![
@@ -342,28 +323,19 @@ async fn authrequest_create(
 }
 
 // Retrieves the submitted OpenID4VP data.
-async fn authrequest_get(
-    State(state): State<AppState>,
-) -> (StatusCode, Json<AuthRequestObjectResponse>) {
+async fn authrequest_get(State(state): State<AppState>) -> (StatusCode, Json<AuthRequestObjectResponse>) {
     println!("authrequest_get");
     let id = Uuid::new_v4().to_string();
     let url = Url::parse(
-        format!(
-            "https://{host}/v1/authrequests/{uuid}",
-            host = state.config.external_hostname,
-            uuid = id.as_str()
-        )
-        .as_str(),
+        format!("https://{host}/v1/authrequests/{uuid}", host = state.config.external_hostname, uuid = id.as_str())
+            .as_str(),
     )
     .unwrap();
     (StatusCode::CREATED, Json(AuthRequestObjectResponse { id, url }))
 }
 
 // Retrieves the OpenID4VP Authorization Request.
-async fn authorize_get(
-    State(state): State<AppState>,
-    Path(request_id): Path<Uuid>,
-) -> impl IntoResponse {
+async fn authorize_get(State(state): State<AppState>, Path(request_id): Path<Uuid>) -> impl IntoResponse {
     // ) -> (StatusCode, std::string::String) {
     println!("authorize_get {}", request_id);
     let x = state.session_store.get_session(request_id).await.unwrap();
@@ -386,12 +358,8 @@ async fn authorize_submit(
     println!("authorize_submit {}", request_id);
     let id = Uuid::new_v4().to_string();
     let url = Url::parse(
-        format!(
-            "https://{host}/v1/authorize/{uuid}",
-            host = state.config.external_hostname,
-            uuid = id.as_str()
-        )
-        .as_str(),
+        format!("https://{host}/v1/authorize/{uuid}", host = state.config.external_hostname, uuid = id.as_str())
+            .as_str(),
     )
     .unwrap();
     (StatusCode::CREATED, Json(AuthRequestObjectResponse { id, url }))
@@ -438,8 +406,7 @@ async fn main() {
     } else {
         config.host
     };
-    let addr =
-        format!("{}:{}", host, config.port).parse::<SocketAddr>().expect("Failed to parse address");
+    let addr = format!("{}:{}", host, config.port).parse::<SocketAddr>().expect("Failed to parse address");
 
     // run our app with hyper, listening globally on port 3000
     println!("Listening on {}", addr);
