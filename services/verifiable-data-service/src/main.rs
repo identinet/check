@@ -510,7 +510,7 @@ mod tests {
         // Create test request
         let request = Request::builder()
             .method("POST")
-            .uri("/v1/sessions")
+            .uri("/v1/authrequests")
             .body(Body::empty())
             .unwrap();
 
