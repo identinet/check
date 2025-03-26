@@ -77,11 +77,7 @@ async fn authrequest_create(
     // TODO: build request and return object
     // TODO: then, gradually move initialization elements to other parts of application
 
-    // TODO: initate client
-    // let vm = ssi::jwk::;
-    // let signer = ssi::jwk::;
-    // let resolver = ssi::dids::AnyDidMethod::default();
-    // TODO: load key from the outside
+    // initate client
     let key = fs::read_to_string(state.config.key_path).unwrap();
 
     // let resolver = ssi::dids::jwk::DIDJWK.into_vm_resolver();
@@ -95,9 +91,13 @@ async fn authrequest_create(
         )
         .unwrap(),
     );
-    let client = verifier::client::DIDClient::new(vm.to_string(), signer.clone(), vm_resolver)
-        .await
-        .unwrap();
+    let client = verifier::client::DIDClient::new(
+        state.config.verification_method,
+        signer.clone(),
+        vm_resolver,
+    )
+    .await
+    .unwrap();
     let aclient = Arc::new(client);
 
     let urlref = Url::parse(
@@ -108,9 +108,6 @@ async fn authrequest_create(
         .as_str(),
     )
     .unwrap();
-    // TODO: initate session store
-    // let session_store = verifier::session::MemoryStore::default();
-    // let session_store = Arc::new(session_store);
     let verifier_builder = verifier_builder
         .with_session_store(state.session_store)
         .by_reference(urlref.clone()) // GET request required to retrieve session parameters - this decreases the
@@ -507,6 +504,7 @@ mod tests {
             external_hostname: "localhost".into(),
             shop_hostname: "localhost".into(),
             key_path: "./_fixtures/key.jwk".into(),
+            verification_method: "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImtYSVJicEtzTzZXZVJ1YndndWdSMWc2RGNhT3NBbmlrVXJ1WXU2QS1HVWMiLCJ5IjoiMG5WdUQ2TkhQeUFEOGF2OWdzM1h6NEoxT2c1ZEFNZDkzdTE1a0RwZklObyJ9#0".into(),
         });
 
         // Create test request

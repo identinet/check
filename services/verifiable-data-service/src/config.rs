@@ -44,6 +44,13 @@ struct CliConfig {
         help = "Path to private key in JWK format or set via enviornment variable KEY_PATH (e.g. ./key.jwk)"
     )]
     key_path: Option<String>,
+
+    #[arg(
+        long,
+        short = 'v',
+        help = "Verification method, DID + key referefence, or set via enviornment variable VERIFICATION_METHOD (e.g. did:web:example.com#key1)"
+    )]
+    verification_method: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -53,6 +60,7 @@ pub struct AppConfig {
     pub external_hostname: String,
     pub shop_hostname: String,
     pub key_path: String,
+    pub verification_method: String,
     // log_level: String, // TODO: add
 }
 
@@ -70,7 +78,8 @@ impl AppConfig {
             .set_override_option("port", cli.port)?
             .set_override_option("external_hostname", cli.external_hostname)?
             .set_override_option("shop_hostname", cli.shop_hostname)?
-            .set_override_option("key_path", cli.key_path)?;
+            .set_override_option("key_path", cli.key_path)?
+            .set_override_option("verification_method", cli.verification_method)?;
         let config: AppConfig = builder.build()?.try_deserialize()?;
 
         if config.host.is_empty() {
@@ -94,6 +103,11 @@ impl AppConfig {
         if config.key_path.is_empty() {
             return Err(ConfigError::NotFound(
                 "Error: 'key_path' is required but missing".into(),
+            ));
+        }
+        if config.verification_method.is_empty() {
+            return Err(ConfigError::NotFound(
+                "Error: 'verification_method' is required but missing".into(),
             ));
         }
 
