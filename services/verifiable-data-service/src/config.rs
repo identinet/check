@@ -83,9 +83,7 @@ impl AppConfig {
         let config: AppConfig = builder.build()?.try_deserialize()?;
 
         if config.host.is_empty() {
-            return Err(ConfigError::NotFound(
-                "Error: 'host' is required but missing".into(),
-            ));
+            return Err(ConfigError::NotFound("Error: 'host' is required but missing".into()));
         }
         if config.port == 0 {
             return Err(ConfigError::NotFound("Error: 'port' out of bounds".into()));
@@ -101,9 +99,7 @@ impl AppConfig {
             ));
         }
         if config.key_path.is_empty() {
-            return Err(ConfigError::NotFound(
-                "Error: 'key_path' is required but missing".into(),
-            ));
+            return Err(ConfigError::NotFound("Error: 'key_path' is required but missing".into()));
         }
         if config.verification_method.is_empty() {
             return Err(ConfigError::NotFound(

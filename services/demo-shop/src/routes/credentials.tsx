@@ -4,9 +4,12 @@ import QRCode from "~/components/QRCode";
 
 const createSession = query(() => {
   "use server";
-  return fetch(`https://${process.env.VDS_HOST}/v1/authrequests`, {
-    method: "POST",
-  }).then((
+  const nonce = crypto.randomUUID();
+  console.log(`https://${process.env.VDS_HOST}/v1/authrequests?nonce=${nonce}`);
+  return fetch(
+    `https://${process.env.VDS_HOST}/v1/authrequests?nonce=${nonce}`,
+    { method: "POST" },
+  ).then((
     r,
   ) => {
     return r.json().then((res) => {

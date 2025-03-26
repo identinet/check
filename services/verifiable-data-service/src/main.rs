@@ -7,7 +7,7 @@ use config::AppConfig;
 use std::{fs, net::SocketAddr, sync::Arc};
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::{header, StatusCode},
     response::{IntoResponse, Json},
     routing::{get, post},
@@ -38,7 +38,7 @@ use openid4vp::{
 };
 use openid4vp_frontend::Status;
 use serde::{Deserialize, Serialize};
-use ssi::{crypto::Algorithm, dids, jwk::JWK, verification_methods};
+use ssi::{crypto::Algorithm, dids, verification_methods};
 use url::Url;
 use uuid::Uuid;
 
@@ -69,9 +69,15 @@ struct AuthRequestObjectResponse {
     url: Url,
 }
 
+#[derive(Deserialize)]
+struct AuthrequestCreateParams {
+    nonce: Uuid,
+}
+
 // Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
 async fn authrequest_create(
     State(state): State<AppState>,
+    params: Query<AuthrequestCreateParams>,
 ) -> (StatusCode, Json<AuthRequestURIResponse>) {
     let verifier_builder = Verifier::builder();
     // TODO: build request and return object
@@ -85,35 +91,29 @@ async fn authrequest_create(
     let resolver = dids::AnyDidMethod::default();
     let vm_resolver: dids::VerificationMethodDIDResolver<_, verification_methods::AnyMethod> =
         dids::VerificationMethodDIDResolver::new(resolver);
-    let signer = Arc::new(
-        verifier::request_signer::P256Signer::new(
-            p256::SecretKey::from_jwk_str(&key).unwrap().into(),
-        )
-        .unwrap(),
-    );
+    // TODO: determine key type dynamically, depending on the curve and support more key types
+    let signer = verifier::request_signer::P256Signer::new(
+        p256::SecretKey::from_jwk_str(&key).unwrap().into(),
+    )
+    .unwrap();
     let client = verifier::client::DIDClient::new(
         state.config.verification_method,
-        signer.clone(),
+        Arc::new(signer),
         vm_resolver,
     )
     .await
     .unwrap();
-    let aclient = Arc::new(client);
 
-    let urlref = Url::parse(
-        format!(
-            "https://{host}/v1/authorize",
-            host = state.config.external_hostname
-        )
-        .as_str(),
+    let direct_post_uri = Url::parse(
+        format!("https://{host}/v1/authorize", host = state.config.external_hostname).as_str(),
     )
     .unwrap();
     let verifier_builder = verifier_builder
         .with_session_store(state.session_store)
-        .by_reference(urlref.clone()) // GET request required to retrieve session parameters - this decreases the
+        .by_reference(direct_post_uri.clone()) // GET request required to retrieve session parameters - this decreases the
         // size of the QR code since just the URL needs to be encoded in the QR code!
-        .with_submission_endpoint(urlref.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
-        .with_client(aclient);
+        .with_submission_endpoint(direct_post_uri.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
+        .with_client(Arc::new(client));
     // TODO: initate request parameters
     // .with_default_request_parameter(t)
     let verifier = verifier_builder.build().await.unwrap();
@@ -226,42 +226,38 @@ async fn authrequest_create(
         Algorithm::RS384.to_string(),
         Algorithm::RS512.to_string(),
     ];
+    let mut claim_formats_supported = credential_format::ClaimFormatMap::new();
+    claim_formats_supported.insert(
+        credential_format::ClaimFormatDesignation::JwtVcJson,
+        credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+    );
+    // claim_formats_supported.insert(
+    //     credential_format::ClaimFormatDesignation::JwtVpJson,
+    //     credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+    // );
+    claim_formats_supported.insert(
+        credential_format::ClaimFormatDesignation::JwtVc,
+        credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+    );
+    claim_formats_supported.insert(
+        credential_format::ClaimFormatDesignation::LdpVc,
+        ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
+    );
+    // claim_formats_supported.insert(
+    //     credential_format::ClaimFormatDesignation::JwtVp,
+    //     ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
+    // );
     let presentation_definition = presentation_definition::PresentationDefinition::new(
         presentation_definition_id,
         input_descriptor::InputDescriptor::new(ipd_id.into(), constraints)
             .set_name(name.into())
             .set_purpose(purpose.into())
-            .set_format({
-                let mut map = credential_format::ClaimFormatMap::new();
-                map.insert(
-                    credential_format::ClaimFormatDesignation::JwtVcJson,
-                    credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
-                );
-                // map.insert(
-                //     credential_format::ClaimFormatDesignation::JwtVpJson,
-                //     credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
-                // );
-                map.insert(
-                    credential_format::ClaimFormatDesignation::JwtVc,
-                    credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
-                );
-                map.insert(
-                    credential_format::ClaimFormatDesignation::LdpVc,
-                    ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
-                );
-                // map.insert(
-                //     credential_format::ClaimFormatDesignation::JwtVp,
-                //     ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
-                // );
-                map
-            }),
+            .set_format(claim_formats_supported),
     );
     let authz_request_builder =
         authz_request_builder.with_presentation_definition(presentation_definition);
     // TODO: initate request parameter
 
-    // TODO: Take Nonce from query parameters
-    let nonce = authorization_request::parameters::Nonce::from("random_nonce");
     let mut client_metadata = UntypedObject::default();
     let mut vp_formats = openid4vp::core::credential_format::ClaimFormatMap::new();
     vp_formats.insert(
@@ -284,10 +280,10 @@ async fn authrequest_create(
     let authz_request_builder = authz_request_builder
         .with_request_parameter(authorization_request::parameters::ResponseMode::DirectPost)
         .with_request_parameter(authorization_request::parameters::ResponseType::VpToken)
-        .with_request_parameter(nonce)
-        .with_request_parameter(authorization_request::parameters::ClientMetadata(
-            client_metadata,
-        ));
+        .with_request_parameter(authorization_request::parameters::Nonce::from(
+            params.nonce.to_string(),
+        ))
+        .with_request_parameter(authorization_request::parameters::ClientMetadata(client_metadata));
     // TODO: create session
     // let authorization_endpoint =
     //     Url::parse(format!("https://{host}/v1/auth", host = state.config.external_hostname,).as_str()).unwrap();
@@ -325,23 +321,15 @@ async fn authrequest_create(
     object.insert(request_object_signing_alg_values_supported);
     object.insert(authorization_endpoint.clone()); // BUG: Due to https://github.com/spruceid/openid4vp/issues/55 the endpoint has to be provided twice
     object.insert(VpFormatsSupported(vp_formats.clone())); // BUG: Due to https://github.com/spruceid/openid4vp/issues/55 the endpoint has to be provided twice
-    let mut wallet_metadata = WalletMetadata::new(
-        authorization_endpoint,
-        VpFormatsSupported(vp_formats),
-        Some(object),
-    );
-    wallet_metadata
-        .add_client_id_schemes_supported(&[ClientIdScheme::Did])
-        .unwrap();
+    let mut wallet_metadata =
+        WalletMetadata::new(authorization_endpoint, VpFormatsSupported(vp_formats), Some(object));
+    wallet_metadata.add_client_id_schemes_supported(&[ClientIdScheme::Did]).unwrap();
     // client_metadata.insert(
     //     openid4vp::core::metadata::parameters::wallet::ClientIdSchemesSupported(vec![
     //         openid4vp::core::authorization_request::parameters::ClientIdScheme::Did,
     //     ]),
     // );
-    let (_uuid, _url) = authz_request_builder
-        .build(wallet_metadata.clone())
-        .await
-        .unwrap();
+    let (_uuid, _url) = authz_request_builder.build(wallet_metadata.clone()).await.unwrap();
     // let request = AuthorizationRequestObject {};
     // TODO: expose poll status via uuid
 
@@ -350,13 +338,7 @@ async fn authrequest_create(
     // sessions.insert(_uuid.into(), wallet_metadata);
 
     // Return the session UUID and URL with 201 Created status
-    (
-        StatusCode::CREATED,
-        Json(AuthRequestURIResponse {
-            id: _uuid.into(),
-            url: _url,
-        }),
-    )
+    (StatusCode::CREATED, Json(AuthRequestURIResponse { id: _uuid.into(), url: _url }))
 }
 
 // Retrieves the submitted OpenID4VP data.
@@ -374,10 +356,7 @@ async fn authrequest_get(
         .as_str(),
     )
     .unwrap();
-    (
-        StatusCode::CREATED,
-        Json(AuthRequestObjectResponse { id, url }),
-    )
+    (StatusCode::CREATED, Json(AuthRequestObjectResponse { id, url }))
 }
 
 // Retrieves the OpenID4VP Authorization Request.
@@ -390,23 +369,12 @@ async fn authorize_get(
     let x = state.session_store.get_session(request_id).await.unwrap();
     println!("status {:?}", x.status);
     println!("authorization_request_jwt {}", x.authorization_request_jwt);
-    println!(
-        "authorization_request_object {:?}",
-        x.authorization_request_object
-    );
+    println!("authorization_request_object {:?}", x.authorization_request_object);
     println!("presentation_definition {:?}", x.presentation_definition);
-    state
-        .session_store
-        .update_status(x.uuid, Status::SentRequest)
-        .await
-        .unwrap();
+    state.session_store.update_status(x.uuid, Status::SentRequest).await.unwrap();
     // TODO: URL is only valid once.
     // return an error if request has been sent before
-    (
-        StatusCode::OK,
-        [(header::CONTENT_TYPE, "application/jwt")],
-        x.authorization_request_jwt,
-    )
+    (StatusCode::OK, [(header::CONTENT_TYPE, "application/jwt")], x.authorization_request_jwt)
 }
 
 // Accepts data for this Authorization Request.
@@ -426,10 +394,7 @@ async fn authorize_submit(
         .as_str(),
     )
     .unwrap();
-    (
-        StatusCode::CREATED,
-        Json(AuthRequestObjectResponse { id, url }),
-    )
+    (StatusCode::CREATED, Json(AuthRequestObjectResponse { id, url }))
 }
 
 // // Retrieve session status
@@ -449,10 +414,7 @@ async fn authorize_submit(
 pub fn create_app(config: AppConfig) -> Router {
     // let store: OpenID4VPSessionStore = Arc::new(Mutex::new(HashMap::new()));
     let store = Arc::new(verifier::session::MemoryStore::default());
-    let state = AppState {
-        session_store: store,
-        config,
-    };
+    let state = AppState { session_store: store, config };
     Router::new()
         // TODO: add authorization to route
         .route("/v1/authrequests", post(authrequest_create))
@@ -476,9 +438,8 @@ async fn main() {
     } else {
         config.host
     };
-    let addr = format!("{}:{}", host, config.port)
-        .parse::<SocketAddr>()
-        .expect("Failed to parse address");
+    let addr =
+        format!("{}:{}", host, config.port).parse::<SocketAddr>().expect("Failed to parse address");
 
     // run our app with hyper, listening globally on port 3000
     println!("Listening on {}", addr);
@@ -510,7 +471,7 @@ mod tests {
         // Create test request
         let request = Request::builder()
             .method("POST")
-            .uri("/v1/authrequests")
+            .uri(format!("/v1/authrequests?nonce={nonce}", nonce = Uuid::new_v4()))
             .body(Body::empty())
             .unwrap();
 
