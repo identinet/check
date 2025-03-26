@@ -13,16 +13,14 @@ struct CliConfig {
     #[arg(
         long,
         short = 'H',
-        default_value = "::1",
-        help = "Server host or set via enviornment variable HOST"
+        help = "Server host or set via enviornment variable HOST (default: ::1)"
     )]
     host: Option<String>,
 
     #[arg(
         long,
         short = 'p',
-        default_value = "3000",
-        help = "Server port or set via enviornment variable PORT"
+        help = "Server port or set via enviornment variable PORT (default: 3000)"
     )]
     port: Option<u16>,
 
@@ -58,6 +56,8 @@ impl AppConfig {
             .add_source(File::with_name("config").required(false)) // Read from config file (TOML, YAML, JSON)
             // .add_source(Environment::with_prefix("VDS")) // Read from environment variables (e.g., APP_HOST, APP_PORT)
             .add_source(Environment::default()) // Read from environment variables (e.g., APP_HOST, APP_PORT)
+            .set_default("host", "::1")?
+            .set_default("port", "3000")?
             .set_override_option("host", cli.host)?
             .set_override_option("port", cli.port)?
             .set_override_option("external_hostname", cli.external_hostname)?
