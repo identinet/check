@@ -32,6 +32,13 @@ struct CliConfig {
 
     #[arg(
         long,
+        short = 'c',
+        help = "Callback base path of web shop for successful data submissions or set via enviornment variable CALLBACK_BASE_PATH (default: callback, e.g. callback → https://shop.example.com/callback/<request_id>)"
+    )]
+    callback_base_path: Option<String>,
+
+    #[arg(
+        long,
         short = 'k',
         help = "Path to private key in JWK format or set via enviornment variable KEY_PATH (e.g. ./key.jwk)"
     )]
@@ -40,7 +47,7 @@ struct CliConfig {
     #[arg(
         long,
         short = 'v',
-        help = "Verification method, DID + key referefence, or set via enviornment variable VERIFICATION_METHOD (e.g. did:web:example.com#key1)"
+        help = "Verification method, DID + key referefence, or set via enviornment variable VERIFICATION_METHOD (e.g. did:web:shop.example.com#key1)"
     )]
     verification_method: Option<String>,
 }
@@ -53,6 +60,7 @@ pub struct AppConfig {
     pub shop_hostname: String,
     pub key_path: String,
     pub verification_method: String,
+    pub callback_base_path: String,
     // log_level: String, // TODO: add
 }
 
@@ -66,12 +74,14 @@ impl AppConfig {
             .add_source(Environment::default()) // Read from environment variables (e.g., APP_HOST, APP_PORT)
             .set_default("host", "::1")?
             .set_default("port", "3000")?
+            .set_default("callback_base_path", "callback")?
             .set_override_option("host", cli.host)?
             .set_override_option("port", cli.port)?
             .set_override_option("external_hostname", cli.external_hostname)?
             .set_override_option("shop_hostname", cli.shop_hostname)?
             .set_override_option("key_path", cli.key_path)?
-            .set_override_option("verification_method", cli.verification_method)?;
+            .set_override_option("verification_method", cli.verification_method)?
+            .set_override_option("callback_base_path", cli.callback_base_path)?;
         let config: AppConfig = builder.build()?.try_deserialize()?;
 
         if config.host.is_empty() {
@@ -91,6 +101,9 @@ impl AppConfig {
         }
         if config.verification_method.is_empty() {
             return Err(ConfigError::NotFound("Error: 'verification_method' is required but missing".into()));
+        }
+        if config.callback_base_path.is_empty() {
+            return Err(ConfigError::NotFound("Error: 'callback_base_path' is required but missing".into()));
         }
 
         Ok(config)

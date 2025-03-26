@@ -11,7 +11,7 @@ use axum::{
     http::{header, StatusCode},
     response::{IntoResponse, Json},
     routing::{get, post},
-    Router,
+    Form, Router,
 };
 use openid4vp::{
     core::{
@@ -53,20 +53,35 @@ struct AppState {
     config: AppConfig,
 }
 
-// Authorization Request URI Response.
-// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
+/// Authorization Request URI Response.
+/// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
 #[derive(Serialize, Deserialize)]
 struct AuthRequestURIResponse {
     id: String,
     url: Url,
 }
 
-// Authorization Request Object Response.
-// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
+/// Authorization Request Object Response.
+/// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
 #[derive(Serialize, Deserialize)]
 struct AuthRequestObjectResponse {
     id: String,
     url: Url,
+}
+
+/// Authorization Request Submission.
+/// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
+#[derive(Debug, Serialize, Deserialize)]
+struct AuthorizationRequestSubmission {
+    vp_token: String,
+    presentation_submission: serde_json::Value,
+}
+
+/// Authorization Request Submission Response.
+/// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
+#[derive(Serialize, Deserialize)]
+struct AuthorizationRequestSubmissionResponse {
+    // redirect_uri: Url,
 }
 
 #[derive(Deserialize)]
@@ -74,7 +89,7 @@ struct AuthrequestCreateParams {
     nonce: Uuid,
 }
 
-// Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
+/// Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
 async fn authrequest_create(
     State(state): State<AppState>,
     params: Query<AuthrequestCreateParams>,
@@ -323,46 +338,64 @@ async fn authrequest_create(
 }
 
 // Retrieves the submitted OpenID4VP data.
-async fn authrequest_get(State(state): State<AppState>) -> (StatusCode, Json<AuthRequestObjectResponse>) {
-    println!("authrequest_get");
-    let id = Uuid::new_v4().to_string();
-    let url = Url::parse(
-        format!("https://{host}/v1/authrequests/{uuid}", host = state.config.external_hostname, uuid = id.as_str())
-            .as_str(),
-    )
-    .unwrap();
-    (StatusCode::CREATED, Json(AuthRequestObjectResponse { id, url }))
-}
-
-// Retrieves the OpenID4VP Authorization Request.
-async fn authorize_get(State(state): State<AppState>, Path(request_id): Path<Uuid>) -> impl IntoResponse {
-    // ) -> (StatusCode, std::string::String) {
-    println!("authorize_get {}", request_id);
-    let x = state.session_store.get_session(request_id).await.unwrap();
-    println!("status {:?}", x.status);
-    println!("authorization_request_jwt {}", x.authorization_request_jwt);
-    println!("authorization_request_object {:?}", x.authorization_request_object);
-    println!("presentation_definition {:?}", x.presentation_definition);
-    state.session_store.update_status(x.uuid, Status::SentRequest).await.unwrap();
-    // TODO: URL is only valid once.
-    // return an error if request has been sent before
-    (StatusCode::OK, [(header::CONTENT_TYPE, "application/jwt")], x.authorization_request_jwt)
-}
-
-// Accepts data for this Authorization Request.
-// TODO: URL is only valid once.
-async fn authorize_submit(
+async fn authrequest_get(
     State(state): State<AppState>,
     Path(request_id): Path<Uuid>,
 ) -> (StatusCode, Json<AuthRequestObjectResponse>) {
-    println!("authorize_submit {}", request_id);
-    let id = Uuid::new_v4().to_string();
+    println!("authrequest_get");
     let url = Url::parse(
-        format!("https://{host}/v1/authorize/{uuid}", host = state.config.external_hostname, uuid = id.as_str())
+        format!("https://{host}/v1/authrequests/{uuid}", host = state.config.external_hostname, uuid = request_id)
             .as_str(),
     )
     .unwrap();
-    (StatusCode::CREATED, Json(AuthRequestObjectResponse { id, url }))
+    (StatusCode::OK, Json(AuthRequestObjectResponse { id: request_id.to_string(), url }))
+}
+
+/// Retrieves the OpenID4VP Authorization Request.
+async fn authorize_get(State(state): State<AppState>, Path(request_id): Path<Uuid>) -> impl IntoResponse {
+    // ) -> (StatusCode, std::string::String) {
+    // TODO: make URL valid only once.
+    println!("authorize_get {}", request_id);
+    let authorization_request = state.session_store.get_session(request_id).await.unwrap();
+    println!("status {:?}", authorization_request.status);
+    println!("authorization_request_jwt {}", authorization_request.authorization_request_jwt);
+    println!("authorization_request_object {:?}", authorization_request.authorization_request_object);
+    println!("presentation_definition {:?}", authorization_request.presentation_definition);
+    state.session_store.update_status(authorization_request.uuid, Status::SentRequest).await.unwrap();
+    // return an error if request has been sent before
+    (StatusCode::OK, [(header::CONTENT_TYPE, "application/jwt")], authorization_request.authorization_request_jwt)
+}
+
+/// Accepts data for this Authorization Request.
+/// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
+async fn authorize_submit(
+    State(state): State<AppState>,
+    Path(request_id): Path<Uuid>,
+    // Json(payload): Json<serde_json::Value>,
+    Form(payload): Form<AuthorizationRequestSubmission>,
+) -> (StatusCode, Json<AuthorizationRequestSubmissionResponse>) {
+    // TODO: make this URL valid only once.
+    println!("authorize_submit {}", request_id);
+    println!("authorize_submit payload {:?}", payload.presentation_submission);
+    // let payload: AuthorizationRequestSubmission = serde_json::from_str(payload.as_str());
+    // vp_token
+    // presentation_submission
+    let redirect_uri = Url::parse(
+        format!(
+            "https://{host}/{callback_base_path}/{uuid}",
+            host = state.config.shop_hostname,
+            callback_base_path = state.config.callback_base_path,
+            uuid = request_id
+        )
+        .as_str(),
+    )
+    .unwrap();
+    (
+        StatusCode::OK,
+        Json(AuthorizationRequestSubmissionResponse {
+        // redirect_uri
+    }),
+    )
 }
 
 // // Retrieve session status
@@ -384,12 +417,16 @@ pub fn create_app(config: AppConfig) -> Router {
     let store = Arc::new(verifier::session::MemoryStore::default());
     let state = AppState { session_store: store, config };
     Router::new()
-        // TODO: add authorization to route
-        .route("/v1/authrequests", post(authrequest_create))
-        // TODO: add authorization to route
-        .route("/v1/authrequests/{requestId}", get(authrequest_get))
-        .route("/v1/authorize/{requestId}", get(authorize_get))
-        .route("/v1/authorize/{requestId}", post(authorize_submit))
+        .nest(
+            "/v1",
+            Router::new()
+                // TODO: add authorization to route
+                .route("/authrequests", post(authrequest_create))
+                // TODO: add authorization to route
+                .route("/authrequests/{requestId}", get(authrequest_get))
+                .route("/authorize/{requestId}", get(authorize_get))
+                .route("/authorize/{requestId}", post(authorize_submit)),
+        )
         .with_state(state)
 }
 
@@ -400,6 +437,7 @@ async fn main() {
     // build our application with a single route
     let app = create_app(config.clone());
 
+    // TODO: Parse listen address properly, see https://rust-api.dev/docs/part-1/tokio-hyper-axum/#web-application-structure
     let host = if config.host.contains(':') {
         // Wrap IPv6 addresses in []
         format!("[{}]", config.host)
@@ -433,6 +471,7 @@ mod tests {
             shop_hostname: "localhost".into(),
             key_path: "./_fixtures/key.jwk".into(),
             verification_method: "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImtYSVJicEtzTzZXZVJ1YndndWdSMWc2RGNhT3NBbmlrVXJ1WXU2QS1HVWMiLCJ5IjoiMG5WdUQ2TkhQeUFEOGF2OWdzM1h6NEoxT2c1ZEFNZDkzdTE1a0RwZklObyJ9#0".into(),
+            callback_base_path: "callback".into(),
         });
 
         // Create test request
