@@ -4,7 +4,7 @@
 mod config; // Import the config module
 use config::AppConfig;
 
-use std::{net::SocketAddr, sync::Arc};
+use std::{fs, net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{Path, State},
@@ -82,21 +82,7 @@ async fn authrequest_create(
     // let signer = ssi::jwk::;
     // let resolver = ssi::dids::AnyDidMethod::default();
     // TODO: load key from the outside
-    let key = include_str!("key.jwk");
-    let jwk: JWK = serde_json::from_str(key)
-        // let jwk: ssi::jwk::JWK = serde_json::from_value(serde_json::json!({
-        //   "crv": "P-256",
-        //   "kty": "EC",
-        //   "x": "acbIQiuMs3i8_uszEjJ2tpTtRM4EU3yz91PH6CdH2V0",
-        //   "y": "_KcyLj9vWMptnmKtm46GqDz8wf74I5LKgrl2GzH3nSE"
-        // }))
-        .unwrap();
-
-    // TODO: make DID configurable
-    let did = dids::jwk::DIDJWK::generate(&jwk);
-    println!("did: {}", did);
-    // TODO: make VM configurable
-    let vm = "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImtYSVJicEtzTzZXZVJ1YndndWdSMWc2RGNhT3NBbmlrVXJ1WXU2QS1HVWMiLCJ5IjoiMG5WdUQ2TkhQeUFEOGF2OWdzM1h6NEoxT2c1ZEFNZDkzdTE1a0RwZklObyJ9#0";
+    let key = fs::read_to_string(state.config.key_path).unwrap();
 
     // let resolver = ssi::dids::jwk::DIDJWK.into_vm_resolver();
     // TODO: combine internal DID method resolver with the HTTP resolver as a fallback
@@ -105,10 +91,7 @@ async fn authrequest_create(
         dids::VerificationMethodDIDResolver::new(resolver);
     let signer = Arc::new(
         verifier::request_signer::P256Signer::new(
-            p256::SecretKey::from_jwk_str(key)
-                // p256::SecretKey::from_jwk_str(include_str!("examples/verifier.jwk"))
-                .unwrap()
-                .into(),
+            p256::SecretKey::from_jwk_str(&key).unwrap().into(),
         )
         .unwrap(),
     );
@@ -519,10 +502,11 @@ mod tests {
     async fn test_initiate_session() {
         // Create app
         let app = create_app(AppConfig {
-            host: "::1".to_string(),
+            host: "::1".into(),
             port: 3000,
-            external_hostname: "localhost".to_string(),
-            shop_hostname: "localhost".to_string(),
+            external_hostname: "localhost".into(),
+            shop_hostname: "localhost".into(),
+            key_path: "./_fixtures/key.jwk".into(),
         });
 
         // Create test request

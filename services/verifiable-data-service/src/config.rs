@@ -37,6 +37,13 @@ struct CliConfig {
         help = "Hostname of web shop or set via enviornment variable SHOP_HOSTNAME (e.g. shop.example.com)"
     )]
     shop_hostname: Option<String>,
+
+    #[arg(
+        long,
+        short = 'k',
+        help = "Path to private key in JWK format or set via enviornment variable KEY_PATH (e.g. ./key.jwk)"
+    )]
+    key_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -45,6 +52,7 @@ pub struct AppConfig {
     pub port: u16,
     pub external_hostname: String,
     pub shop_hostname: String,
+    pub key_path: String,
     // log_level: String, // TODO: add
 }
 
@@ -61,7 +69,8 @@ impl AppConfig {
             .set_override_option("host", cli.host)?
             .set_override_option("port", cli.port)?
             .set_override_option("external_hostname", cli.external_hostname)?
-            .set_override_option("shop_hostname", cli.shop_hostname)?;
+            .set_override_option("shop_hostname", cli.shop_hostname)?
+            .set_override_option("key_path", cli.key_path)?;
         let config: AppConfig = builder.build()?.try_deserialize()?;
 
         if config.host.is_empty() {
@@ -80,6 +89,11 @@ impl AppConfig {
         if config.shop_hostname.is_empty() {
             return Err(ConfigError::NotFound(
                 "Error: 'shop_hostname' must be a valid non-zero value".into(),
+            ));
+        }
+        if config.key_path.is_empty() {
+            return Err(ConfigError::NotFound(
+                "Error: 'key_path' is required but missing".into(),
             ));
         }
 
