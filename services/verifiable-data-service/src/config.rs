@@ -10,44 +10,44 @@ use serde::Deserialize;
     long_about = concat!(env!("CARGO_PKG_DESCRIPTION"), "\n\n", "All configuration options can either be specified via command line argument, environment variable or configuration file (config.yaml | config.toml | config.json).")
 )]
 struct CliConfig {
-    #[arg(long, short = 'H', help = "Server host or set via enviornment variable HOST (default: ::1)")]
+    #[arg(long, short = 'H', help = "Server host or set via environment variable HOST (default: ::1)")]
     host: Option<String>,
 
-    #[arg(long, short = 'p', help = "Server port or set via enviornment variable PORT (default: 3000)")]
+    #[arg(long, short = 'p', help = "Server port or set via environment variable PORT (default: 3000)")]
     port: Option<u16>,
 
     #[arg(
         long,
         short = 'e',
-        help = "External hostname or set via enviornment variable EXTERNAL_HOSTNAME (e.g. vds.example.com)"
+        help = "External hostname or set via environment variable EXTERNAL_HOSTNAME (e.g. vds.example.com)"
     )]
     external_hostname: Option<String>,
 
     #[arg(
         long,
         short = 's',
-        help = "Hostname of web shop or set via enviornment variable SHOP_HOSTNAME (e.g. shop.example.com)"
+        help = "Hostname of web shop or set via environment variable SHOP_HOSTNAME (e.g. shop.example.com)"
     )]
     shop_hostname: Option<String>,
 
     #[arg(
         long,
         short = 'c',
-        help = "Callback base path of web shop for successful data submissions or set via enviornment variable CALLBACK_BASE_PATH (default: callback, e.g. callback → https://shop.example.com/callback/<request_id>)"
+        help = "Callback base path of web shop for successful data submissions or set via environment variable CALLBACK_BASE_PATH (default: callback, e.g. callback → https://shop.example.com/callback/<request_id>)"
     )]
     callback_base_path: Option<String>,
 
     #[arg(
         long,
         short = 'k',
-        help = "Path to private key in JWK format or set via enviornment variable KEY_PATH (e.g. ./key.jwk)"
+        help = "Path to private key in JWK format or set via environment variable KEY_PATH (e.g. ./key.jwk)"
     )]
     key_path: Option<String>,
 
     #[arg(
         long,
         short = 'v',
-        help = "Verification method, DID + key referefence, or set via enviornment variable VERIFICATION_METHOD (e.g. did:web:shop.example.com#key1)"
+        help = "Verification method, DID + key referefence, or set via environment variable VERIFICATION_METHOD (e.g. did:web:shop.example.com#key1)"
     )]
     verification_method: Option<String>,
 }
