@@ -100,6 +100,14 @@ dev: githooks
       admin: {
         disabled: true
       }
+      logging: {
+        logs: {
+          default: {
+            # level: "INFO"
+            level: "DEBUG"
+          }
+        }
+      }
       apps: {
         tls: {
           certificates: {
@@ -151,13 +159,8 @@ dev: githooks
                 {
                   match: ($service | getHosts --no-tunnel | each {|host| {host: [$host]}})
                   handle: [{
-                    handler: "subroute"
-                    routes: [{
-                      handle: [{
-                        handler: "reverse_proxy"
-                        upstreams: [{dial: $"localhost:($service.port)"}]
-                      }]
-                    }]
+                    handler: "reverse_proxy"
+                    upstreams: [{dial: $"localhost:($service.port)"}]
                   }]
                 }
               })

@@ -1,0 +1,5 @@
+# Documentation: https://rust-lang.github.io/rustfmt/
+use_small_heuristics = "Max"
+max_width = 120
+imports_granularity = "Crate"
+group_imports = "StdExternalCrate"

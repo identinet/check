@@ -48,6 +48,12 @@ paths:
             type: string
             format: uuid
           required: false
+        - name: nonce
+          in: path
+          required: true
+          description: Nonce value
+          schema:
+            type: string
       operationId: createRequest
       summary: Creates a new OpenID4VP Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-11.5.
       description: Returns Authorization Request transaction ID and request URI for submitting the response. The authorization URI needs to be extended with the nonce generated on the side of the verifier.
