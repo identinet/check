@@ -52,7 +52,7 @@ mod tests {
                 .layer(Extension(Ext)),
         );
 
-        let res = client.get("/?url=https://www.abc.com").await;
+        let res = client.get("/?url=https://identity.foundation").await;
         assert_eq!(res.status(), StatusCode::OK);
         let data = res.json::<VerificationResponseDto>().await;
         assert_eq!(data.status, "OK");

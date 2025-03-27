@@ -127,14 +127,14 @@ mod tests {
     #[test]
     fn test_url_to_well_known_config_uri() {
         assert_eq!(
-            url_to_well_known_config_uri(&Url::parse("https://identinet.io").unwrap()),
-            "https://identinet.io/.well-known/did-configuration.json"
+            url_to_well_known_config_uri(&Url::parse("https://identity.foundation").unwrap()),
+            "https://identity.foundation/.well-known/did-configuration.json"
         );
         assert_eq!(
             url_to_well_known_config_uri(
-                &Url::parse("https://identinet.io/path/is/ignored").unwrap()
+                &Url::parse("https://identity.foundation/path/is/ignored").unwrap()
             ),
-            "https://identinet.io/.well-known/did-configuration.json"
+            "https://identity.foundation/.well-known/did-configuration.json"
         );
     }
 
