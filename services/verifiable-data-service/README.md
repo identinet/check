@@ -13,9 +13,10 @@
 
 ![Talao add Credentials](./docs/figures/talao-add-credential_small.jpg)
 
-3. Interact with Demo Shop (start tunnel - `just tunnel`, caddy server
-   `just dev` and shop `cd services/demo-shop && just dev`). Then go to the page
-   that requests a credential.
+3. Start this service (`cd services/verifiable-data-service && just dev`) and
+   the Demo Shop (start tunnel - `just tunnel`, caddy server `just dev` and shop
+   `cd services/demo-shop && just dev`). Then open the Demo Shop and go to the
+   page that requests a credential.
 
 Subsequently, the following steps are performed internally:
 
