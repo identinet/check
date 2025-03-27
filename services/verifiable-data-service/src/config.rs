@@ -83,7 +83,9 @@ impl AppConfig {
             .set_override_option("verification_method", cli.verification_method)?
             .set_override_option("callback_base_path", cli.callback_base_path)?;
         let config: AppConfig = builder.build()?.try_deserialize()?;
-
+        Self::validate(config)
+    }
+    pub fn validate(config: Self) -> Result<Self, ConfigError> {
         if config.host.is_empty() {
             return Err(ConfigError::NotFound("Error: 'host' is required but missing".into()));
         }
