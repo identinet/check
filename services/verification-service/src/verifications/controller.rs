@@ -15,7 +15,7 @@ pub async fn verify_domain(
     // save to unwrap, URL has been parsed during DTO validation already
     let url = Url::parse(&params.url).unwrap();
 
-    let did_document = service::verify_by_url(&url)
+    service::verify_by_url(&url)
         .await
         .map_err(|err| match err {
             Error::UrlNotSupported(s) => VerificationError::bad_request_from(s),
@@ -25,8 +25,8 @@ pub async fn verify_domain(
                 }
                 _ => VerificationError::bad_request_from(error.to_string()),
             },
+            _ => VerificationError::bad_request_from("Should not happen".to_string()),
         })?;
-    println!("did doc: {:?}", did_document);
 
     let json = VerificationResponseDto {
         status: "OK".to_string(),
