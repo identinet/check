@@ -1,6 +1,8 @@
 use reqwest;
 use serde::Deserialize;
-use ssi::dids::{resolution::Output, AnyDidMethod, DIDBuf, DIDResolver};
+use ssi::dids::{
+    document::service::Endpoint, resolution::Output, AnyDidMethod, DIDBuf, DIDResolver,
+};
 use tokio::task::JoinSet;
 use url::Url;
 
@@ -59,11 +61,31 @@ pub async fn verify_by_url(url: &Url) -> Result<bool, Error> {
         return Err(e);
     }
 
-    // Collect all DID documents
+    // Collect all successfully resolved DID documents
     let did_docs: Vec<_> = oks.into_iter().filter_map(|r| r.ok()).collect();
 
     for did_doc in did_docs {
+        println!("***** DID document *****");
         println!("did doc: {:?}", did_doc);
+        println!();
+
+        let linked_vp_type = String::from("LinkedVerifiablePresentation");
+
+        let linked_vp_endpoints: Vec<&Endpoint> = did_doc
+            .document
+            .document()
+            .service
+            .iter()
+            .filter(|s| s.type_.contains(&linked_vp_type)) // pick services with type "LinkedVerifiablePresentation"
+            .flat_map(|s| s.service_endpoint.iter()) // from those services get the endpoints (OneOrMany)
+            .flat_map(|e| e.into_iter()) // get iterator over OneOrMany
+            .collect();
+
+        println!("***** Linked VP endpoints *****");
+        linked_vp_endpoints
+            .iter()
+            .for_each(|f| println!("endpoint: {:?}", f));
+        println!();
     }
 
     Ok(true)
