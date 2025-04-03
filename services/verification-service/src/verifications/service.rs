@@ -90,14 +90,12 @@ async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
 
 /// Downloads the DID well-known config from the given URL
 /// https://identity.foundation/specs/did-configuration/
-async fn lookup_did_config(url: &Url) -> Result<DidConfig, reqwest::Error> {
-    let well_known_uri = url_to_well_known_config_uri(&url);
+async fn lookup_did_config(url: &Url) -> Result<DidConfig, ()> {
+    let well_known_uri = url_to_well_known_config_uri(&url)?;
     // TODO handle JWT proof format
     // TODO handle JSON parse errors
-    let config = reqwest::get(well_known_uri)
-        .await?
-        .json::<DidConfig>()
-        .await?;
+    let response = reqwest::get(well_known_uri).await.map_err(|_| ())?;
+    let config = response.json::<DidConfig>().await.map_err(|_| ())?;
     Ok(config)
 }
 
@@ -115,12 +113,11 @@ fn config_to_dids(config: &DidConfig) -> Vec<DIDBuf> {
 
 /// Constructs the well-known config URL based on the given URL
 /// https://identity.foundation/specs/did-configuration/
-fn url_to_well_known_config_uri(url: &Url) -> String {
-    // url.authority() returns origin as string and strips default ports
-    format!(
-        "https://{}/.well-known/did-configuration.json",
-        url.authority()
-    )
+fn url_to_well_known_config_uri(url: &Url) -> Result<Url, ()> {
+    let mut url = url.clone();
+    url.set_scheme("https")?;
+    url.set_path(".well-known/did-configuration.json");
+    Ok(url)
 }
 
 /// Transforms the given URL to a did:web string. Only the domain and the port
@@ -165,14 +162,24 @@ mod tests {
     #[test]
     fn test_url_to_well_known_config_uri() {
         assert_eq!(
-            url_to_well_known_config_uri(&Url::parse("https://identity.foundation").unwrap()),
+            url_to_well_known_config_uri(&Url::parse("https://identity.foundation").unwrap())
+                .unwrap()
+                .as_str(),
             "https://identity.foundation/.well-known/did-configuration.json"
         );
         assert_eq!(
             url_to_well_known_config_uri(
                 &Url::parse("https://identity.foundation/path/is/ignored").unwrap()
-            ),
+            )
+            .unwrap()
+            .as_str(),
             "https://identity.foundation/.well-known/did-configuration.json"
+        );
+        assert_eq!(
+            url_to_well_known_config_uri(&Url::parse("http://https.is/enforced").unwrap())
+                .unwrap()
+                .as_str(),
+            "https://https.is/.well-known/did-configuration.json"
         );
     }
 
