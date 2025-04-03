@@ -54,7 +54,7 @@ pub async fn verify_by_url(url: &Url) -> Result<bool, Error> {
     if oks.is_empty() {
         let e = match errs.into_iter().next() {
             Some(r) => r.err().unwrap(), // unwrapping is safe as `errs` partition contains only Err
-            None => Error::Unexpected("Oks and Errs are empty".to_string()), // return general error in case there are also no error results
+            None => Error::Unexpected("Neither results nor errors found".to_string()), // return general error in case there are also no error results
         };
         return Err(e);
     }
