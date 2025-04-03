@@ -33,7 +33,7 @@ export async function GET(event: APIEvent) {
             const entry = store[id];
             if (entry && !entry?.closed) {
               console.debug(`Sending keep alive :ping ${id}/${entry.nonce}`);
-              controller.enqueue(`:ping\n\n`);
+              controller.enqueue(`event: ping\ndata:\n\n`);
               setTimeout(sendKeepAlive, 1500);
             } else {
               console.debug("Connection closed, stopping keep alive", entry);

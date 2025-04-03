@@ -1,25 +1,15 @@
-import {
-  createEffect,
-  createSignal,
-  onCleanup,
-  Show,
-  Suspense,
-} from "solid-js";
-import {
-  createAsync,
-  query,
-  useBeforeLeave,
-  useNavigate,
-} from "@solidjs/router";
+import { createEffect, createSignal, onCleanup, Show, Suspense } from "solid-js";
+import { createAsync, query, useBeforeLeave, useNavigate } from "@solidjs/router";
 import QRCode from "~/components/QRCode";
 import isMobile from "~/lib/isMobile.js";
 import process from "node:process";
 
-const createAuthorizationRequest = query(() => {
+const createAuthorizationRequest = query((mobile) => {
   "use server";
   console.debug("createAuthorizationRequest");
+  console.debug("isMobile", mobile);
   return fetch(
-    `https://${process.env.EXTERNAL_HOST}//api/authrequests/create`,
+    `https://${process.env.EXTERNAL_HOST}//api/authrequests/create?mobile=${mobile}`,
     { method: "POST" },
   ).then((res) =>
     res.json().then(async (authRequest) => {
@@ -37,7 +27,7 @@ export default function Credentials() {
     established: "established",
     closed: "closed",
   };
-  const authRequest = createAsync(() => createAuthorizationRequest());
+  const authRequest = createAsync(() => createAuthorizationRequest(isMobile()));
   const navigate = useNavigate();
 
   // SSE connection between client and server
@@ -109,8 +99,7 @@ export default function Credentials() {
           when={isMobile()}
           fallback={
             <p>
-              Please proceed by scanning this QR code from the wallet app on
-              your mobile device.
+              Please proceed by scanning this QR code from the wallet app on your mobile device.
             </p>
           }
         >
@@ -126,12 +115,14 @@ export default function Credentials() {
               </QRCode>
             }
           >
-            <a
-              href={authRequest()?.url}
-              class="flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 inactive"
-            >
-              Open Wallet
-            </a>
+            <div class="flex gap-10 p-8 wrap">
+              <a
+                href={authRequest()?.url}
+                class="flex w-full items-center justify-center rounded-lg bg-primary-700 p-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 inactive"
+              >
+                Open Wallet
+              </a>
+            </div>
           </Show>
         </Suspense>
       </div>

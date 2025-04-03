@@ -24,6 +24,11 @@ export function GET(event: APIEvent) {
   /* } */
   const entry = store[id];
 
+  const redictionTarget = {
+    true: "/checkout",
+    false: "/close",
+  };
+
   if (entry) {
     if (!entry?.closed && connections[id]) {
       if (nonce == entry?.nonce) {
@@ -34,10 +39,17 @@ export function GET(event: APIEvent) {
         connections[id] = null;
         /* await store.set( */
         /*   id, */
-        /*   JSON.stringify({ nonce: entry?.nonce, closed: true }), */
+        /*   JSON.stringify({ ...entry, closed: true }), */
         /* ); */
-        store[id] = { nonce: entry?.nonce, closed: true };
-        return "success, you can close this window";
+        store[id] = { ...entry, closed: true };
+        // redirect to final checkout or close page, depending on whether the flow was started on a mobile or desktop
+        // browser
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Location": redictionTarget[entry.mobile],
+          },
+        });
       } else {
         console.error("Nonce doesn't match:", id, entry.nonce, nonce);
       }

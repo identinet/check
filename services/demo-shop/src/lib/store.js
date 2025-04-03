@@ -1,11 +1,12 @@
 /**
- * @typedef {Object} SSENonce
+ * @typedef {Object} SSESession
  * @property {String} nonce Nonce.
  * @property {Boolean} closed Indicates that the stream has been closed.
+ * @property {Boolean} mobile Indicates whether the session was started on a mobile device.
  */
 
 /**
- * @typedef {Object.<String,SSENonce>} Store
+ * @typedef {Object.<String,SSESession>} Store
  */
 
 /**

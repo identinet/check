@@ -4,6 +4,8 @@ import { store } from "~/lib/store.js";
 
 export async function POST(event: APIEvent) {
   console.debug("authrequests/create");
+  const params = new URL(event.request.url).searchParams;
+  const mobile = params.get("mobile") == "true" ? true : false;
 
   const nonce = crypto.randomUUID();
 
@@ -22,7 +24,7 @@ export async function POST(event: APIEvent) {
       console.debug(`Generated nonce ${authRequest.id}/${nonce}`);
       // TODO: test if data doesn't exist yet
       /* await store.set(authRequest.id, JSON.stringify({ nonce, closed: false })); */
-      store[authRequest.id] = { nonce, closed: false };
+      store[authRequest.id] = { nonce, closed: false, mobile };
       return authRequest;
     }).catch((err) => {
       console.error("Error creating authorization request", err);
