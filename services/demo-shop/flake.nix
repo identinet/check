@@ -39,7 +39,7 @@
             just
             nushell
             skopeo
-            valkey
+            # valkey
             # default_pkg.nativeBuildInputs
           ];
         };
