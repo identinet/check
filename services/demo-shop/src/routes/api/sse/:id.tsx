@@ -48,6 +48,13 @@ export async function GET(event: APIEvent) {
         },
       });
       // Cleanup when the client disconnects
+      event.request.signal.addEventListener("close", async (ev) => {
+        console.debug("event.request.signal.addEventListener close", id, ev);
+        /* await store.set(id, JSON.stringify({ closed: true })); */
+        store[id].closed = true;
+        connections[id]?.close();
+        delete connections[id];
+      });
       event.request.signal.addEventListener("abort", async (ev) => {
         console.debug("event.request.signal.addEventListener abort", id, ev);
         /* await store.set(id, JSON.stringify({ closed: true })); */
