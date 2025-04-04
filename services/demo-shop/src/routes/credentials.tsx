@@ -20,7 +20,7 @@ const createAuthorizationRequest = query((mobile) => {
   console.debug("createAuthorizationRequest");
   console.debug("isMobile", mobile);
   return fetch(
-    `https://${process.env.EXTERNAL_HOST}//api/authrequests/create?mobile=${mobile}`,
+    `https://${process.env.EXTERNAL_HOST}/api/authrequests/create?mobile=${mobile}`,
     { method: "POST" },
   ).then((res) =>
     res.json().then(async (authRequest) => {
