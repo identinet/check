@@ -1,4 +1,3 @@
-/* import { useParams } from "@solidjs/router"; */
 /* import { createSignal } from "solid-js"; */
 /* import { onMount } from "solid-js"; */
 
