@@ -1,7 +1,9 @@
 use reqwest;
 use serde::Deserialize;
 use ssi::dids::{
-    document::service::Endpoint, resolution::Output, AnyDidMethod, DIDBuf, DIDResolver,
+    document::{service::Endpoint, Service},
+    resolution::Output,
+    AnyDidMethod, DIDBuf, DIDResolver,
 };
 use tokio::task::JoinSet;
 use url::Url;
@@ -69,22 +71,12 @@ pub async fn verify_by_url(url: &Url) -> Result<bool, Error> {
         println!("did doc: {:?}", did_doc);
         println!();
 
-        let linked_vp_type = String::from("LinkedVerifiablePresentation");
+        let linked_presentations = fetch_all_linked_presentations(&did_doc.document.service).await;
 
-        let linked_vp_endpoints: Vec<&Endpoint> = did_doc
-            .document
-            .document()
-            .service
-            .iter()
-            .filter(|s| s.type_.contains(&linked_vp_type)) // pick services with type "LinkedVerifiablePresentation"
-            .flat_map(|s| s.service_endpoint.iter()) // from those services get the endpoints (OneOrMany)
-            .flat_map(|e| e.into_iter()) // get iterator over OneOrMany
-            .collect();
-
-        println!("***** Linked VP endpoints *****");
-        linked_vp_endpoints
-            .iter()
-            .for_each(|f| println!("endpoint: {:?}", f));
+        println!("***** Linked VPs *****");
+        for presentation in &linked_presentations {
+            println!("linked presentation: {:?}", presentation);
+        }
         println!();
     }
 
@@ -175,6 +167,55 @@ async fn resolve_did(did: &DIDBuf) -> Result<DidDocument, Error> {
         Ok(output) => Ok(output),
         Err(e) => Err(Error::ResolutionError(e)),
     }
+}
+
+/// Given a set of services returns all verifiable presentations. Only the "LinkedVerifiablePresentation" services are
+/// considered.
+/// https://identity.foundation/linked-vp/spec/v1.0.0/
+async fn fetch_all_linked_presentations(services: &Vec<Service>) -> Vec<String> {
+    let linked_vp_type = String::from("LinkedVerifiablePresentation");
+
+    let linked_vp_services = services
+        .iter()
+        .filter(|s| s.type_.contains(&linked_vp_type)); // pick services with type "LinkedVerifiablePresentation"
+
+    let mut linked_presentations: Vec<String> = Vec::new();
+    for svc in linked_vp_services {
+        match fetch_linked_presentation(svc).await {
+            Some(vp) => linked_presentations.push(vp),
+            None => {}
+        }
+    }
+
+    linked_presentations
+}
+
+/// Iterates over all endpoints of the given service. Each endpoint's body is fetched and the first successful response
+/// is returned. `None` is returned if all endpoints fail.
+async fn fetch_linked_presentation(service: &Service) -> Option<String> {
+    let endpoint_iter = service.service_endpoint.iter().flat_map(|e| e.into_iter());
+
+    for endpoint in endpoint_iter {
+        match fetch_endpoint_body(endpoint).await {
+            Ok(vp) => return Some(vp),
+            Err(_) => continue,
+        }
+    }
+
+    return None;
+}
+
+/// Downloads the body of the given endpoint
+async fn fetch_endpoint_body(endpoint: &Endpoint) -> Result<String, ()> {
+    let uri = match endpoint {
+        Endpoint::Uri(buf) => buf.to_string(),
+        _ => return Err(()),
+    };
+
+    let response = reqwest::get(uri).await.map_err(|_| ())?;
+    let body = response.text().await.map_err(|_| ())?;
+
+    Ok(body)
 }
 
 #[cfg(test)]
