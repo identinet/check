@@ -37,6 +37,7 @@ export default function Credentials() {
     notEstablished: "not_established",
     established: "established",
     closed: "closed",
+    timeout: "timeout",
   };
   const authRequest = createAsync(() => createAuthorizationRequest(isMobile()));
   const navigate = useNavigate();
@@ -53,6 +54,16 @@ export default function Credentials() {
       eventSource.onopen = (event) => {
         console.debug("connection opened", event);
         setEventSourceStatus(eventSourceStatusOptions.established);
+
+        function printConnectionStatus() {
+          console.log("eventsource readyState", eventSource.readyState);
+          setTimeout(() => {
+            if (eventSource.readyState != 2) {
+              printConnectionStatus();
+            }
+          }, 1000);
+        }
+        printConnectionStatus();
       };
       eventSource.onmessage = (event) => {
         if (eventSourceStatus() != eventSourceStatusOptions.established) {
@@ -63,7 +74,10 @@ export default function Credentials() {
       };
       eventSource.addEventListener("submitted", (event) => {
         if (eventSourceStatus() != eventSourceStatusOptions.established) {
-          console.debug("ignoring event, eventsource", eventSourceStatus());
+          console.debug(
+            "ignoring submitted event, eventsource",
+            eventSourceStatus(),
+          );
           return;
         }
         console.debug("event submitted", event);
@@ -71,6 +85,28 @@ export default function Credentials() {
         setEventSourceStatus(eventSourceStatusOptions.closed);
         eventSource?.close();
         navigate(url);
+      });
+      eventSource.addEventListener("ping", (event) => {
+        if (eventSourceStatus() != eventSourceStatusOptions.established) {
+          console.debug(
+            "ignoring ping event, eventsource",
+            eventSourceStatus(),
+          );
+          return;
+        }
+        console.debug("event ping" /* event */);
+      });
+      eventSource.addEventListener("timeout", (event) => {
+        if (eventSourceStatus() != eventSourceStatusOptions.established) {
+          console.debug(
+            "ignoring timeout event, eventsource",
+            eventSourceStatus(),
+          );
+          return;
+        }
+        console.debug("event timeout" /* event */);
+        setEventSourceStatus(eventSourceStatusOptions.timeout);
+        eventSource?.close();
       });
       eventSource.onerror = (err) => {
         if (eventSourceStatus() == eventSourceStatusOptions.closed) {
@@ -91,6 +127,14 @@ export default function Credentials() {
     try {
       setEventSourceStatus(eventSourceStatusOptions.closed);
       eventSource?.close();
+      console.debug("connection closed", eventSource);
+      if (authRequest()?.id) {
+        fetch(`/api/sse/${authRequest()?.id}/cancel`, { method: "POST" }).catch(
+          (
+            err,
+          ) => console.error("Error while canceling request", err),
+        );
+      }
     } catch (err) {
       console.error("useBeforeLeave", err);
     }

@@ -24,7 +24,7 @@ export function GET(event: APIEvent) {
   /* } */
   const entry = store[id];
 
-  const redictionTarget = {
+  const redirectionTarget = {
     true: "/checkout",
     false: "/close",
   };
@@ -47,7 +47,7 @@ export function GET(event: APIEvent) {
         return new Response(null, {
           status: 302,
           headers: {
-            "Location": redictionTarget[entry.mobile],
+            "Location": redirectionTarget[entry.mobile],
           },
         });
       } else {
