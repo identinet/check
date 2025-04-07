@@ -74,6 +74,10 @@ dev: install
     # Sometime vinxi crashes, run it in a loop to work around this issue
     while true { do -i {deno task dev}; sleep 1sec }
 
+# Start local redis instance
+dev-redis: install
+    valkey-server
+
 # TODO
 dev-test tests='': githooks
     # Continuously test application

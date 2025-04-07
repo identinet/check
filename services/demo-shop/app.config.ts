@@ -1,7 +1,9 @@
 // Documentation: https://vite.dev/config/
 import { defineConfig } from "@solidjs/start/config";
 import UnoCSS from "unocss/vite";
-import { presetIcons, presetWind } from "unocss";
+// import presetWind4 from "@unocss/preset-wind4";
+import presetWind3 from "@unocss/preset-wind3";
+import { presetIcons } from "unocss";
 
 /**
  * TODO flowbite preset is outdated, we probably want to update the included preflight CSS results with the CSS provided
@@ -46,7 +48,7 @@ export default defineConfig({
     plugins: [UnoCSS({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
-        presetWind(),
+        presetWind3(),
         presetIcons({
           // Documentation: https://unocss.dev/presets/icons
           collections: {

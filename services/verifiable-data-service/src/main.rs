@@ -81,7 +81,7 @@ struct AuthorizationRequestSubmission {
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
 #[derive(Serialize, Deserialize)]
 struct AuthorizationRequestSubmissionResponse {
-    // redirect_uri: Url,
+    redirect_uri: Url,
 }
 
 #[derive(Deserialize)]
@@ -377,25 +377,22 @@ async fn authorize_submit(
     // TODO: make this URL valid only once.
     println!("authorize_submit {}", request_id);
     println!("authorize_submit payload {:?}", payload.presentation_submission);
+    let authorization_request = state.session_store.get_session(request_id).await.unwrap();
     // let payload: AuthorizationRequestSubmission = serde_json::from_str(payload.as_str());
     // vp_token
     // presentation_submission
     let redirect_uri = Url::parse(
         format!(
-            "https://{host}/{callback_base_path}/{uuid}",
+            "https://{host}/{callback_base_path}/{uuid}/{nonce}",
             host = state.config.shop_hostname,
             callback_base_path = state.config.callback_base_path,
-            uuid = request_id
+            uuid = request_id,
+            nonce = authorization_request.authorization_request_object.nonce()
         )
         .as_str(),
     )
     .unwrap();
-    (
-        StatusCode::OK,
-        Json(AuthorizationRequestSubmissionResponse {
-        // redirect_uri
-    }),
-    )
+    (StatusCode::OK, Json(AuthorizationRequestSubmissionResponse { redirect_uri }))
 }
 
 // // Retrieve session status

@@ -15,28 +15,43 @@
 
 3. Start this service (`cd services/verifiable-data-service && just dev`) and
    the Demo Shop (start tunnel - `just tunnel`, caddy server `just dev` and shop
-   `cd services/demo-shop && just dev`). Then open the Demo Shop and go to the
-   page that requests a credential.
+   `cd services/demo-shop && just dev`).
 
-Subsequently, the following steps are performed internally:
+4. Then open the Demo Shop on the desktop or phone and go to the page that
+   requests a credential: <https://TUNNEL-shop.theidentinet.com>
 
-- Initiate a session/an Authorization Request via Verifiable Data Service,
-  `POST /api/v1/authrequests`
-  - See
-    [Cross Device Flow](https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow)
-- Receive session URL and render it as a QR code.
+   Subsequently, the following steps are performed internally:
 
-3. Scan QR code that includes the request URL with wallet.
+   - Initiate a session/an Authorization Request via from the Demo Shop's API
+     (`POST /api/authrequests`), this calls the Verifiable Data Service
+     (`POST /api/v1/authrequests`)
+     - See
+       [Cross-Device Flow](https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow)
+5. Two options:
+   - Same-device flow:
+     - Render a button that triggers the wallet to be opened.
+   - Cross-device flow:
+     - Receive session URL and render it as a QR code.
+     - Cross-device flow: Open a
+       [Service Sent Event](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
+       channel (`GET /api/sse/REQUEST_ID`)from the browser that will be used as
+       a notification channel from the server to the browser.
+     - Scan QR code that includes the request URL with wallet.
 
 ![Talao scan QR code](./docs/figures/talao-scan_small.jpg)
 
-4. Wallet retrieves Request Object.
-5. Verifiable Data Service receives and verifies authenticity of data.
-6. Verifiable Data Service forwards client or pings endpoint at demo-shop.
-   - TODO: find out how exactly the shop is being notified
-7. Web shop retrieves data from Verifiable Data Service.
-   - TODO: implement basic authentication or something similar
-8. Process data in show and forward user to the next page.
+6. Wallet retrieves Request Object.
+7. Verifiable Data Service receives and verifies authenticity of data.
+8. Verifiable Data Service sends redirect_uri to wallet, which triggers the
+   wallet to open an endpoint at demo-shop `GET /api/sse/REQUEST_ID/NONCE`.
+9. Two options:
+   - Same-device flow: One the mobile device, no SSE is
+   - Cross-device flow: Demo shop sends notification to browser tab to navigate
+     to the next page.
+10. Demo shop retrieves data from Verifiable Data Service.
+    - TODO: implement functionality
+    - TODO: implement basic authentication or something similar
+11. Display received data in Demo shop.
 
 ### User Flow
 
