@@ -46,7 +46,7 @@ githooks:
       "#!/usr/bin/env -S sh
     set -eu
     MSG_FILE=\"$1\"
-    PATTERN='^(fix|feat|docs|style|chore|test|refactor|ci|build)(\\([a-z0-9/-]+\\))?!?: [a-z].+$'
+    PATTERN='^(fix|feat|docs|style|chore|test|refactor|ci|build)(\\([A-Za-z0-9/_-]+\\))?!?: [a-z].+$'
     if ! head -n 1 \"${MSG_FILE}\" | grep -qE \"${PATTERN}\"; then
             echo \"Your commit message:\" 1>&2
             cat \"${MSG_FILE}\" 1>&2
