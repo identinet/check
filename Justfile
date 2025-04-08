@@ -74,16 +74,16 @@ dev: githooks
     mkdir $certs_directory
     # load configuration from files
     let services = glob "services/*/caddy.json" | each {open $in}
-    $services | filter {$in | get -i host | is-not-empty} | $in.host | each {|host|
-      if not ($"($certs_directory)/($host).pem" | path exists) {
-        mkcert -cert-file $"($certs_directory)/($host).pem" -key-file $"($certs_directory)/($host).pem" $host
+    $services | filter {$in | get -i hostname | is-not-empty} | $in.hostname | each {|hostname|
+      if not ($"($certs_directory)/($hostname).pem" | path exists) {
+        mkcert -cert-file $"($certs_directory)/($hostname).pem" -key-file $"($certs_directory)/($hostname).pem" $hostname
       }
     }
     def getHosts [--no-tunnel] {
       let service = $in
       let hosts = []
-      let hosts = if ($service | get -i host | is-not-empty) {
-        $hosts | append $service.host
+      let hosts = if ($service | get -i hostname | is-not-empty) {
+        $hosts | append $service.hostname
       } else { $hosts }
       let hosts = if (not $no_tunnel) and ($service | get -i tunnelprefix | is-not-empty) {
         $hosts | append $"($env.TUNNEL_USER)-($service.tunnelprefix).($env.TUNNEL_DOMAIN)"
@@ -132,7 +132,7 @@ dev: githooks
               listen: [$":($http_port)"]
               routes: ($services | each {|service|
                 {
-                  match: ($service | getHosts | each {|host| {host: [$host]}})
+                  match: ($service | getHosts | each {|hostname| {host: [$hostname]}})
                   handle: [
                     {
                         handler: "reverse_proxy"
@@ -142,7 +142,7 @@ dev: githooks
                     #   handler: "static_response",
                     #   status_code: 308,
                     #   headers: {
-                    #     Location: [$"https://{http.request.host}:($https_port){http.request.uri}"]
+                    #     Location: [$"https://{http.request.hostname}:($https_port){http.request.uri}"]
                     #   }
                     # }
                   ]
@@ -157,7 +157,7 @@ dev: githooks
               listen: [$":($https_port)"]
               routes: ($services | each {|service|
                 {
-                  match: ($service | getHosts --no-tunnel | each {|host| {host: [$host]}})
+                  match: ($service | getHosts --no-tunnel | each {|hostname| {host: [$hostname]}})
                   handle: [{
                     handler: "reverse_proxy"
                     upstreams: [{dial: $"localhost:($service.port)"}]
@@ -173,7 +173,7 @@ dev: githooks
     print "Caddy is up and running. Visit:"
     print ($services | each {|service|
       let hosts = $service | getHosts
-      $hosts | each {|host| $"https://($host)(if $https_port != 443 {$":($https_port)"})" } | fill -c ' ' -w 40 | str join "or " | prepend "-" | str join " "
+      $hosts | each {|hostname| $"https://($hostname)(if $https_port != 443 {$":($https_port)"})" } | fill -c ' ' -w 40 | str join "or " | prepend "-" | str join " "
     } | str join "\n")
     print ""
     sudo (which caddy).0.path run --config $"($certs_directory)/../caddy.json"

@@ -1,5 +1,5 @@
 {
-  "host": "shop.com.localhost",
+  "hostname": "shop.com.localhost",
   "tunnelprefix": "shop",
   "port": 3030
 }

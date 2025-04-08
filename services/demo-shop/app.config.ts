@@ -11,9 +11,9 @@ import { presetIcons } from "unocss";
  */
 import { presetFlowbite } from "@vonagam/unocss-preset-flowbite";
 const host = process.env.HOST || "::";
-const external_host = process.env.EXTERNAL_HOST;
-const internal_host = process.env.INTERNAL_HOST;
-const vds_host = process.env.EXTERNAL_VDS_HOST;
+const external_hostname = process.env.EXTERNAL_HOSTNAME;
+const internal_hostname = process.env.INTERNAL_HOSTNAME;
+const vds_hostname = process.env.EXTERNAL_VDS_HOSTNAME;
 const port = parseInt(process.env.PORT || "3000");
 
 export default defineConfig({
@@ -23,8 +23,8 @@ export default defineConfig({
       port,
       strictPort: true,
       allowedHosts: [
-        external_host,
-        internal_host,
+        external_hostname,
+        internal_hostname,
       ],
       hmr: {
         // See https://vite.dev/config/server-options.html#server-hmr
@@ -33,7 +33,7 @@ export default defineConfig({
       },
       cors: {
         origin: [
-          `https://${vds_host}`,
+          `https://${vds_hostname}`,
         ],
       },
       watch: {

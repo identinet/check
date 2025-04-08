@@ -1,5 +1,5 @@
 {
-  "host": "vds.identinet.io.localhost",
+  "hostname": "vds.identinet.io.localhost",
   "tunnelprefix": "vds",
   "port": 3020
 }
