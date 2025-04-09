@@ -88,6 +88,11 @@ dev-test tests='': githooks
     # Continuously test application
     deno task test
 
+# Open URL in browser.
+open:
+    #!/usr/bin/env nu
+    deno run -A npm:open-cli $"https://($env.EXTERNAL_HOSTNAME)"
+
 # Lint code
 lint: githooks
     deno lint

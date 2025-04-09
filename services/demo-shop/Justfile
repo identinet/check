@@ -82,10 +82,10 @@ dev-redis: install
 dev-test tests='': githooks
     # Continuously test application
 
-# Open URL in browser. WARNING: requires configuration that is NOT part of this project
+# Open URL in browser.
 open:
     #!/usr/bin/env nu
-    deno run -A npm:open-cli $"https://($env.EXTERNAL_HOST)"
+    deno run -A npm:open-cli $"https://($env.EXTERNAL_HOSTNAME)"
 
 # Build release version of application
 build: install
