@@ -17,7 +17,7 @@ export async function POST(event: APIEvent) {
   /* } */
 
   return fetch(
-    `https://${process.env.VDS_HOST}/v1/authrequests?nonce=${nonce}`,
+    `https://${process.env.EXTERNAL_VDS_HOSTNAME}/v1/authrequests?nonce=${nonce}`,
     { method: "POST" },
   ).then((res) =>
     res.json().then(async (authRequest) => {
