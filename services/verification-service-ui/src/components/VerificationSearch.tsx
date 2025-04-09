@@ -13,7 +13,7 @@ const verifyUrlAction = action(async (formData: FormData) => {
   "use server";
   const input = formData.get("url") as string;
 
-  const demoResult = handleDemoUrl(input);
+  const demoResult = await handleDemoUrl(input);
   if (demoResult) return demoResult;
 
   const response = await fetch(
@@ -25,7 +25,7 @@ const verifyUrlAction = action(async (formData: FormData) => {
   return response.json();
 }, "verifyUrl");
 
-const handleDemoUrl = (url: string) => {
+const handleDemoUrl = async (url: string) => {
   // TODO remove test data handler
   if (url == "https://no-id-example.identinet.io") {
     throw new Error("Not found");
@@ -34,8 +34,14 @@ const handleDemoUrl = (url: string) => {
       status: "NO_CREDENTIAL",
     };
   } else if (url == "https://id-plus-example.identinet.io") {
+    const presentationUrl =
+      "https://id-plus-well-known-example.identinet.io/.well-known/presentation.json";
+    const response = await fetch(presentationUrl);
+    if (!response.ok) throw new Error(response.statusText);
+    /* return response.json(); */
     return {
       status: "CREDENTIAL",
+      presentation: await response.json(),
     };
   } else if (url == "https://broken-example.identinet.io") {
     return {
