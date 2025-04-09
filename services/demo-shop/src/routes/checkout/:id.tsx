@@ -1,4 +1,24 @@
+import { createAsync, query, useBeforeLeave, useNavigate, useParams } from "@solidjs/router";
+
+const getData = query((id) => {
+  "use server";
+  console.debug("getData");
+  return fetch(
+    `https://${process.env.EXTERNAL_HOSTNAME}/api/sse/${id}/data`,
+    { method: "GET" },
+  ).then((res) =>
+    res.json().then((credential) => {
+      console.debug("getData response", credential);
+      return credential;
+    }).catch((err) => {
+      console.error("Error retrieving data", err);
+    })
+  ).catch((err) => console.error("getData", err));
+}, "getData");
+
 export default function Checkout() {
+  const params = useParams();
+  const credentials = createAsync(() => getData(params.id));
   return (
     <section class="bg-white py-8 antialiased dark:bg-gray-900 md:py-16">
       <form action="#" class="mx-auto max-w-screen-xl px-4 2xl:px-0">
@@ -108,6 +128,7 @@ export default function Checkout() {
                     class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
                     placeholder="name@flowbite.com"
                     required
+                    value={credentials()?.at(0)?.vc?.credentialSubject?.email || ""}
                   />
                 </div>
 
@@ -741,54 +762,6 @@ export default function Checkout() {
                       />
                     </div>
                   </div>
-                </div>
-
-                <div>
-                  <label
-                    for="email"
-                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
-                    placeholder="name@flowbite.com"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    for="company_name"
-                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Company name
-                  </label>
-                  <input
-                    type="text"
-                    id="company_name"
-                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
-                    placeholder="Flowbite LLC"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    for="vat_number"
-                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    VAT number
-                  </label>
-                  <input
-                    type="text"
-                    id="vat_number"
-                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
-                    placeholder="DE42313253"
-                    required
-                  />
                 </div>
 
                 <div class="sm:col-span-2">

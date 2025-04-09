@@ -3,6 +3,7 @@
  * @property {String} nonce Nonce.
  * @property {Boolean} closed Indicates that the stream has been closed.
  * @property {Boolean} mobile Indicates whether the session was started on a mobile device.
+ * @property {Array} credentials Verifiable Credentials submitted by the user.
  */
 
 /**

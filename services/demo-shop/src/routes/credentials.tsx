@@ -1,16 +1,5 @@
-import {
-  createEffect,
-  createSignal,
-  onCleanup,
-  Show,
-  Suspense,
-} from "solid-js";
-import {
-  createAsync,
-  query,
-  useBeforeLeave,
-  useNavigate,
-} from "@solidjs/router";
+import { createEffect, createSignal, onCleanup, Show, Suspense } from "solid-js";
+import { createAsync, query, useBeforeLeave, useNavigate } from "@solidjs/router";
 import QRCode from "~/components/QRCode";
 import isMobile from "~/lib/isMobile.js";
 import process from "node:process";
@@ -81,7 +70,7 @@ export default function Credentials() {
           return;
         }
         console.debug("event submitted", event);
-        const url = "/checkout";
+        const url = event.data;
         setEventSourceStatus(eventSourceStatusOptions.closed);
         eventSource?.close();
         navigate(url);
@@ -155,8 +144,7 @@ export default function Credentials() {
           when={isMobile()}
           fallback={
             <p>
-              Please proceed by scanning this QR code from the wallet app on
-              your mobile device.
+              Please proceed by scanning this QR code from the wallet app on your mobile device.
             </p>
           }
         >
