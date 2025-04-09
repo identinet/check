@@ -103,8 +103,8 @@ dev: githooks
       logging: {
         logs: {
           default: {
-            # level: "INFO"
-            level: "DEBUG"
+            level: "INFO"
+            # level: "DEBUG"
           }
         }
       }
