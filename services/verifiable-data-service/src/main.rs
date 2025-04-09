@@ -3,8 +3,16 @@
 
 mod config; // Import the config module
 use config::AppConfig;
+use tokio::sync::Mutex;
 
-use std::{fs, net::SocketAddr, sync::Arc};
+use std::{
+    collections::HashMap,
+    fs,
+    future::{self, Future},
+    net::SocketAddr,
+    pin::Pin,
+    sync::Arc,
+};
 
 use axum::{
     extract::{Path, Query, State},
@@ -33,31 +41,52 @@ use openid4vp::{
         },
         object::UntypedObject,
         presentation_definition,
+        presentation_submission::PresentationSubmission,
+        response::{parameters::VpToken, AuthorizationResponse, PostRedirection, UnencodedAuthorizationResponse},
     },
-    verifier::{self, session::SessionStore, Verifier},
+    verifier::{
+        self,
+        session::{Session, SessionStore},
+        Verifier,
+    },
 };
-use openid4vp_frontend::Status;
+use openid4vp_frontend::{Outcome, Status};
 use serde::{Deserialize, Serialize};
 use ssi::{crypto::Algorithm, dids, verification_methods};
 use url::Url;
 use uuid::Uuid;
 
-// Shared session store
-// type OpenID4VPSessionStore = Arc<Mutex<HashMap<String, WalletMetadata>>>;
-// TODO: swap in memory store with a postgres backend
-type OpenID4VPSessionStore = Arc<verifier::session::MemoryStore>;
+// Share data cache that stores data submitted to the service for future retrieval.
+type DataCache = Arc<Mutex<HashMap<Uuid, DataEntry>>>;
+
+#[derive(Debug, Clone, Default)]
+struct DataEntry {
+    nonce: String,
+    vp_token: Option<VpToken>,
+    presentation_submission: Option<PresentationSubmission>,
+}
+
+// impl Default for DataEntry {
+//     fn default() -> Self {
+//         DataEntry{nonce: "".to_string(), presentation_submission: None}
+//     }
+// }
+
+type LocalVerifier = Arc<Verifier>;
 
 #[derive(Clone)]
 struct AppState {
-    session_store: OpenID4VPSessionStore,
     config: AppConfig,
+    // verifier: LocalVerifier, // INFO: apparently, we don't need to wrap the Verifier in an Arc
+    verifier: Verifier,
+    data_cache: DataCache,
 }
 
 /// Authorization Request URI Response.
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
 #[derive(Serialize, Deserialize)]
 struct AuthRequestURIResponse {
-    id: String,
+    id: Uuid,
     url: Url,
 }
 
@@ -65,28 +94,25 @@ struct AuthRequestURIResponse {
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
 #[derive(Serialize, Deserialize)]
 struct AuthRequestObjectResponse {
-    id: String,
-    url: Url,
+    nonce: String,
+    vp_token: Option<VpToken>,
+    presentation_submission: Option<PresentationSubmission>,
+    status: Status,
+}
+
+#[derive(Deserialize)]
+struct AuthrequestCreateParams {
+    nonce: String,
 }
 
 /// Authorization Request Submission.
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
 #[derive(Debug, Serialize, Deserialize)]
 struct AuthorizationRequestSubmission {
-    vp_token: String,
-    presentation_submission: serde_json::Value,
-}
-
-/// Authorization Request Submission Response.
-/// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
-#[derive(Serialize, Deserialize)]
-struct AuthorizationRequestSubmissionResponse {
-    redirect_uri: Url,
-}
-
-#[derive(Deserialize)]
-struct AuthrequestCreateParams {
-    nonce: Uuid,
+    vp_token: VpToken,
+    // presentation_submission: PresentationSubmission,
+    // presentation_submission: serde_json::Value,
+    presentation_submission: String,
 }
 
 /// Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
@@ -94,38 +120,7 @@ async fn authrequest_create(
     State(state): State<AppState>,
     params: Query<AuthrequestCreateParams>,
 ) -> (StatusCode, Json<AuthRequestURIResponse>) {
-    let verifier_builder = Verifier::builder();
-    // TODO: build request and return object
-    // TODO: then, gradually move initialization elements to other parts of application
-
-    // initate client
-    let key = fs::read_to_string(state.config.key_path).unwrap();
-
-    // let resolver = ssi::dids::jwk::DIDJWK.into_vm_resolver();
-    // TODO: combine internal DID method resolver with the HTTP resolver as a fallback
-    let resolver = dids::AnyDidMethod::default();
-    let vm_resolver: dids::VerificationMethodDIDResolver<_, verification_methods::AnyMethod> =
-        dids::VerificationMethodDIDResolver::new(resolver);
-    // TODO: determine key type dynamically, depending on the curve and support more key types
-    let signer =
-        verifier::request_signer::P256Signer::new(p256::SecretKey::from_jwk_str(&key).unwrap().into()).unwrap();
-    let client = verifier::client::DIDClient::new(state.config.verification_method, Arc::new(signer), vm_resolver)
-        .await
-        .unwrap();
-
-    let direct_post_uri =
-        Url::parse(format!("https://{host}/v1/authorize", host = state.config.external_hostname).as_str()).unwrap();
-    let verifier_builder = verifier_builder
-        .with_session_store(state.session_store)
-        .by_reference(direct_post_uri.clone()) // GET request required to retrieve session parameters - this decreases the
-        // size of the QR code since just the URL needs to be encoded in the QR code!
-        .with_submission_endpoint(direct_post_uri.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
-        .with_client(Arc::new(client));
-    // TODO: initate request parameters
-    // .with_default_request_parameter(t)
-    let verifier = verifier_builder.build().await.unwrap();
-
-    let authz_request_builder = verifier::Verifier::build_authorization_request(&verifier);
+    let authz_request_builder = verifier::Verifier::build_authorization_request(&state.verifier);
     // TODO: initate presentation definition
     let presentation_definition_id = Uuid::new_v4().to_string();
     let ipd_id = "did-key-id"; // TODO: make id unique, not sure what the content of this is actually about
@@ -280,7 +275,7 @@ async fn authrequest_create(
     let authz_request_builder = authz_request_builder
         .with_request_parameter(authorization_request::parameters::ResponseMode::DirectPost)
         .with_request_parameter(authorization_request::parameters::ResponseType::VpToken)
-        .with_request_parameter(authorization_request::parameters::Nonce::from(params.nonce.to_string()))
+        .with_request_parameter(authorization_request::parameters::Nonce::from(params.nonce.clone()))
         .with_request_parameter(authorization_request::parameters::ClientMetadata(client_metadata));
     // TODO: create session
     // let authorization_endpoint =
@@ -325,94 +320,148 @@ async fn authrequest_create(
     //         openid4vp::core::authorization_request::parameters::ClientIdScheme::Did,
     //     ]),
     // );
-    let (_uuid, _url) = authz_request_builder.build(wallet_metadata.clone()).await.unwrap();
-    // let request = AuthorizationRequestObject {};
-    // TODO: expose poll status via uuid
-
-    // Store the session (optional, based on your needs)
-    // let mut sessions = store.lock().await;
-    // sessions.insert(_uuid.into(), wallet_metadata);
+    let (id, url) = authz_request_builder.build(wallet_metadata.clone()).await.unwrap();
+    let mut cache = state.data_cache.lock().await;
+    assert!(cache.get(&id).is_none(), "Expect authorization request to not exist");
+    cache.insert(id, DataEntry { nonce: params.nonce.clone(), ..DataEntry::default() });
 
     // Return the session UUID and URL with 201 Created status
-    (StatusCode::CREATED, Json(AuthRequestURIResponse { id: _uuid.into(), url: _url }))
+    (StatusCode::CREATED, Json(AuthRequestURIResponse { id, url }))
 }
 
-// Retrieves the submitted OpenID4VP data.
+// Retrieves the submitted OpenID4VP data and deletes the request from the service.
 async fn authrequest_get(
     State(state): State<AppState>,
     Path(request_id): Path<Uuid>,
 ) -> (StatusCode, Json<AuthRequestObjectResponse>) {
     println!("authrequest_get");
-    let url = Url::parse(
-        format!("https://{host}/v1/authrequests/{uuid}", host = state.config.external_hostname, uuid = request_id)
-            .as_str(),
+    let status = state.verifier.poll_status(request_id).await.unwrap();
+    // state.session_store.remove_session(request_id).await.unwrap();
+    let mut cache = state.data_cache.lock().await;
+    let entry = cache.get(&request_id).unwrap().clone();
+    // Cleanup, the data is only accessible once
+    cache.remove(&request_id);
+    // TODO: cleanup session
+    (
+        StatusCode::OK,
+        Json(AuthRequestObjectResponse {
+            nonce: entry.nonce,
+            vp_token: entry.vp_token,
+            presentation_submission: entry.presentation_submission,
+            status,
+        }),
     )
-    .unwrap();
-    (StatusCode::OK, Json(AuthRequestObjectResponse { id: request_id.to_string(), url }))
 }
 
-/// Retrieves the OpenID4VP Authorization Request.
+/// Retrieves the OpenID4VP Authorization Request and sends it to the wallet.
 async fn authorize_get(State(state): State<AppState>, Path(request_id): Path<Uuid>) -> impl IntoResponse {
-    // ) -> (StatusCode, std::string::String) {
-    // TODO: make URL valid only once.
     println!("authorize_get {}", request_id);
-    let authorization_request = state.session_store.get_session(request_id).await.unwrap();
-    println!("status {:?}", authorization_request.status);
-    println!("authorization_request_jwt {}", authorization_request.authorization_request_jwt);
-    println!("authorization_request_object {:?}", authorization_request.authorization_request_object);
-    println!("presentation_definition {:?}", authorization_request.presentation_definition);
-    state.session_store.update_status(authorization_request.uuid, Status::SentRequest).await.unwrap();
-    // return an error if request has been sent before
-    (StatusCode::OK, [(header::CONTENT_TYPE, "application/jwt")], authorization_request.authorization_request_jwt)
+    let status = state.verifier.poll_status(request_id).await.unwrap();
+    assert!(
+        status == Status::SentRequest || status == Status::SentRequestByReference, // FIXME: for some unknown reason, this endpoint gets called twice, not sure why
+        "Authorization request status doesn't match expecation. Got: {:?}",
+        status
+    );
+    let auth_request = state.verifier.retrieve_authorization_request(request_id).await.unwrap();
+    (StatusCode::OK, [(header::CONTENT_TYPE, "application/jwt")], auth_request)
 }
 
-/// Accepts data for this Authorization Request.
+/// Validates the submitted presentation.
+/// TODO: verification not yet implemented
+fn validate(session: Session, response: AuthorizationResponse) -> Pin<Box<impl Future<Output = Outcome>>> {
+    println!("validate");
+    let o = Outcome::Success { info: "Successful validation".into() };
+    let f = future::ready(o);
+    Box::pin(f)
+}
+
+/// Accepts data for this Authorization Request. Data can be submitted only once!
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
 async fn authorize_submit(
     State(state): State<AppState>,
     Path(request_id): Path<Uuid>,
-    // Json(payload): Json<serde_json::Value>,
+    // Form(payload): Form<UnencodedAuthorizationResponse>, // FIXME: For some unknown reason, decoding fails. It works when the structure is decoded in the handler
     Form(payload): Form<AuthorizationRequestSubmission>,
-) -> (StatusCode, Json<AuthorizationRequestSubmissionResponse>) {
-    // TODO: make this URL valid only once.
+) -> (StatusCode, Json<PostRedirection>) {
     println!("authorize_submit {}", request_id);
-    println!("authorize_submit payload {:?}", payload.presentation_submission);
-    let authorization_request = state.session_store.get_session(request_id).await.unwrap();
-    // let payload: AuthorizationRequestSubmission = serde_json::from_str(payload.as_str());
-    // vp_token
-    // presentation_submission
+    assert!(
+        state.verifier.poll_status(request_id).await.unwrap() == Status::SentRequest,
+        "Authorization request status doesn't match expecation"
+    );
+    // TODO: update status to Status::ReceivedResponse - however, updating the status is currently not supported
+    let presentation_submission: PresentationSubmission =
+        serde_json::from_str(&payload.presentation_submission).unwrap();
+    let new_payload = UnencodedAuthorizationResponse {
+        vp_token: payload.vp_token.clone(),
+        presentation_submission: presentation_submission.clone(),
+    };
+    state.verifier.verify_response(request_id, AuthorizationResponse::Unencoded(new_payload), validate).await.unwrap();
+    let mut cache = state.data_cache.lock().await;
+    let entry = cache.get(&request_id).unwrap().clone();
+    cache.insert(
+        request_id,
+        DataEntry {
+            nonce: entry.nonce.clone(),
+            vp_token: Some(payload.vp_token),
+            presentation_submission: Some(presentation_submission),
+        },
+    );
     let redirect_uri = Url::parse(
         format!(
             "https://{host}/{callback_base_path}/{uuid}/{nonce}",
             host = state.config.shop_hostname,
             callback_base_path = state.config.callback_base_path,
             uuid = request_id,
-            nonce = authorization_request.authorization_request_object.nonce()
+            nonce = entry.nonce,
         )
         .as_str(),
     )
     .unwrap();
-    (StatusCode::OK, Json(AuthorizationRequestSubmissionResponse { redirect_uri }))
+    (StatusCode::OK, Json(PostRedirection { redirect_uri }))
 }
 
-// // Retrieve session status
-// async fn session_status(State(store): State<OpenID4VPSessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
-//     let id = Uuid::new_v4().to_string();
-//     // Return the session ID with 201 Created status
-//     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
-// }
-
-// // Retrieve session status
-// async fn session_submit(State(store): State<OpenID4VPSessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
-//     let id = Uuid::new_v4().to_string();
-//     // Return the session ID with 201 Created status
-//     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
-// }
-
-pub fn create_app(config: AppConfig) -> Router {
+async fn get_verifier(config: AppConfig) -> Verifier {
     // let store: OpenID4VPSessionStore = Arc::new(Mutex::new(HashMap::new()));
-    let store = Arc::new(verifier::session::MemoryStore::default());
-    let state = AppState { session_store: store, config };
+    let session_store = Arc::new(verifier::session::MemoryStore::default());
+    let verifier_builder = Verifier::builder();
+    // TODO: build request and return object
+    // TODO: then, gradually move initialization elements to other parts of application
+
+    // initate client
+    let key = fs::read_to_string(config.key_path).unwrap();
+
+    // let resolver = ssi::dids::jwk::DIDJWK.into_vm_resolver();
+    // TODO: combine internal DID method resolver with the HTTP resolver as a fallback
+    let resolver = dids::AnyDidMethod::default();
+    let vm_resolver: dids::VerificationMethodDIDResolver<_, verification_methods::AnyMethod> =
+        dids::VerificationMethodDIDResolver::new(resolver);
+    // TODO: determine key type dynamically, depending on the curve and support more key types
+    let signer =
+        verifier::request_signer::P256Signer::new(p256::SecretKey::from_jwk_str(&key).unwrap().into()).unwrap();
+    let client =
+        verifier::client::DIDClient::new(config.verification_method, Arc::new(signer), vm_resolver).await.unwrap();
+
+    let direct_post_uri =
+        Url::parse(format!("https://{host}/v1/authorize", host = config.external_hostname).as_str()).unwrap();
+    let verifier_builder = verifier_builder
+        .with_session_store(session_store)
+        .by_reference(direct_post_uri.clone()) // GET request required to retrieve session parameters - this decreases the
+        // size of the QR code since just the URL needs to be encoded in the QR code!
+        .with_submission_endpoint(direct_post_uri.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
+        .with_client(Arc::new(client));
+    // TODO: initate request parameters
+    // .with_default_request_parameter(t)
+    verifier_builder.build().await.unwrap()
+    // verifier.verify_response(reference, authorization_response, validator_function)
+}
+
+pub async fn create_app(config: AppConfig) -> Router {
+    let data_cache: DataCache = Arc::new(Mutex::new(HashMap::new()));
+    let verifier = get_verifier(config.clone()).await;
+    let state = AppState { config, verifier:
+        // Arc::new(verifier),
+        verifier,
+        data_cache };
     Router::new()
         .nest(
             "/v1",
@@ -432,7 +481,7 @@ async fn main() {
     let config = AppConfig::new().unwrap();
 
     // build our application with a single route
-    let app = create_app(config.clone());
+    let app = create_app(config.clone()).await;
 
     // TODO: Parse listen address properly, see https://rust-api.dev/docs/part-1/tokio-hyper-axum/#web-application-structure
     let host = if config.host.contains(':') {
