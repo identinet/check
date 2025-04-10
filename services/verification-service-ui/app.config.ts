@@ -83,6 +83,21 @@ export default defineConfig({
             "900": "#1e3a8a",
             "950": "#172554",
           },
+          valid: {
+            100: "#EAF6FF",
+            500: "#ADDCFF",
+            900: "#039BE5",
+          },
+          risky: {
+            100: "#FFF7EA",
+            500: "#FEEDDE",
+            900: "#FFCFAD",
+          },
+          invalid: {
+            100: "#FFEAF3",
+            500: "#FFADCA",
+            900: "#E5036C",
+          },
         },
       },
       content: {

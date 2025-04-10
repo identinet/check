@@ -4,21 +4,22 @@ import {
   VerificationResultDetailSuccess,
 } from "./VerificationResultDetailDummies";
 
-const errorElement = ({ error }) => {
-  const msg = error.message ? error.message : "Unknown error";
-  return resultElement({
-    title: "Error",
-    details: `There was an error while verifying the address: ${msg}.`,
-  });
-};
+const classesInvalid =
+  "bg-gradient-from-invalid-100 bg-gradient-via-invalid-100 bg-gradient-to-invalid-500 border-invalid-900";
+const classesValid =
+  "bg-gradient-from-valid-100 bg-gradient-via-valid-100 bg-gradient-to-valid-500 border-valid-900";
+const classesRisky =
+  "bg-gradient-from-risky-100 bg-gradient-via-risky-100 bg-gradient-to-risky-500 border-risky-900";
 
 export default function VerificationResult({ pending, result, error }) {
   const [collapsed, setCollapsed] = createSignal(true);
   const toggleCardView = () => setCollapsed((collapsed) => !collapsed);
 
-  const resultElement = ({ title, details }) => {
+  const resultElement = ({ title, details, classes }) => {
     return (
-      <div class="max-w-sm p-6 bg-white border border-blue rounded-lg shadow-sm">
+      <div
+        class={`max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classes}`}
+      >
         <h5 class="mb-4 text-left text-xl font-bold tracking-tight text-gray-900">
           {title}
         </h5>
@@ -64,13 +65,19 @@ export default function VerificationResult({ pending, result, error }) {
   }
 
   if (error) {
-    return errorElement({ error });
+    const msg = error.message ? error.message : "Unknown error";
+    return resultElement({
+      title: "Error",
+      details: `There was an error while verifying the address: ${msg}.`,
+      classes: classesInvalid,
+    });
   }
 
   if (result.status == "NOT_VERIFIED") {
     return resultElement({
       title: "Not verified",
       details: VerificationResultDetailNotVerified,
+      classes: classesInvalid,
     });
   }
 
@@ -78,6 +85,7 @@ export default function VerificationResult({ pending, result, error }) {
     return resultElement({
       title: "Success",
       details: VerificationResultDetailSuccess(false),
+      classes: classesRisky,
     });
   }
 
@@ -87,6 +95,7 @@ export default function VerificationResult({ pending, result, error }) {
   return resultElement({
     title: titleFromCredentialType(credential),
     details: credentialDetails(credential),
+    classes: classesValid,
   });
 }
 
