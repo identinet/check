@@ -1,50 +1,64 @@
-import { For, Show } from "solid-js";
-import { action, query, useAction, useSubmission } from "@solidjs/router";
-import { useForm } from "~/utils/forms/validation";
+import { createSignal, For } from "solid-js";
 import {
   VerificationResultDetailNotVerified,
   VerificationResultDetailSuccess,
 } from "./VerificationResultDetailDummies";
 
-const greyClasses = "bg-gray-50 border-gray-300 dark:border-gray-600";
-const greenClasses =
-  "bg-green-50 border-green-300 dark:border-green-800 dark:text-green-400 text-black-400";
-const yellowClasses =
-  "bg-yellow-50 border-yellow-300 dark:border-yellow-800 dark:text-yellow-300 text-yellow-800";
-const redClasses =
-  "bg-red-50 border-red-300 dark:border-red-800 dark:text-red-400 text-red-800";
-
-const resultElement = ({ classes, title, desc, details }) => {
-  const commonClasses =
-    "text-left border dark:bg-gray-800 mb-4 p-4 rounded-lg max-w-md mt-8 mx-auto";
-
-  return (
-    <div class={`${commonClasses} ${classes}`} role="alert">
-      <h3 class="text-lg text-center font-medium">{title}</h3>
-      {desc &&
-        <div class="mt-2 mb-4 text-sm">{desc}</div>}
-      {details &&
-        <div class="mt-2 mb-4">{details}</div>}
-    </div>
-  );
-};
-
 const errorElement = ({ error }) => {
   const msg = error.message ? error.message : "Unknown error";
   return resultElement({
-    classes: yellowClasses,
-    icon: "i-flowbite-fire-solid",
     title: "Error",
-    desc: `There was an error while verifying the address: ${msg}.`,
+    details: `There was an error while verifying the address: ${msg}.`,
   });
 };
 
 export default function VerificationResult({ pending, result, error }) {
+  const [collapsed, setCollapsed] = createSignal(true);
+  const toggleCardView = () => setCollapsed((collapsed) => !collapsed);
+
+  const resultElement = ({ title, details }) => {
+    return (
+      <div class="max-w-sm p-6 bg-white border border-blue rounded-lg shadow-sm">
+        <h5 class="mb-4 text-left text-xl font-bold tracking-tight text-gray-900">
+          {title}
+        </h5>
+        {details && (
+          <div class="mb-3">
+            {details}
+          </div>
+        )}
+        <button
+          onClick={toggleCardView}
+          class="text-xs text-gray-900 underline"
+        >
+          {collapsed() && "View full credential"}
+          {!collapsed() && "Return to preview"}
+        </button>
+      </div>
+    );
+  };
+
+  const credentialDetails = (credential) => {
+    return (
+      <dl class="text-sm text-left rtl:text-right w-full">
+        <div class="preview grid grid-cols-[1fr_2fr] gap-4 mb-4">
+          {renderClaim(["Issuer", credential.issuer])}
+          {renderClaim(["Issued", credential.issuanceDate])}
+        </div>
+        <div
+          class={`full grid grid-cols-[1fr_2fr] gap-4 ${
+            collapsed() ? "hidden" : ""
+          }`}
+        >
+          {renderClaim([null, credential.credentialSubject])}
+        </div>
+      </dl>
+    );
+  };
+
   /* console.log("VerificationResult", result); */
   if (pending) {
     return resultElement({
-      classes: greyClasses,
-      icon: "i-flowbite-cog-outline",
       title: "Pending...",
     });
   }
@@ -55,20 +69,14 @@ export default function VerificationResult({ pending, result, error }) {
 
   if (result.status == "NOT_VERIFIED") {
     return resultElement({
-      classes: redClasses,
-      icon: "i-flowbite-exclamation-circle-solid",
       title: "Not verified",
-      desc: "Uh oh! This address could not be verified.",
       details: VerificationResultDetailNotVerified,
     });
   }
 
   if (result.status == "NO_CREDENTIAL") {
     return resultElement({
-      classes: greenClasses,
-      icon: "i-flowbite-badge-check-solid",
       title: "Success",
-      desc: "Address verified successfully!",
       details: VerificationResultDetailSuccess(false),
     });
   }
@@ -77,7 +85,6 @@ export default function VerificationResult({ pending, result, error }) {
 
   // VERIFED, CREDENTIALS
   return resultElement({
-    classes: greenClasses,
     title: titleFromCredentialType(credential),
     details: credentialDetails(credential),
   });
@@ -124,37 +131,18 @@ const formatClaimValue = (value) => {
 const renderClaim = ([key, value]) => {
   if (!isObject(value)) {
     return (
-      <tr class="dark:border-gray-700 border-gray-200">
-        <th
-          scope="row"
-          class="pr-6 py-2 font-semibold text-black-900 whitespace-nowrap dark:text-white"
-        >
-          {formatClaimKey(key)}
-        </th>
-        <td class="pl-6 py-2">{formatClaimValue(value)}</td>
-      </tr>
+      <>
+        <dt class="font-semibold">{formatClaimKey(key)}</dt>
+        <dd>{formatClaimValue(value)}</dd>
+      </>
     );
   }
 
   return (
     <For each={Object.entries(value)}>
-      {([key, value], index) => {
+      {([key, value]) => {
         return renderClaim([key, value]);
       }}
     </For>
-  );
-};
-
-const credentialDetails = (credential) => {
-  return (
-    <div class="text-left">
-      <table class="w-full text-sm text-left rtl:text-right">
-        <tbody>
-          {renderClaim(["Issuer", credential.issuer])}
-          {renderClaim(["Issued", credential.issuanceDate])}
-          {renderClaim([null, credential.credentialSubject])}
-        </tbody>
-      </table>
-    </div>
   );
 };
