@@ -1,13 +1,13 @@
 import { createEffect, Show } from "solid-js";
 import {
   action,
-  query,
   useAction,
   useSearchParams,
   useSubmission,
 } from "@solidjs/router";
 import { useForm } from "~/utils/forms/validation";
 import VerificationResult from "~/components/VerificationResult";
+import process from "node:process";
 
 const verifyUrlAction = action(async (formData: FormData) => {
   "use server";
@@ -61,6 +61,7 @@ export default function ConfirmButton() {
   const submission = useSubmission(verifyUrlAction);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // deno-lint-ignore no-unused-vars
   const { validate, formSubmit, errors } = useForm({
     errorClass: "error-input",
   });
@@ -68,7 +69,7 @@ export default function ConfirmButton() {
     try {
       const url = new URL(value);
       return (url.protocol != "https:") && "Please enter a 'https' URL";
-    } catch (e) {
+    } catch (_e) {
       return `${value} is not a valid URL`;
     }
   };
