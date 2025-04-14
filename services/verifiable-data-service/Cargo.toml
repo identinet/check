@@ -33,7 +33,11 @@ tower = { version = "0.5.2", features = ["util"] }
 http-body-util = "0.1.0"
 
 [patch.crates-io]
+
+# there's a breaking change coming in ssi lib with commit "ef39aead TH ◯ Improve `ssi-crypto`. (#642"
+ssi = { git = "https://github.com/identinet/ssi.git", rev = "4b79532a" }
+# branch = "main"
+ssi-data-integrity-suites = { git = "https://github.com/identinet/ssi.git", rev = "4b79532a" }
+# branch = "main"
 openid4vp = { git = "https://github.com/identinet/openid4vp.git" }
 openid4vp-frontend = { git = "https://github.com/identinet/openid4vp.git" }
-ssi = { git = "https://github.com/identinet/ssi.git", branch = "main" }
-ssi-data-integrity-suites = { git = "https://github.com/identinet/ssi.git", branch = "main" }
