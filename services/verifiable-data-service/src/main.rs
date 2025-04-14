@@ -265,12 +265,12 @@ async fn authrequest_create(
         ClaimFormatDesignation::JwtVpJson,
         ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
     );
-    vp_formats.insert(
-        ClaimFormatDesignation::JwtVcJson,
-        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
-    );
+    // vp_formats.insert(
+    //     ClaimFormatDesignation::JwtVcJson,
+    //     ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
+    // );
     vp_formats.insert(ClaimFormatDesignation::LdpVp, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
-    vp_formats.insert(ClaimFormatDesignation::LdpVc, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
+    // vp_formats.insert(ClaimFormatDesignation::LdpVc, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
     client_metadata.insert(VpFormats(vp_formats.clone()));
     let authz_request_builder = authz_request_builder
         .with_request_parameter(authorization_request::parameters::ResponseMode::DirectPost)
