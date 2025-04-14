@@ -135,8 +135,12 @@ dev: githooks
                   match: ($service | getHosts | each {|hostname| {host: [$hostname]}})
                   handle: [
                     {
-                        handler: "reverse_proxy"
-                        upstreams: [{dial: $"localhost:($service.port)"}]
+                      handler: "encode"
+                      encodings: { gzip: {level: 3} zstd: {level: "default"} }
+                    }
+                    {
+                      handler: "reverse_proxy"
+                      upstreams: [{dial: $"localhost:($service.port)"}]
                     }
                     # {
                     #   handler: "static_response",
@@ -158,10 +162,16 @@ dev: githooks
               routes: ($services | each {|service|
                 {
                   match: ($service | getHosts --no-tunnel | each {|hostname| {host: [$hostname]}})
-                  handle: [{
-                    handler: "reverse_proxy"
-                    upstreams: [{dial: $"localhost:($service.port)"}]
-                  }]
+                  handle: [
+                    {
+                      handler: "encode"
+                      encodings: { gzip: {level: 3} zstd: {level: "default"} }
+                    }
+                    {
+                      handler: "reverse_proxy"
+                      upstreams: [{dial: $"localhost:($service.port)"}]
+                    }
+                  ]
                 }
               })
             }
