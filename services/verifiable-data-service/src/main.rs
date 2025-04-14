@@ -40,15 +40,14 @@ use openid4vp::{
             WalletMetadata,
         },
         object::UntypedObject,
-        presentation_definition,
+        presentation_definition::{
+            self, SubmissionRequirement, SubmissionRequirementBase, SubmissionRequirementObject,
+            SubmissionRequirementPick,
+        },
         presentation_submission::PresentationSubmission,
         response::{parameters::VpToken, AuthorizationResponse, PostRedirection, UnencodedAuthorizationResponse},
     },
-    verifier::{
-        self,
-        session::{Session, SessionStore},
-        Verifier,
-    },
+    verifier::{self, session::Session, Verifier},
 };
 use openid4vp_frontend::{Outcome, Status};
 use serde::{Deserialize, Serialize};
@@ -72,7 +71,7 @@ struct DataEntry {
 //     }
 // }
 
-type LocalVerifier = Arc<Verifier>;
+// type LocalVerifier = Arc<Verifier>;
 
 #[derive(Clone)]
 struct AppState {
@@ -115,15 +114,9 @@ struct AuthorizationRequestSubmission {
     presentation_submission: String,
 }
 
-/// Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
-async fn authrequest_create(
-    State(state): State<AppState>,
-    params: Query<AuthrequestCreateParams>,
-) -> (StatusCode, Json<AuthRequestURIResponse>) {
-    let authz_request_builder = verifier::Verifier::build_authorization_request(&state.verifier);
-    // TODO: initate presentation definition
+/// Builds a presentation definition according to https://identity.foundation/presentation-exchange/spec/v2.0.0
+fn build_presentation_definition() -> presentation_definition::PresentationDefinition {
     let presentation_definition_id = Uuid::new_v4().to_string();
-    let ipd_id = "did-key-id"; // TODO: make id unique, not sure what the content of this is actually about
     let name = "DID Key Identity Verification"; // TODO: define name
     let purpose = "Check whether your identity key has been verified."; // TODO: define purpose
                                                                         // Constraints request credentials
@@ -249,18 +242,73 @@ async fn authrequest_create(
     //     credential_format::ClaimFormatDesignation::JwtVp,
     //     ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
     // );
-    let presentation_definition = presentation_definition::PresentationDefinition::new(
+    let group_id = "A";
+    let mut pres_definition = presentation_definition::PresentationDefinition::new(
         presentation_definition_id,
-        input_descriptor::InputDescriptor::new(ipd_id.into(), constraints)
-            .set_name(name.into())
-            .set_purpose(purpose.into())
-            .set_format(claim_formats_supported),
+        input_descriptor::InputDescriptor {
+            id: Uuid::new_v4().to_string(),
+            constraints,
+            groups: vec![group_id.into()],
+            ..Default::default()
+        }
+        .set_name(name.into())
+        .set_purpose(purpose.into())
+        .set_format(claim_formats_supported),
     );
-    let authz_request_builder = authz_request_builder.with_presentation_definition(presentation_definition);
+    // Submission requirements are relevant for the verification of the results
+    let submission_requirement = SubmissionRequirement::Pick(SubmissionRequirementPick {
+        submission_requirement: SubmissionRequirementBase::From {
+            from: group_id.into(),
+            submission_requirement_base: SubmissionRequirementObject {
+                name: Some("Submission of email credential".into()),
+                purpose: Some("We need to know your email address".into()),
+                property_set: None,
+            },
+        },
+        count: Some(1),
+        min: Some(1),
+        max: Some(1),
+    });
+    let mut subission_requirements = Vec::new();
+    subission_requirements.push(submission_requirement);
+    let _ = pres_definition.submission_requirements_mut().insert(&mut subission_requirements);
+    pres_definition
+}
+
+/// Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
+async fn authrequest_create(
+    State(state): State<AppState>,
+    params: Query<AuthrequestCreateParams>,
+) -> (StatusCode, Json<AuthRequestURIResponse>) {
+    let authz_request_builder = verifier::Verifier::build_authorization_request(&state.verifier);
+    let pres_definition = build_presentation_definition();
+    let authz_request_builder = authz_request_builder.with_presentation_definition(pres_definition);
     // TODO: initate request parameter
 
     let mut client_metadata = UntypedObject::default();
     let mut vp_formats = openid4vp::core::credential_format::ClaimFormatMap::new();
+    let prooftype_values_supported = vec![
+        ssi_data_integrity_suites::EcdsaRdfc2019::NAME.to_string(),
+        // ssi_data_integrity_suites::EcdsaSd2023::NAME.to_string(),
+        ssi_data_integrity_suites::EcdsaSecp256k1Signature2019::NAME.to_string(),
+        ssi_data_integrity_suites::EcdsaSecp256r1Signature2019::NAME.to_string(),
+        ssi_data_integrity_suites::Ed25519Signature2018::NAME.to_string(),
+        ssi_data_integrity_suites::Ed25519Signature2020::NAME.to_string(),
+        ssi_data_integrity_suites::EdDsa2022::NAME.to_string(),
+        ssi_data_integrity_suites::EdDsaRdfc2022::NAME.to_string(),
+        ssi_data_integrity_suites::EthereumEip712Signature2021::NAME.to_string(),
+        ssi_data_integrity_suites::JsonWebSignature2020::NAME.to_string(),
+        ssi_data_integrity_suites::RsaSignature2018::NAME.to_string(),
+    ];
+    let alg_values_supported = vec![
+        Algorithm::ES256.to_string(),
+        Algorithm::ES256K.to_string(),
+        Algorithm::ES384.to_string(),
+        Algorithm::EdDSA.to_string(),
+        Algorithm::RS256.to_string(),
+        Algorithm::RS384.to_string(),
+        Algorithm::RS512.to_string(),
+    ];
     vp_formats.insert(
         ClaimFormatDesignation::JwtVpJson,
         ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
@@ -367,11 +415,54 @@ async fn authorize_get(State(state): State<AppState>, Path(request_id): Path<Uui
 }
 
 /// Validates the submitted presentation.
-/// TODO: verification not yet implemented
+/// Follows https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-vp-token-validation
+/// INFO: it looks like there's no defined behavior for when the validation fails. Therefore, we'll have to create an
+/// implementation specific response.
 fn validate(session: Session, response: AuthorizationResponse) -> Pin<Box<impl Future<Output = Outcome>>> {
     println!("validate");
-    let o = Outcome::Success { info: "Successful validation".into() };
-    let f = future::ready(o);
+    println!("session {:?}", serde_json::to_string(&session.presentation_definition).unwrap());
+    let outcome = match response {
+        AuthorizationResponse::Unencoded(data) => {
+            // 1. Determine the number of VPs returned in the VP Token and identify in which VP which requested VC is
+            //    included, using the Input Descriptor Mapping Object(s) in the Presentation Submission.
+
+            // Basic verification of to ensure that definition and submission fit
+            let presentation_submission = data.presentation_submission();
+            if presentation_submission.id().to_string() != *session.presentation_definition.id() {
+                Outcome::Failure {
+                    reason: format!(
+                        "Submission received for a different definition, IDs don't match: expected: {} got: {}",
+                        session.presentation_definition.id(),
+                        presentation_submission.id()
+                    )
+                    .into(),
+                }
+            } else {
+                // session.presentation_definition.submission_requirements()
+                // ignore all credentials and input descriptors that have no requirements
+                println!("response, unencoded {}", serde_json::to_string(&data.presentation_submission).unwrap());
+
+                Outcome::Error { cause: "JWT not supported".into() }
+            }
+        }
+        AuthorizationResponse::Jwt(data) => {
+            // TODO: implement support for JWT submissions
+            println!("response, jwt {:?}", data.response);
+            Outcome::Error { cause: "JWT submissions not supported".into() }
+        }
+    };
+    // 2. Validate the integrity, authenticity, and Holder Binding of any Verifiable Presentation provided in the VP
+    //    Token according to the rules of the respective Presentation format. See Section 12.1 for the checks required
+    //    to prevent replay of a VP.
+    // 3. Perform the checks on the Credential(s) specific to the Credential Format (i.e., validation of the
+    //    signature(s) on each VC).
+    // 4. Confirm that the returned Credential(s) meet all criteria sent in the Presentation Definition in the
+    //    Authorization Request.
+    // 5. Perform the checks required by the Verifier's policy based on the set of trust requirements such as trust
+    //    frameworks it belongs to (i.e., revocation checks), if applicable.
+    // let o = Outcome::Success { info: "Successful validation".into() };
+    // let o = Outcome::Failure { reason: "Verification failed".into() };
+    let f = future::ready(outcome);
     Box::pin(f)
 }
 
@@ -395,7 +486,6 @@ async fn authorize_submit(
         vp_token: payload.vp_token.clone(),
         presentation_submission: presentation_submission.clone(),
     };
-    state.verifier.verify_response(request_id, AuthorizationResponse::Unencoded(new_payload), validate).await.unwrap();
     let mut cache = state.data_cache.lock().await;
     let entry = cache.get(&request_id).unwrap().clone();
     cache.insert(
@@ -406,6 +496,17 @@ async fn authorize_submit(
             presentation_submission: Some(presentation_submission),
         },
     );
+    state.verifier.verify_response(request_id, AuthorizationResponse::Unencoded(new_payload), validate).await.unwrap();
+    // TODO: remove debug output
+    match state.verifier.poll_status(request_id).await.unwrap() {
+        Status::Complete(Outcome::Success { info }) => {
+            println!("success {}", info)
+        }
+        Status::Complete(Outcome::Failure { reason }) => println!("failure {}", reason),
+        Status::Complete(Outcome::Error { cause }) => println!("error {}", cause),
+        _ => println!("unknown"),
+    };
+    // Redirect to target URI regardless of the result. Let the verifier take care of error handling
     let redirect_uri = Url::parse(
         format!(
             "https://{host}/{callback_base_path}/{uuid}/{nonce}",
