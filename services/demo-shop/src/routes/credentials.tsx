@@ -44,15 +44,15 @@ export default function Credentials() {
         console.debug("connection opened", event);
         setEventSourceStatus(eventSourceStatusOptions.established);
 
-        function printConnectionStatus() {
-          console.log("eventsource readyState", eventSource.readyState);
-          setTimeout(() => {
-            if (eventSource.readyState != 2) {
-              printConnectionStatus();
-            }
-          }, 1000);
-        }
-        printConnectionStatus();
+        /* function printConnectionStatus() { */
+        /*   console.log("eventsource readyState", eventSource.readyState); */
+        /*   setTimeout(() => { */
+        /*     if (eventSource.readyState != 2) { */
+        /*       printConnectionStatus(); */
+        /*     } */
+        /*   }, 1000); */
+        /* } */
+        /* printConnectionStatus(); */
       };
       eventSource.onmessage = (event) => {
         if (eventSourceStatus() != eventSourceStatusOptions.established) {
