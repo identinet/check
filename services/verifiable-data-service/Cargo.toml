@@ -35,5 +35,5 @@ http-body-util = "0.1.0"
 [patch.crates-io]
 openid4vp = { git = "https://github.com/identinet/openid4vp.git" }
 openid4vp-frontend = { git = "https://github.com/identinet/openid4vp.git" }
-ssi = { git = "https://github.com/identinet/ssi.git" }
-ssi-data-integrity-suites = { git = "https://github.com/identinet/ssi.git" }
+ssi = { git = "https://github.com/identinet/ssi.git", branch = "main" }
+ssi-data-integrity-suites = { git = "https://github.com/identinet/ssi.git", branch = "main" }
