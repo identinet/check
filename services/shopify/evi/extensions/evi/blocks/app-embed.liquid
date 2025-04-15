@@ -1,0 +1,13 @@
+<div style="position: fixed; top: 100px; right: 0px; z-index: 100;" onclick="fetch('https://heise.de').then(res => console.log('gogo'))"
+
+  >
+    {{ "evi.png" | asset_url | img_tag }}
+</div>
+{% schema %}
+  {
+    "name": "EVI - Embedded Verification Interface",
+    "javascript": "evi.js",
+    "target": "body",
+    "settings": []
+  }
+{% endschema %}
