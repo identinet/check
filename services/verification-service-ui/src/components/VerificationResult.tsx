@@ -15,11 +15,17 @@ export default function VerificationResult({ pending, result, error }) {
   const [collapsed, setCollapsed] = createSignal(true);
   const toggleCardView = () => setCollapsed((collapsed) => !collapsed);
 
-  const resultElement = ({ title, details, classes }) => {
+  const resultElement = ({ title, details, classes, icon, desc }) => {
     return (
       <div
         class={`max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classes}`}
       >
+        {(icon || desc) && (
+          <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">
+            {icon && <div class={`${icon} me-2 w-4 h-4 shrink-0`} />}
+            {desc && <span>{desc}</span>}
+          </div>
+        )}
         <h5 class="mb-4 text-left text-xl font-bold tracking-tight text-gray-900">
           {title}
         </h5>
@@ -75,6 +81,8 @@ export default function VerificationResult({ pending, result, error }) {
 
   if (result.status == "NOT_VERIFIED") {
     return resultElement({
+      icon: "i-flowbite-close-circle-solid",
+      desc: "Invalid",
       title: "Not verified",
       details: VerificationResultDetailNotVerified,
       classes: classesInvalid,
