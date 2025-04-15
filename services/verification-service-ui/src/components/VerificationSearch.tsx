@@ -32,6 +32,9 @@ const handleDemoUrl = async (url: string) => {
   } else if (url == "https://id-example.identinet.io") {
     return {
       status: "NO_CREDENTIAL",
+      presentation: {
+        verifiableCredential: [],
+      },
     };
   } else if (url == "https://id-plus-example.identinet.io") {
     const presentationUrl =
@@ -44,8 +47,14 @@ const handleDemoUrl = async (url: string) => {
       presentation: await response.json(),
     };
   } else if (url == "https://broken-example.identinet.io") {
+    const presentationUrl =
+      "https://id-broken-plus-well-known-example.identinet.io/.well-known/presentation.json";
+    const response = await fetch(presentationUrl);
+    if (!response.ok) throw new Error(response.statusText);
+    /* return response.json(); */
     return {
       status: "NOT_VERIFIED",
+      presentation: await response.json(),
     };
   }
 };
@@ -56,7 +65,7 @@ const ErrorMessage = (props) => (
   </p>
 );
 
-export default function ConfirmButton() {
+export default function VerificationSearch() {
   const verifyUrl = useAction(verifyUrlAction);
   const submission = useSubmission(verifyUrlAction);
   const [searchParams, setSearchParams] = useSearchParams();

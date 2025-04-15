@@ -1,165 +1,45 @@
 import { createSignal, For } from "solid-js";
-import {
-  VerificationResultDetailNotVerified,
-  VerificationResultDetailSuccess,
-} from "./VerificationResultDetailDummies";
-
-const classesInvalid =
-  "bg-gradient-from-invalid-100 bg-gradient-via-invalid-100 bg-gradient-to-invalid-500 border-invalid-900";
-const classesValid =
-  "bg-gradient-from-valid-100 bg-gradient-via-valid-100 bg-gradient-to-valid-500 border-valid-900";
-const classesRisky =
-  "bg-gradient-from-risky-100 bg-gradient-via-risky-100 bg-gradient-to-risky-500 border-risky-900";
+import { CredentialCard, ErrorCard } from "./CredentialCard";
 
 export default function VerificationResult({ pending, result, error }) {
-  const [collapsed, setCollapsed] = createSignal(true);
-  const toggleCardView = () => setCollapsed((collapsed) => !collapsed);
-
-  const resultElement = ({ title, details, classes, icon, desc }) => {
-    return (
-      <div
-        class={`max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classes}`}
-      >
-        {(icon || desc) && (
-          <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">
-            {icon && <div class={`${icon} me-2 w-4 h-4 shrink-0`} />}
-            {desc && <span>{desc}</span>}
-          </div>
-        )}
-        <h5 class="mb-4 text-left text-xl font-bold tracking-tight text-gray-900">
-          {title}
-        </h5>
-        {details && (
-          <div class="mb-3">
-            {details}
-          </div>
-        )}
-        <button
-          onClick={toggleCardView}
-          class="text-xs text-gray-900 underline"
-        >
-          {collapsed() && "View full credential"}
-          {!collapsed() && "Return to preview"}
-        </button>
-      </div>
-    );
-  };
-
-  const credentialDetails = (credential) => {
-    return (
-      <dl class="text-sm text-left rtl:text-right w-full">
-        <div class="preview grid grid-cols-[1fr_2fr] gap-4 mb-4">
-          {renderClaim(["Issuer", credential.issuer])}
-          {renderClaim(["Issued", credential.issuanceDate])}
-        </div>
-        <div
-          class={`full grid grid-cols-[1fr_2fr] gap-4 ${
-            collapsed() ? "hidden" : ""
-          }`}
-        >
-          {renderClaim([null, credential.credentialSubject])}
-        </div>
-      </dl>
-    );
-  };
-
-  /* console.log("VerificationResult", result); */
   if (pending) {
-    return resultElement({
-      title: "Pending...",
-    });
+    return "pending...";
   }
 
   if (error) {
-    const msg = error.message ? error.message : "Unknown error";
-    return resultElement({
-      title: "Error",
-      details: `There was an error while verifying the address: ${msg}.`,
-      classes: classesInvalid,
-    });
-  }
-
-  if (result.status == "NOT_VERIFIED") {
-    return resultElement({
-      icon: "i-flowbite-close-circle-solid",
-      desc: "Invalid",
-      title: "Not verified",
-      details: VerificationResultDetailNotVerified,
-      classes: classesInvalid,
-    });
-  }
-
-  if (result.status == "NO_CREDENTIAL") {
-    return resultElement({
-      title: "Success",
-      details: VerificationResultDetailSuccess(false),
-      classes: classesRisky,
-    });
-  }
-
-  const credential = result.presentation.verifiableCredential[0];
-
-  // VERIFED, CREDENTIALS
-  return resultElement({
-    title: titleFromCredentialType(credential),
-    details: credentialDetails(credential),
-    classes: classesValid,
-  });
-}
-
-const isObject = (item) => {
-  return (typeof item === "object" && !Array.isArray(item) && item !== null);
-};
-
-const titleFromCredentialType = (credential) => {
-  if (Array.isArray(credential.type)) {
-    return credential.type.join(" ");
-  }
-
-  return credential.type;
-};
-
-const formatClaimKey = (key) => {
-  const newKey = key.replace("schema:", "");
-  return newKey.charAt(0).toUpperCase() + newKey.slice(1);
-};
-
-const formatClaimValue = (value) => {
-  // return  numbers as numbers (else they would get parsed as Dates)
-  const num = Number(value);
-  if (!isNaN(num)) return num;
-
-  // format dates
-  const ts = Date.parse(value);
-  if (isNaN(ts)) return value; // timestring could not be parsed
-
-  const date = new Date(ts);
-  return new Intl.DateTimeFormat("de-DE", {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-  }).format(date);
-};
-
-const renderClaim = ([key, value]) => {
-  if (!isObject(value)) {
     return (
-      <>
-        <dt class="font-semibold">{formatClaimKey(key)}</dt>
-        <dd>{formatClaimValue(value)}</dd>
-      </>
+      <div class="max-w-md mx-auto mt-8">
+        <ErrorCard
+          icon="i-flowbite-fire-outline"
+          message={`There was an error when checking the site: ${error}`}
+        />
+      </div>
+    );
+  }
+
+  const credentials = result.presentation?.verifiableCredential || [];
+  const status = result.status;
+
+  if (credentials.length == 0) {
+    return (
+      <div class="max-w-md mx-auto mt-8">
+        <ErrorCard
+          icon="i-flowbite-ban-outline"
+          message="Unfortunately, there are no credentials available for this site."
+        />
+      </div>
     );
   }
 
   return (
-    <For each={Object.entries(value)}>
-      {([key, value]) => {
-        return renderClaim([key, value]);
-      }}
-    </For>
+    <div class="flex justify-center mt-4">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <For each={credentials}>
+          {(credential) => (
+            <CredentialCard status={status} credential={credential} />
+          )}
+        </For>
+      </div>
+    </div>
   );
-};
+}
