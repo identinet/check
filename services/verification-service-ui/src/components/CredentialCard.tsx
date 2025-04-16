@@ -1,8 +1,4 @@
 import { createSignal, For } from "solid-js";
-import {
-  VerificationResultDetailNotVerified,
-  VerificationResultDetailSuccess,
-} from "./VerificationResultDetailDummies";
 
 const classesInvalid =
   "bg-gradient-from-invalid-100 bg-gradient-via-invalid-100 bg-gradient-to-invalid-500 border-invalid-900";
@@ -87,19 +83,9 @@ export function CredentialCard({ credential, status }) {
     return resultElement({
       icon: "i-flowbite-close-circle-solid",
       desc: "Invalid",
-      /* title: "Not verified", */
-      /* details: VerificationResultDetailNotVerified, */
       classes: classesInvalid,
       title: titleFromCredentialType(credential),
       details: credentialDetails(credential),
-    });
-  }
-
-  if (status == "NO_CREDENTIAL") {
-    return resultElement({
-      title: "Success",
-      details: VerificationResultDetailSuccess(false),
-      classes: classesRisky,
     });
   }
 
