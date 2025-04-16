@@ -48,6 +48,11 @@ export default defineConfig({
           "**/node_modules/**",
         ],
       },
+      fs: {
+        // workaround for dev env: allow serving files outside of workspace root
+        // TODO follow https://github.com/vitejs/vite/issues/19795 for a solution
+        strict: process.env.NODE_ENV != "development",
+      },
     },
     plugins: [UnoCSS({
       // Documentation: https://unocss.dev/guide/config-file

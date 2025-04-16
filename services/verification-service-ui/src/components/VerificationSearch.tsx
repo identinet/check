@@ -62,7 +62,8 @@ const demoSites = [
 ];
 
 const handleDemoUrl = async (url: string) => {
-  const [_u, _t, handler] = demoSites.find(([u]) => u == url);
+  const [_u, _t, handler] = demoSites.find(([u]) => u == url) || [];
+  if (!handler) return null;
   return await handler();
 };
 
@@ -74,7 +75,7 @@ const verifyUrlAction = action(async (formData: FormData) => {
   if (demoResult) return demoResult;
 
   const response = await fetch(
-    `https://${process.env.API_HOST}/v1/verification?url=${input}`,
+    `https://${process.env.EXTERNAL_API_HOSTNAME}/v1/verification?url=${input}`,
   );
 
   if (!response.ok) throw new Error(response.statusText);
