@@ -9,6 +9,63 @@ import { useForm } from "~/utils/forms/validation";
 import VerificationResult from "~/components/VerificationResult";
 import process from "node:process";
 
+const demoSites = [
+  [
+    "https://no-id-example.identinet.io",
+    "No DID document available",
+    (_url) => {
+      throw new Error("Not found");
+    },
+  ],
+  [
+    "https://id-well-known-example.identinet.io/",
+    "DID document available, no credentials",
+    (_url) => (
+      {
+        status: "NO_CREDENTIAL",
+        presentation: {
+          verifiableCredential: [],
+        },
+      }
+    ),
+  ],
+  [
+    "https://id-plus-well-known-example.identinet.io/",
+    "DID document available, multiple credentials",
+    async (url) => {
+      const presentationUrl =
+        "https://id-plus-well-known-example.identinet.io/.well-known/presentation.json";
+      const response = await fetch(presentationUrl);
+      if (!response.ok) throw new Error(response.statusText);
+      /* return response.json(); */
+      return {
+        status: "CREDENTIAL",
+        presentation: await response.json(),
+      };
+    },
+  ],
+  [
+    "https://id-broken-plus-well-known-example.identinet.io/",
+    "DID document available, invalid credential",
+    async (url) => {
+      const presentationUrl =
+        "https://id-broken-plus-well-known-example.identinet.io/.well-known/presentation.json";
+      const response = await fetch(presentationUrl);
+      if (!response.ok) throw new Error(response.statusText);
+      /* return response.json(); */
+      return {
+        status: "NOT_VERIFIED",
+        presentation: await response.json(),
+      };
+    },
+  ],
+];
+
+const handleDemoUrl = async (url: string) => {
+  const [_u, _t, handler] = demoSites.find(([u]) => u == url);
+  return await handler();
+};
+
 const verifyUrlAction = action(async (formData: FormData) => {
   "use server";
   const input = formData.get("url") as string;
@@ -24,40 +81,6 @@ const verifyUrlAction = action(async (formData: FormData) => {
 
   return response.json();
 }, "verifyUrl");
-
-const handleDemoUrl = async (url: string) => {
-  // TODO remove test data handler
-  if (url == "https://no-id-example.identinet.io") {
-    throw new Error("Not found");
-  } else if (url == "https://id-example.identinet.io") {
-    return {
-      status: "NO_CREDENTIAL",
-      presentation: {
-        verifiableCredential: [],
-      },
-    };
-  } else if (url == "https://id-plus-example.identinet.io") {
-    const presentationUrl =
-      "https://id-plus-well-known-example.identinet.io/.well-known/presentation.json";
-    const response = await fetch(presentationUrl);
-    if (!response.ok) throw new Error(response.statusText);
-    /* return response.json(); */
-    return {
-      status: "CREDENTIAL",
-      presentation: await response.json(),
-    };
-  } else if (url == "https://broken-example.identinet.io") {
-    const presentationUrl =
-      "https://id-broken-plus-well-known-example.identinet.io/.well-known/presentation.json";
-    const response = await fetch(presentationUrl);
-    if (!response.ok) throw new Error(response.statusText);
-    /* return response.json(); */
-    return {
-      status: "NOT_VERIFIED",
-      presentation: await response.json(),
-    };
-  }
-};
 
 const ErrorMessage = (props) => (
   <p class="mt-2 text-sm text-red-600 dark:text-red-500">
@@ -143,6 +166,44 @@ export default function VerificationSearch() {
           </button>
         </div>
         {errors.url && <ErrorMessage error={errors.url} />}
+
+        <span>
+          Enter the shop URL to see listed credentials.<br />
+          Or pick an&nbsp;
+        </span>
+
+        <button
+          id="dropdownHoverButton"
+          data-dropdown-toggle="dropdownHover"
+          data-dropdown-trigger="hover"
+          class="focus:outline-none text-primary-500"
+          type="button"
+        >
+          example site
+        </button>
+
+        <div
+          id="dropdownHover"
+          class="z-10 hidden bg-gray-50 divide-y divide-gray-100 rounded-lg shadow-sm"
+        >
+          <ul
+            class="text-sm text-gray-700"
+            aria-labelledby="dropdownHoverButton"
+          >
+            <For each={demoSites}>
+              {([url, title]) => (
+                <li>
+                  <a
+                    href={`/?url=${url}`}
+                    class="block p-1 hover:underline"
+                  >
+                    {title}
+                  </a>
+                </li>
+              )}
+            </For>
+          </ul>
+        </div>
       </form>
 
       <Show when={submission.pending}>
