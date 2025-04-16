@@ -6,8 +6,10 @@ export default function Nav() {
   const active = (path: string) =>
     isActive(path) ? "bg-primary-500" : "bg-transparent hover:bg-primary-300";
 
+  const hideOnMain = () => location.search.indexOf("url=") < 0 ? "hidden" : "";
+
   return (
-    <nav class="bg-primary-600 border-gray-200">
+    <nav class={`bg-primary-600 border-gray-200 ${hideOnMain()}`}>
       <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a
           href="/"

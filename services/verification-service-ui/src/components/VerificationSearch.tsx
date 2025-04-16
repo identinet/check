@@ -123,13 +123,7 @@ export default function VerificationSearch() {
 
   return (
     <>
-      <form use:formSubmit={submit} class="max-w-md mx-auto">
-        <label
-          for="url-input"
-          class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
-        >
-          Enter website address
-        </label>
+      <form use:formSubmit={submit} class="max-w-md mx-auto mb-8">
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
             <svg
@@ -153,7 +147,7 @@ export default function VerificationSearch() {
             type="url"
             name="url"
             class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="https://www.acme.co"
+            placeholder="https://www…"
             value={searchParams.url}
             required
             use:validate={[isHttpsUrl]}
@@ -161,51 +155,51 @@ export default function VerificationSearch() {
           <button
             type="submit"
             disabled={submission.pending || errors.url}
-            class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            class="text-white absolute end-2.5 bottom-2.5 bg-primary-300 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
           >
             CHECK!
           </button>
         </div>
         {errors.url && <ErrorMessage error={errors.url} />}
+      </form>
 
-        <span>
-          Enter the shop URL to see listed credentials.<br />
-          Or pick an&nbsp;
-        </span>
+      <span class="text-xs">
+        Enter the shop URL to see listed credentials. Or pick an&nbsp;
 
         <button
           id="dropdownHoverButton"
           data-dropdown-toggle="dropdownHover"
           data-dropdown-trigger="hover"
-          class="focus:outline-none text-primary-500"
+          class="focus:outline-none text-primary-500 text-xs"
           type="button"
         >
           example site
         </button>
+        .
+      </span>
 
-        <div
-          id="dropdownHover"
-          class="z-10 hidden bg-gray-50 divide-y divide-gray-100 rounded-lg shadow-sm"
+      <div
+        id="dropdownHover"
+        class="z-10 hidden bg-gray-50 divide-y divide-gray-100 rounded-lg shadow-sm"
+      >
+        <ul
+          class="text-sm text-gray-700"
+          aria-labelledby="dropdownHoverButton"
         >
-          <ul
-            class="text-sm text-gray-700"
-            aria-labelledby="dropdownHoverButton"
-          >
-            <For each={demoSites}>
-              {([url, title]) => (
-                <li>
-                  <a
-                    href={`/?url=${url}`}
-                    class="block p-1 hover:underline"
-                  >
-                    {title}
-                  </a>
-                </li>
-              )}
-            </For>
-          </ul>
-        </div>
-      </form>
+          <For each={demoSites}>
+            {([url, title]) => (
+              <li>
+                <a
+                  href={`/?url=${url}`}
+                  class="block p-1 hover:underline"
+                >
+                  {title}
+                </a>
+              </li>
+            )}
+          </For>
+        </ul>
+      </div>
 
       <Show when={submission.pending}>
         {() => <VerificationResult pending="true" />}
