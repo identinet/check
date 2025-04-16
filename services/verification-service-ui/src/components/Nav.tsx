@@ -6,7 +6,8 @@ export default function Nav() {
   const active = (path: string) =>
     isActive(path) ? "bg-primary-500" : "bg-transparent hover:bg-primary-300";
 
-  const hideOnMain = () => location.search.indexOf("url=") < 0 ? "hidden" : "";
+  const hideOnMain = () =>
+    isActive("/") && location.search.indexOf("url=") < 0 ? "hidden" : "";
 
   return (
     <nav class={`bg-primary-600 border-gray-200 ${hideOnMain()}`}>
