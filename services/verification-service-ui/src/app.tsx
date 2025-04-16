@@ -6,6 +6,7 @@ import { FileRoutes } from "@solidjs/start/router";
 
 import { onMount, Suspense } from "solid-js";
 import Nav from "~/components/Nav";
+import Footer from "~/components/Footer";
 
 import { initFlowbite } from "flowbite";
 
@@ -17,10 +18,11 @@ export default function App() {
   return (
     <Router
       root={(props) => (
-        <>
+        <div class="flex flex-col min-h-vh">
           <Nav />
           <Suspense>{props.children}</Suspense>
-        </>
+          <Footer />
+        </div>
       )}
     >
       <FileRoutes />

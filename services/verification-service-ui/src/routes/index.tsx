@@ -24,14 +24,6 @@ export default function Home() {
         </p>
       </div>
       <VerificationSearch />
-      <p class="mt-10 mb-4">
-        <span>Home</span>
-        {" - "}
-        <A href="/about" class="text-sky-600 hover:underline">
-          About Page
-        </A>
-        {" "}
-      </p>
     </main>
   );
 }
