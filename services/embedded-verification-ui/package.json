@@ -1,7 +1,5 @@
 {
-  "name": "vite-template-solid",
-  "version": "0.0.0",
-  "description": "",
+  "name": "embedded-verification-ui",
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -9,7 +7,6 @@
     "build": "vite build",
     "serve": "vite preview"
   },
-  "license": "MIT",
   "devDependencies": {
     "typescript": "^5.7.2",
     "vite": "^6.0.0",
