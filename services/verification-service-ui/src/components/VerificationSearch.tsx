@@ -1,4 +1,4 @@
-import { createEffect, Show } from "solid-js";
+import { createEffect, onMount, Show } from "solid-js";
 import {
   action,
   useAction,
@@ -8,6 +8,7 @@ import {
 import { useForm } from "~/utils/forms/validation";
 import VerificationResult from "~/components/VerificationResult";
 import process from "node:process";
+import { initDropdowns } from "flowbite";
 
 const demoSites = [
   [
@@ -93,6 +94,10 @@ export default function VerificationSearch() {
   const verifyUrl = useAction(verifyUrlAction);
   const submission = useSubmission(verifyUrlAction);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  onMount(() => {
+    initDropdowns();
+  });
 
   // deno-lint-ignore no-unused-vars
   const { validate, formSubmit, errors } = useForm({

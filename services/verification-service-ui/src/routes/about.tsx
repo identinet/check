@@ -1,4 +1,5 @@
-import { A } from "@solidjs/router";
+import { onMount } from "solid-js";
+import { initAccordions } from "flowbite";
 
 const data = [
   [
@@ -66,6 +67,10 @@ Verifying the legitimacy of online marketplaces
 ];
 
 export default function About() {
+  onMount(() => {
+    initAccordions();
+  });
+
   return (
     <main class="mx-auto w-lg p-4">
       <div
