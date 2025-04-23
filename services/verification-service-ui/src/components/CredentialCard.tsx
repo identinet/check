@@ -34,7 +34,9 @@ export function CredentialCard({ credential, status }) {
   const resultElement = ({ title, details, classes, icon, desc }) => {
     return (
       <div
-        class={`max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classes}`}
+        class={`max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm height-100% ${classes} ${
+          collapsed() ? "" : "absolute"
+        }`}
       >
         {(icon || desc) && (
           <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">

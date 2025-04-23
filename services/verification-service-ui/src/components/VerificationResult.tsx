@@ -74,7 +74,9 @@ export default function VerificationResult({ pending, result, error }) {
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <For each={credentials}>
             {(credential) => (
-              <CredentialCard status={status} credential={credential} />
+              <div class="flex">
+                <CredentialCard status={status} credential={credential} />
+              </div>
             )}
           </For>
         </div>
