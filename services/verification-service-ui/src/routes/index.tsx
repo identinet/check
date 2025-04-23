@@ -1,4 +1,4 @@
-import { A, useLocation } from "@solidjs/router";
+import { useLocation } from "@solidjs/router";
 import VerificationSearch from "~/components/VerificationSearch";
 
 export default function Home() {

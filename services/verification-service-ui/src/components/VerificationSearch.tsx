@@ -19,7 +19,7 @@ const demoSites = [
     },
   ],
   [
-    "https://id-well-known-example.identinet.io/",
+    "https://id-well-known-example.identinet.io",
     "DID document available, no credentials",
     (_url) => (
       {
@@ -31,11 +31,10 @@ const demoSites = [
     ),
   ],
   [
-    "https://id-plus-well-known-example.identinet.io/",
+    "https://id-plus-well-known-example.identinet.io",
     "DID document available, multiple credentials",
     async (url) => {
-      const presentationUrl =
-        "https://id-plus-well-known-example.identinet.io/.well-known/presentation.json";
+      const presentationUrl = `${url}/.well-known/presentation.json`;
       const response = await fetch(presentationUrl);
       if (!response.ok) throw new Error(response.statusText);
       /* return response.json(); */
@@ -46,11 +45,10 @@ const demoSites = [
     },
   ],
   [
-    "https://id-broken-plus-well-known-example.identinet.io/",
+    "https://id-broken-plus-well-known-example.identinet.io",
     "DID document available, invalid credential",
     async (url) => {
-      const presentationUrl =
-        "https://id-broken-plus-well-known-example.identinet.io/.well-known/presentation.json";
+      const presentationUrl = `${url}/.well-known/presentation.json`;
       const response = await fetch(presentationUrl);
       if (!response.ok) throw new Error(response.statusText);
       /* return response.json(); */
@@ -63,9 +61,9 @@ const demoSites = [
 ];
 
 const handleDemoUrl = async (url: string) => {
-  const [_u, _t, handler] = demoSites.find(([u]) => u == url) || [];
+  const [u, _t, handler] = demoSites.find(([u]) => u == url) || [];
   if (!handler) return null;
-  return await handler();
+  return await handler(u);
 };
 
 const verifyUrlAction = action(async (formData: FormData) => {

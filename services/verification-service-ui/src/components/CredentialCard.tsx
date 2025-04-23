@@ -4,8 +4,8 @@ const classesInvalid =
   "bg-gradient-from-invalid-100 bg-gradient-via-invalid-100 bg-gradient-to-invalid-500 border-invalid-900";
 const classesValid =
   "bg-gradient-from-valid-100 bg-gradient-via-valid-100 bg-gradient-to-valid-500 border-valid-900";
-const classesRisky =
-  "bg-gradient-from-risky-100 bg-gradient-via-risky-100 bg-gradient-to-risky-500 border-risky-900";
+//const classesRisky =
+//  "bg-gradient-from-risky-100 bg-gradient-via-risky-100 bg-gradient-to-risky-500 border-risky-900";
 
 export function ErrorCard({ icon, message }) {
   return (

@@ -1,4 +1,4 @@
-import { createSignal, For } from "solid-js";
+import { For } from "solid-js";
 import { CredentialCard, ErrorCard } from "./CredentialCard";
 
 export default function VerificationResult({ pending, result, error }) {
