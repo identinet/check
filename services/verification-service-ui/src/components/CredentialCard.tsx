@@ -104,11 +104,23 @@ const isObject = (item) => {
 };
 
 const titleFromCredentialType = (credential) => {
-  if (Array.isArray(credential.type)) {
-    return credential.type.join(" ");
+  let types = Array.isArray(credential.type)
+    ? credential.type
+    : [credential.type];
+
+  // if there is more than one item remove the "VerifiableCredential" item
+  if (types.length > 1) {
+    const idx = types.indexOf("VerifiableCredential");
+    if (idx >= 0) types.splice(idx, 1);
   }
 
-  return credential.type;
+  // remove "schema:" parts from types
+  types = types.map((t) => {
+    const parts = t.split(":");
+    return parts[parts.length - 1];
+  });
+
+  return types.join(" ");
 };
 
 const formatClaimKey = (key) => {
