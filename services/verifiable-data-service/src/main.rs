@@ -4,6 +4,8 @@
 mod config; // Import the config module
 use config::AppConfig;
 use tokio::sync::Mutex;
+mod validate;
+use validate::validate;
 
 use std::{
     collections::HashMap,
@@ -226,10 +228,10 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
         credential_format::ClaimFormatDesignation::JwtVcJson,
         credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
     );
-    // claim_formats_supported.insert(
-    //     credential_format::ClaimFormatDesignation::JwtVpJson,
-    //     credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
-    // );
+    claim_formats_supported.insert(
+        credential_format::ClaimFormatDesignation::JwtVpJson,
+        credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+    );
     claim_formats_supported.insert(
         credential_format::ClaimFormatDesignation::JwtVc,
         credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
@@ -412,58 +414,6 @@ async fn authorize_get(State(state): State<AppState>, Path(request_id): Path<Uui
     );
     let auth_request = state.verifier.retrieve_authorization_request(request_id).await.unwrap();
     (StatusCode::OK, [(header::CONTENT_TYPE, "application/jwt")], auth_request)
-}
-
-/// Validates the submitted presentation.
-/// Follows https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-vp-token-validation
-/// INFO: it looks like there's no defined behavior for when the validation fails. Therefore, we'll have to create an
-/// implementation specific response.
-fn validate(session: Session, response: AuthorizationResponse) -> Pin<Box<impl Future<Output = Outcome>>> {
-    println!("validate");
-    println!("session {:?}", serde_json::to_string(&session.presentation_definition).unwrap());
-    let outcome = match response {
-        AuthorizationResponse::Unencoded(data) => {
-            // 1. Determine the number of VPs returned in the VP Token and identify in which VP which requested VC is
-            //    included, using the Input Descriptor Mapping Object(s) in the Presentation Submission.
-
-            // Basic verification of to ensure that definition and submission fit
-            let presentation_submission = data.presentation_submission();
-            if presentation_submission.id().to_string() != *session.presentation_definition.id() {
-                Outcome::Failure {
-                    reason: format!(
-                        "Submission received for a different definition, IDs don't match: expected: {} got: {}",
-                        session.presentation_definition.id(),
-                        presentation_submission.id()
-                    )
-                    .into(),
-                }
-            } else {
-                // session.presentation_definition.submission_requirements()
-                // ignore all credentials and input descriptors that have no requirements
-                println!("response, unencoded {}", serde_json::to_string(&data.presentation_submission).unwrap());
-
-                Outcome::Error { cause: "JWT not supported".into() }
-            }
-        }
-        AuthorizationResponse::Jwt(data) => {
-            // TODO: implement support for JWT submissions
-            println!("response, jwt {:?}", data.response);
-            Outcome::Error { cause: "JWT submissions not supported".into() }
-        }
-    };
-    // 2. Validate the integrity, authenticity, and Holder Binding of any Verifiable Presentation provided in the VP
-    //    Token according to the rules of the respective Presentation format. See Section 12.1 for the checks required
-    //    to prevent replay of a VP.
-    // 3. Perform the checks on the Credential(s) specific to the Credential Format (i.e., validation of the
-    //    signature(s) on each VC).
-    // 4. Confirm that the returned Credential(s) meet all criteria sent in the Presentation Definition in the
-    //    Authorization Request.
-    // 5. Perform the checks required by the Verifier's policy based on the set of trust requirements such as trust
-    //    frameworks it belongs to (i.e., revocation checks), if applicable.
-    // let o = Outcome::Success { info: "Successful validation".into() };
-    // let o = Outcome::Failure { reason: "Verification failed".into() };
-    let f = future::ready(outcome);
-    Box::pin(f)
 }
 
 /// Accepts data for this Authorization Request. Data can be submitted only once!

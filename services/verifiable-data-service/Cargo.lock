@@ -5729,6 +5729,7 @@ dependencies = [
  "p256",
  "serde",
  "serde_json",
+ "serde_json_path",
  "ssi",
  "ssi-data-integrity-suites",
  "tokio",
