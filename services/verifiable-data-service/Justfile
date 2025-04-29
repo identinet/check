@@ -34,7 +34,7 @@ build: test
 # Build debug version of application
 [group('development')]
 dev-build: githooks
-    cargo build
+    cargo watch -w src -x build
 
 # Test application
 [group('development')]

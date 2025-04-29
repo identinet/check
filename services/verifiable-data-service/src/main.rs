@@ -119,68 +119,75 @@ struct AuthorizationRequestSubmission {
 /// Builds a presentation definition according to https://identity.foundation/presentation-exchange/spec/v2.0.0
 fn build_presentation_definition() -> presentation_definition::PresentationDefinition {
     let presentation_definition_id = Uuid::new_v4().to_string();
-    let name = "DID Key Identity Verification"; // TODO: define name
-    let purpose = "Check whether your identity key has been verified."; // TODO: define purpose
-                                                                        // Constraints request credentials
-                                                                        // See examples: https://doc.wallet-provider.io/wallet/verifier-configuration/#full-verifier-flow-example
+    let name = "Identity Verification"; // TODO: define name
+    let purpose = "Check whether your identity has been verified."; // TODO: define purpose
+                                                                    // Constraints request credentials
+                                                                    // See examples: https://doc.wallet-provider.io/wallet/verifier-configuration/#full-verifier-flow-example
     let constraint_id_credential =
-            // Add a constraint fields to check if the credential
-            // conforms to a specific path.
-            input_descriptor::ConstraintsField::new("$.credentialSubject.id".parse().unwrap())
-                // Add alternative path(s) to check multiple potential formats.
-                // .add_path(
-                //     "$.vc.credentialSubject.id"
-                //         .parse()
-                //         .unwrap(),
-                // )
-                // .add_path(
-                //     "$.vp.verifiableCredential.vc.credentialSubject.id"
-                //         .parse()
-                //         .unwrap(),
-                // )
-                // .add_path(
-                //     "$.vp.verifiableCredential[0].vc.credentialSubject.id"
-                //         .parse()
-                //         .unwrap(),
-                // )
-                // .add_path("$.vp.verifiableCredential.vc.sub".parse().unwrap())
-                // .add_path("$.vp.verifiableCredential[0].vc.sub".parse().unwrap())
-                // .add_path("$.sub".parse().unwrap())
-                // .add_path("$.iss".parse().unwrap())
-                .set_name("Verify your identity".into())
-                .set_purpose("Check whether your identity has been verified.".into())
-                .set_filter(&serde_json::json!({
-                    "type": "string",
-                    "pattern": "did:(key|jwk):.*" // INFO: test if this works
-                }))
-                .expect("Failed to set filter, invalid validation schema.")
-                // TODO: set field intent_to_retain - currently, there's no setter for this property!
-                // .set_predicate(input_descriptor::Predicate::Required), // TODO: reenable this feature
-                .set_predicate(input_descriptor::Predicate::Preferred);
-    // let constraint_email_credential_fromjson: input_descriptor::ConstraintsField =
-    //     serde_json::from_value(serde_json::json!(
-    //     {
-    //         // "id": "emailpass_1",
-    //         "name": "Verify your email address",
-    //         "porpose": "Check whether your email address has been verified.",
-    //         "required": true,
-    //         "retained": true,
-    //         "constraints": {
-    //             "fields": [
-    //                 {
-    //                     "path": [
-    //                         "$.vc.credentialSubject.type"
-    //                     ],
-    //                     "filter": {
-    //                         "type": "string",
-    //                         "const": "EmailPass"
-    //                     }
-    //                 }
-    //             ]
-    //         }
-    //     }
-    //     ))
-    //     .unwrap();
+    // Add a constraint fields to check if the credential
+    // conforms to a specific path.
+    input_descriptor::ConstraintsField::new("$.credentialSubject.id".parse().unwrap())
+        // Add alternative path(s) to check multiple potential formats.
+        // .add_path(
+        //     "$.vc.credentialSubject.id"
+        //         .parse()
+        //         .unwrap(),
+        // )
+        // .add_path(
+        //     "$.vp.verifiableCredential.vc.credentialSubject.id"
+        //         .parse()
+        //         .unwrap(),
+        // )
+        .add_path(
+            "$.vp.verifiableCredential.*.vc.credentialSubject.id"
+                .parse()
+                .unwrap(),
+        )
+        // .add_path("$.vp.verifiableCredential.vc.sub".parse().unwrap())
+        // .add_path("$.vp.verifiableCredential[0].vc.sub".parse().unwrap())
+        // .add_path("$.sub".parse().unwrap())
+        // .add_path("$.iss".parse().unwrap())
+        .set_name("Verify your identity".into())
+        .set_purpose("Check whether your identity key has been verified.".into())
+        .set_filter(&serde_json::json!({
+            "type": "string",
+            "pattern": "did:(key|jwk):.*" // INFO: test if this works
+        }))
+        .expect("Failed to set filter, invalid validation schema.")
+        // TODO: set field intent_to_retain - currently, there's no setter for this property!
+        // .set_predicate(input_descriptor::Predicate::Required), // TODO: reenable this feature
+        .set_predicate(input_descriptor::Predicate::Preferred);
+    let constraint_email_credential_fromjson: input_descriptor::ConstraintsField =
+        serde_json::from_value(serde_json::json!(
+        {
+            // "id": "emailpass_1",
+            "name": "Verify your email address",
+            "porpose": "Check whether your email address has been verified.",
+            "optional": false,
+            "retained": true,
+            "path": [
+                // JSONPath
+                "$.vc.credentialSubject.type"
+                // Credentials is part of a verifiable presentation
+                // "$.vp.verifiableCredential.*.vc.credentialSubject.type"
+                // "$.vp.verifiableCredential[0].vc.credentialSubject.type"
+            ],
+            "filter": {
+                // JSONSchema
+                // "anyOf": [
+                //     {
+                "type": "string", "const": "EmailPass"
+            // },
+            //         {
+            //             "type": "array",
+            //             // at least one EmailPass credentials is shared
+            //             "contains": { "type": "string", "const": "EmailPass" }
+            //         }
+            //     ]
+            }
+        }
+        ))
+        .unwrap();
     // Add a constraint fields to check if the credential
     // conforms to a specific path.
     let constraint_email_credential =
@@ -197,8 +204,8 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
             .set_predicate(input_descriptor::Predicate::Required);
     let constraints = input_descriptor::Constraints::new()
         // .add_constraint(constraint_id_credential)
-        // .add_constraint(constraint_email_credential_fromjson)
-        .add_constraint(constraint_email_credential)
+        .add_constraint(constraint_email_credential_fromjson)
+        // .add_constraint(constraint_email_credential)
         // .set_limit_disclosure(input_descriptor::ConstraintsLimitDisclosure::Required);
         .set_limit_disclosure(input_descriptor::ConstraintsLimitDisclosure::Preferred);
     let prooftype_values_supported = vec![
@@ -215,13 +222,13 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
         ssi_data_integrity_suites::RsaSignature2018::NAME.to_string(),
     ];
     let alg_values_supported = vec![
-        Algorithm::ES256.to_string(),
-        Algorithm::ES256K.to_string(),
-        Algorithm::ES384.to_string(),
-        Algorithm::EdDSA.to_string(),
-        Algorithm::RS256.to_string(),
-        Algorithm::RS384.to_string(),
-        Algorithm::RS512.to_string(),
+        Algorithm::Es256.to_string(),
+        Algorithm::Es256K.to_string(),
+        Algorithm::Es384.to_string(),
+        Algorithm::EdDsa.to_string(),
+        Algorithm::Rs256.to_string(),
+        Algorithm::Rs384.to_string(),
+        Algorithm::Rs512.to_string(),
     ];
     let mut claim_formats_supported = credential_format::ClaimFormatMap::new();
     claim_formats_supported.insert(
@@ -250,13 +257,13 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
         input_descriptor::InputDescriptor {
             id: Uuid::new_v4().to_string(),
             constraints,
-            groups: vec![group_id.into()],
+            // groups: vec![group_id.into()], // INFO: disable group for the moment
             ..Default::default()
-        }
-        .set_name(name.into())
-        .set_purpose(purpose.into())
-        .set_format(claim_formats_supported),
-    );
+        },
+    )
+    .set_format(claim_formats_supported)
+    .set_name(name.into())
+    .set_purpose(purpose.into());
     // Submission requirements are relevant for the verification of the results
     let submission_requirement = SubmissionRequirement::Pick(SubmissionRequirementPick {
         submission_requirement: SubmissionRequirementBase::From {
@@ -303,22 +310,22 @@ async fn authrequest_create(
         ssi_data_integrity_suites::RsaSignature2018::NAME.to_string(),
     ];
     let alg_values_supported = vec![
-        Algorithm::ES256.to_string(),
-        Algorithm::ES256K.to_string(),
-        Algorithm::ES384.to_string(),
-        Algorithm::EdDSA.to_string(),
-        Algorithm::RS256.to_string(),
-        Algorithm::RS384.to_string(),
-        Algorithm::RS512.to_string(),
+        Algorithm::Es256.to_string(),
+        Algorithm::Es256K.to_string(),
+        Algorithm::Es384.to_string(),
+        Algorithm::EdDsa.to_string(),
+        Algorithm::Rs256.to_string(),
+        Algorithm::Rs384.to_string(),
+        Algorithm::Rs512.to_string(),
     ];
     vp_formats.insert(
         ClaimFormatDesignation::JwtVpJson,
         ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
     );
-    // vp_formats.insert(
-    //     ClaimFormatDesignation::JwtVcJson,
-    //     ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
-    // );
+    vp_formats.insert(
+        ClaimFormatDesignation::JwtVcJson,
+        ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
+    );
     vp_formats.insert(ClaimFormatDesignation::LdpVp, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
     // vp_formats.insert(ClaimFormatDesignation::LdpVc, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
     client_metadata.insert(VpFormats(vp_formats.clone()));
@@ -435,6 +442,8 @@ async fn authorize_submit(
     let new_payload = UnencodedAuthorizationResponse {
         vp_token: payload.vp_token.clone(),
         presentation_submission: presentation_submission.clone(),
+        state: None,
+        should_strip_quotes: false,
     };
     let mut cache = state.data_cache.lock().await;
     let entry = cache.get(&request_id).unwrap().clone();
