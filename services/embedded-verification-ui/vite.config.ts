@@ -4,7 +4,7 @@ import solidPlugin from "vite-plugin-solid";
 export default defineConfig({
   plugins: [solidPlugin()],
   server: {
-    port: 3010,
+    port: process.env.PORT ?? 3010,
   },
   build: {
     target: "esnext",
