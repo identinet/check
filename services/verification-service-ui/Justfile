@@ -64,6 +64,7 @@ update-deps: githooks
     deno outdated --update --latest
 
 _bump_files CURRENT_VERSION NEW_VERSION:
+    #!/usr/bin/env nu
     # let manifest = (open manifest.json)
     open manifest.json | upsert version "{{ NEW_VERSION }}" | save -f manifest.json; git add manifest.json
     open package.json | upsert version "{{ NEW_VERSION }}" | save -f package.json; git add package.json
