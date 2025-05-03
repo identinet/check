@@ -3,7 +3,7 @@
 Development Docs:
 https://shopify.dev/docs/apps/build/online-store/theme-app-extensions/configuration#example-app-embed-block-code
 
-1. Navigate on into [evi extension directory](./).
+1. Navigate to [evi extension directory](./).
 2. Run `shopify app dev` (This requires an active login so that changes can be
    pushed to Shopify).
 3. Build [../../embedded-verification-ui](../../embedded-verification-ui):
