@@ -5,14 +5,7 @@ mod config; // Import the config module
 use config::AppConfig;
 use tokio::sync::Mutex;
 mod validate;
-use std::{
-    collections::HashMap,
-    fs,
-    future::{self, Future},
-    net::SocketAddr,
-    pin::Pin,
-    sync::Arc,
-};
+use std::{collections::HashMap, fs, net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{Path, Query, State},
@@ -47,7 +40,7 @@ use openid4vp::{
         presentation_submission::PresentationSubmission,
         response::{parameters::VpToken, AuthorizationResponse, PostRedirection, UnencodedAuthorizationResponse},
     },
-    verifier::{self, session::Session, Verifier},
+    verifier::{self, Verifier},
 };
 use openid4vp_frontend::{Outcome, Status};
 use serde::{Deserialize, Serialize};
@@ -122,7 +115,7 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
     let purpose = "Check whether your identity has been verified."; // TODO: define purpose
                                                                     // Constraints request credentials
                                                                     // See examples: https://doc.wallet-provider.io/wallet/verifier-configuration/#full-verifier-flow-example
-    let constraint_id_credential =
+    let _constraint_id_credential =
     // Add a constraint fields to check if the credential
     // conforms to a specific path.
     input_descriptor::ConstraintsField::new("$.credentialSubject.id".parse().unwrap())
@@ -189,7 +182,7 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
         .unwrap();
     // Add a constraint fields to check if the credential
     // conforms to a specific path.
-    let constraint_email_credential =
+    let _constraint_email_credential =
         input_descriptor::ConstraintsField::new("$.vc.credentialSubject.type".parse().unwrap())
             .set_filter(&serde_json::json!({
                 "type": "string",
@@ -517,10 +510,12 @@ async fn get_verifier(config: AppConfig) -> Verifier {
 pub async fn create_app(config: AppConfig) -> Router {
     let data_cache: DataCache = Arc::new(Mutex::new(HashMap::new()));
     let verifier = get_verifier(config.clone()).await;
-    let state = AppState { config, verifier:
-        // Arc::new(verifier),
+    let state = AppState {
+        config,
+        // verifier: Arc::new(verifier),
         verifier,
-        data_cache };
+        data_cache,
+    };
     Router::new()
         .nest(
             "/v1",
@@ -577,7 +572,7 @@ mod tests {
             key_path: "./_fixtures/key.jwk".into(),
             verification_method: "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImtYSVJicEtzTzZXZVJ1YndndWdSMWc2RGNhT3NBbmlrVXJ1WXU2QS1HVWMiLCJ5IjoiMG5WdUQ2TkhQeUFEOGF2OWdzM1h6NEoxT2c1ZEFNZDkzdTE1a0RwZklObyJ9#0".into(),
             callback_base_path: "callback".into(),
-        });
+        }).await;
 
         // Create test request
         let request = Request::builder()
@@ -597,6 +592,6 @@ mod tests {
         let response: AuthRequestURIResponse = serde_json::from_slice(&body).unwrap();
 
         // Verify that the session_id is a valid UUID
-        assert!(Uuid::parse_str(&response.id).is_ok());
+        assert!(Uuid::parse_str(&response.id.to_string()).is_ok());
     }
 }
