@@ -5,8 +5,6 @@ mod config; // Import the config module
 use config::AppConfig;
 use tokio::sync::Mutex;
 mod validate;
-use validate::validate;
-
 use std::{
     collections::HashMap,
     fs,
@@ -56,6 +54,7 @@ use serde::{Deserialize, Serialize};
 use ssi::{crypto::Algorithm, dids, verification_methods};
 use url::Url;
 use uuid::Uuid;
+use validate::validate;
 
 // Share data cache that stores data submitted to the service for future retrieval.
 type DataCache = Arc<Mutex<HashMap<Uuid, DataEntry>>>;
@@ -469,7 +468,7 @@ async fn authorize_submit(
     let redirect_uri = Url::parse(
         format!(
             "https://{host}/{callback_base_path}/{uuid}/{nonce}",
-            host = state.config.shop_hostname,
+            host = state.config.callback_hostname,
             callback_base_path = state.config.callback_base_path,
             uuid = request_id,
             nonce = entry.nonce,
@@ -574,7 +573,7 @@ mod tests {
             host: "::1".into(),
             port: 3000,
             external_hostname: "localhost".into(),
-            shop_hostname: "localhost".into(),
+            callback_hostname: "localhost".into(),
             key_path: "./_fixtures/key.jwk".into(),
             verification_method: "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImtYSVJicEtzTzZXZVJ1YndndWdSMWc2RGNhT3NBbmlrVXJ1WXU2QS1HVWMiLCJ5IjoiMG5WdUQ2TkhQeUFEOGF2OWdzM1h6NEoxT2c1ZEFNZDkzdTE1a0RwZklObyJ9#0".into(),
             callback_base_path: "callback".into(),
