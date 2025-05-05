@@ -1,5 +1,5 @@
 {
-  "name": "verifiable-data-service",
+  "name": "check-verifiable-data-service",
   "version": "0.0.1",
   "description": "Docker image that packages the Verifiable Data Service",
   "author": "identinet GmbH <support@identinet.io>",
@@ -16,6 +16,6 @@
   "registry": {
     "type": "docker",
     "name": "docker.io/identinet",
-    "url": "https://hub.docker.com/r/identinet/verifiable-data-service"
+    "url": "https://hub.docker.com/r/identinet/check-verifiable-data-service"
   }
 }
