@@ -1,6 +1,7 @@
 // Fail build if feature is requsted, see https://www.reddit.com/r/rust/comments/8oz7md/make_cargo_fail_on_warning/
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
+use axum::routing::get;
 use axum::Router;
 use std::env;
 use std::net::SocketAddr;
@@ -22,10 +23,17 @@ fn get_config() -> (String, u16) {
     (host, port)
 }
 
+/// Liveness check
+async fn health_check() -> String {
+    "Ok".to_string()
+}
+
 pub fn create_app() -> Router {
     let verifications_router = verifications::create_router();
     let v1_router = Router::new().merge(verifications_router);
-    Router::new().nest("/v1", v1_router)
+    Router::new()
+        .route("/_status/healthz", get(health_check))
+        .nest("/v1", v1_router)
 }
 
 #[tokio::main]

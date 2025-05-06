@@ -4,35 +4,47 @@
   description = "NixOS docker image";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs_unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
-  outputs = { self, nixpkgs, nixpkgs-unstable, flake-utils, }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs_unstable,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        unstable = nixpkgs-unstable.legacyPackages.${system};
+        unstable = nixpkgs_unstable.legacyPackages.${system};
         default_pkg = unstable.callPackage ./default.nix { };
         manifest = pkgs.lib.importJSON ./manifest.json;
-        pkgVersionsEqual = x: y:
+        pkgVersionsEqual =
+          x: y:
           let
-            attempt = builtins.tryEval
-              (assert builtins.substring 0 (builtins.stringLength x) y == x; y);
-          in if attempt.success then
+            attempt = builtins.tryEval (
+              assert builtins.substring 0 (builtins.stringLength x) y == x;
+              y
+            );
+          in
+          if attempt.success then
             attempt.value
           else
-          # Version can be bumped in the prerelease or build version to create a
-          # custom local revision, see https://semver.org/
+            # Version can be bumped in the prerelease or build version to create a
+            # custom local revision, see https://semver.org/
             abort "Version mismatch: ${y} doesn't start with ${x}";
         version = pkgVersionsEqual default_pkg.version manifest.version;
-
-      in rec {
+      in
+      rec {
         # Development environment: nix develop
         devShells.default = pkgs.mkShell {
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
             cargo-watch
             default_pkg.nativeBuildInputs
+            default_pkg.buildInputs
             deno
             gh
             git-cliff
@@ -40,11 +52,18 @@
             nushell
             skopeo
           ];
+          env = {
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.openssl ];
+          };
         };
 
         devShells.ci = pkgs.mkShell {
           name = manifest.name;
-          nativeBuildInputs = with pkgs; [ just nushell skopeo ];
+          nativeBuildInputs = with pkgs; [
+            just
+            nushell
+            skopeo
+          ];
         };
 
         packages.docker = pkgs.dockerTools.streamLayeredImage {
@@ -75,19 +94,24 @@
           enableFakechroot = true;
           fakeRootCommands = ''
             set -exuo pipefail
-            mkdir -p /run/verification-service
-            # chown 65534:65534 /run/verification-service
+            mkdir -p /run/${default_pkg.pname}
+            # chown 65534:65534 /run/${default_pkg.pname}
             # mkdir /tmp
             # chmod 1777 /tmp
           '';
           config = {
             # Valid values, see: https://github.com/moby/docker-image-spec
             # and https://oci-playground.github.io/specs-latest/
-            ExposedPorts = { "8000/tcp" = { }; };
-            Entrypoint = [ "${pkgs.tini}/bin/tini" "--" ];
-            Cmd = [ "${default_pkg}/bin/verification-service" ];
+            ExposedPorts = {
+              "3000/tcp" = { };
+            };
+            Entrypoint = [
+              "${pkgs.tini}/bin/tini"
+              "--"
+            ];
+            Cmd = [ "${default_pkg}/bin/${default_pkg.pname}" ];
             # Env = [ "VARNAME=xxx" ];
-            WorkingDir = "/run/verification-service";
+            WorkingDir = "/run/${default_pkg.pname}";
             # WorkingDir = "/";
             # User 'nobody' and group 'nogroup'
             User = "65534";
@@ -101,8 +125,7 @@
               "org.opencontainers.image.documentation" = manifest.registry.url;
               "org.opencontainers.image.version" = manifest.version;
               "org.opencontainers.image.vendor" = manifest.author;
-              "org.opencontainers.image.authors" =
-                builtins.elemAt manifest.contributors 0;
+              "org.opencontainers.image.authors" = builtins.elemAt manifest.contributors 0;
               "org.opencontainers.image.url" = manifest.homepage;
               "org.opencontainers.image.source" = manifest.repository.url;
               "org.opencontainers.image.revision" = manifest.version;
@@ -114,5 +137,6 @@
 
         # The default package when a specific package name isn't specified: nix build
         packages.default = packages.docker;
-      });
+      }
+    );
 }
