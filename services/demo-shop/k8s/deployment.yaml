@@ -25,6 +25,9 @@ spec:
         - name: demo-shop
           image: identinet/check-demo-shop
           imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: demo-shop-env
           securityContext:
             capabilities:
               drop:
@@ -33,9 +36,6 @@ spec:
             runAsNonRoot: true
             runAsUser: 65534
             runAsGroup: 65534
-          envFrom:
-            - secretRef:
-                name: demo-shop-env
           resources:
             requests:
               cpu: 100m

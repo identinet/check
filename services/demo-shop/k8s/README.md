@@ -4,7 +4,7 @@ This Kubernetes configuration is meant to be used with
 [kustomize](https://kustomize.io/) to give you full control over the deployed
 resources.
 
-Minium configuration via your `kustomization.yaml`:
+Minimum configuration via your `kustomization.yaml`:
 
 ```yaml
 # Documentation: https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/
@@ -22,7 +22,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/rules/0/host
-        value: shop.example.com
+        value: demo-shop.example.com
 
 secretGenerator:
   # Generate Kubernetes secret from a local environment file
@@ -35,12 +35,14 @@ The configuration of the service is done via environment variables. Example
 environment file `demo-shop.env`:
 
 ```dotenv
-# Host interface that the service will bind to
-HOST=::
-# Host port that the service will bind to
-PORT=3000
 # External hostname
-EXTERNAL_HOSTNAME=shop.example.com
+EXTERNAL_HOSTNAME=demo-shop.example.com
 # External hostname of the Verifiable Data Service
-EXTERNAL_VDS_HOSTNAME=vds.example.com
+EXTERNAL_VDS_HOSTNAME=demo-shop.vds.example.com
+
+# Variables with default values
+# # Host interface that the service will bind to
+# HOST=::
+# # Host port that the service will bind to
+# PORT=3000
 ```
