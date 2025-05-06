@@ -1,5 +1,5 @@
 {
-  "name": "demo-shop",
+  "name": "check-demo-shop",
   "version": "0.0.1",
   "description": "Docker image that packages the demo shop",
   "author": "identinet GmbH <support@identinet.io>",
@@ -16,6 +16,6 @@
   "registry": {
     "type": "docker",
     "name": "docker.io/identinet",
-    "url": "https://hub.docker.com/r/identinet/demo-shop"
+    "url": "https://hub.docker.com/r/identinet/check-demo-shop"
   }
 }

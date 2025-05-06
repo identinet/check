@@ -24,7 +24,7 @@ export default defineConfig({
       strictPort: true,
       allowedHosts: [
         external_hostname,
-        internal_hostname,
+        ...(internal_hostname ? [internal_hostname] : []),
       ],
       hmr: {
         // See https://vite.dev/config/server-options.html#server-hmr
@@ -32,9 +32,7 @@ export default defineConfig({
         protocol: "ws",
       },
       cors: {
-        origin: [
-          `https://${vds_hostname}`,
-        ],
+        origin: [],
       },
       watch: {
         ignored: [
