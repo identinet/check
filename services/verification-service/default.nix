@@ -1,5 +1,7 @@
 # Build with NIXPKGS_ALLOW_UNFREE=1 nix-build -E 'with import <nixpkgs> {}; callPackage ./default.nix {}'
-{ pkgs ? import <nixpkgs> { }, }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 let
   gitignoreSrc = pkgs.fetchFromGitHub {
     # Documentation: https://github.com/hercules-ci/gitignore.nix
@@ -11,22 +13,27 @@ let
   };
   inherit (import gitignoreSrc { inherit (pkgs) lib; }) gitignoreSource;
   manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
-in pkgs.rustPlatform.buildRustPackage {
+in
+pkgs.rustPlatform.buildRustPackage {
   pname = manifest.name;
   version = manifest.version;
   cargoLock.lockFile = ./Cargo.lock;
-  # cargoLock.outputHashes = {
-  # "did-jwk-0.1.1" = pkgs.lib.fakeSha256;
-  # "did-jwk-0.1.1" = "sha256-byxaWQDR35ioADSjWqGX/h8ht4FjXNh+mdtfD0LW8Sk=";
-  # };
+  cargoLock.outputHashes = {
+    # INFO: sometimes the hash is missing for some packages, not sure why.
+    # Enable the fake hash to get the value that's required here
+    # "did-ethr-0.3.1" = pkgs.lib.fakeSha256;
+    "did-ethr-0.3.1" = "sha256-a0xbvelrc6Rv+8hyDOuzT6deInTwhU6JGM3dpJLjOGw=";
+  };
   src = pkgs.lib.sources.cleanSourceWith {
     src = gitignoreSource ./.;
     filter = path: type: !(baseNameOf path == "target");
   };
+  buildInputs = with pkgs; [
+    openssl
+  ];
   nativeBuildInputs = with pkgs; [
     cargo
     clippy
-    openssl.dev
     pkg-config
     rust-analyzer
     rustc

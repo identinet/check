@@ -3,8 +3,9 @@
 
 mod config; // Import the config module
 use config::AppConfig;
-
-use std::{fs, net::SocketAddr, sync::Arc};
+use tokio::sync::Mutex;
+mod validate;
+use std::{collections::HashMap, fs, net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{Path, Query, State},
@@ -32,32 +33,53 @@ use openid4vp::{
             WalletMetadata,
         },
         object::UntypedObject,
-        presentation_definition,
+        presentation_definition::{
+            self, SubmissionRequirement, SubmissionRequirementBase, SubmissionRequirementObject,
+            SubmissionRequirementPick,
+        },
+        presentation_submission::PresentationSubmission,
+        response::{parameters::VpToken, AuthorizationResponse, PostRedirection, UnencodedAuthorizationResponse},
     },
-    verifier::{self, session::SessionStore, Verifier},
+    verifier::{self, Verifier},
 };
-use openid4vp_frontend::Status;
+use openid4vp_frontend::{Outcome, Status};
 use serde::{Deserialize, Serialize};
 use ssi::{crypto::Algorithm, dids, verification_methods};
 use url::Url;
 use uuid::Uuid;
+use validate::validate;
 
-// Shared session store
-// type OpenID4VPSessionStore = Arc<Mutex<HashMap<String, WalletMetadata>>>;
-// TODO: swap in memory store with a postgres backend
-type OpenID4VPSessionStore = Arc<verifier::session::MemoryStore>;
+// Share data cache that stores data submitted to the service for future retrieval.
+type DataCache = Arc<Mutex<HashMap<Uuid, DataEntry>>>;
+
+#[derive(Debug, Clone, Default)]
+struct DataEntry {
+    nonce: String,
+    vp_token: Option<VpToken>,
+    presentation_submission: Option<PresentationSubmission>,
+}
+
+// impl Default for DataEntry {
+//     fn default() -> Self {
+//         DataEntry{nonce: "".to_string(), presentation_submission: None}
+//     }
+// }
+
+// type LocalVerifier = Arc<Verifier>;
 
 #[derive(Clone)]
 struct AppState {
-    session_store: OpenID4VPSessionStore,
     config: AppConfig,
+    // verifier: LocalVerifier, // INFO: apparently, we don't need to wrap the Verifier in an Arc
+    verifier: Verifier,
+    data_cache: DataCache,
 }
 
 /// Authorization Request URI Response.
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
 #[derive(Serialize, Deserialize)]
 struct AuthRequestURIResponse {
-    id: String,
+    id: Uuid,
     url: Url,
 }
 
@@ -65,135 +87,102 @@ struct AuthRequestURIResponse {
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-cross-device-flow
 #[derive(Serialize, Deserialize)]
 struct AuthRequestObjectResponse {
-    id: String,
-    url: Url,
+    nonce: String,
+    vp_token: Option<VpToken>,
+    presentation_submission: Option<PresentationSubmission>,
+    status: Status,
+}
+
+#[derive(Deserialize)]
+struct AuthrequestCreateParams {
+    nonce: String,
 }
 
 /// Authorization Request Submission.
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
 #[derive(Debug, Serialize, Deserialize)]
 struct AuthorizationRequestSubmission {
-    vp_token: String,
-    presentation_submission: serde_json::Value,
+    vp_token: VpToken,
+    // presentation_submission: PresentationSubmission,
+    // presentation_submission: serde_json::Value,
+    presentation_submission: String,
 }
 
-/// Authorization Request Submission Response.
-/// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
-#[derive(Serialize, Deserialize)]
-struct AuthorizationRequestSubmissionResponse {
-    redirect_uri: Url,
-}
-
-#[derive(Deserialize)]
-struct AuthrequestCreateParams {
-    nonce: Uuid,
-}
-
-/// Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
-async fn authrequest_create(
-    State(state): State<AppState>,
-    params: Query<AuthrequestCreateParams>,
-) -> (StatusCode, Json<AuthRequestURIResponse>) {
-    let verifier_builder = Verifier::builder();
-    // TODO: build request and return object
-    // TODO: then, gradually move initialization elements to other parts of application
-
-    // initate client
-    let key = fs::read_to_string(state.config.key_path).unwrap();
-
-    // let resolver = ssi::dids::jwk::DIDJWK.into_vm_resolver();
-    // TODO: combine internal DID method resolver with the HTTP resolver as a fallback
-    let resolver = dids::AnyDidMethod::default();
-    let vm_resolver: dids::VerificationMethodDIDResolver<_, verification_methods::AnyMethod> =
-        dids::VerificationMethodDIDResolver::new(resolver);
-    // TODO: determine key type dynamically, depending on the curve and support more key types
-    let signer =
-        verifier::request_signer::P256Signer::new(p256::SecretKey::from_jwk_str(&key).unwrap().into()).unwrap();
-    let client = verifier::client::DIDClient::new(state.config.verification_method, Arc::new(signer), vm_resolver)
-        .await
-        .unwrap();
-
-    let direct_post_uri =
-        Url::parse(format!("https://{host}/v1/authorize", host = state.config.external_hostname).as_str()).unwrap();
-    let verifier_builder = verifier_builder
-        .with_session_store(state.session_store)
-        .by_reference(direct_post_uri.clone()) // GET request required to retrieve session parameters - this decreases the
-        // size of the QR code since just the URL needs to be encoded in the QR code!
-        .with_submission_endpoint(direct_post_uri.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
-        .with_client(Arc::new(client));
-    // TODO: initate request parameters
-    // .with_default_request_parameter(t)
-    let verifier = verifier_builder.build().await.unwrap();
-
-    let authz_request_builder = verifier::Verifier::build_authorization_request(&verifier);
-    // TODO: initate presentation definition
+/// Builds a presentation definition according to https://identity.foundation/presentation-exchange/spec/v2.0.0
+fn build_presentation_definition() -> presentation_definition::PresentationDefinition {
     let presentation_definition_id = Uuid::new_v4().to_string();
-    let ipd_id = "did-key-id"; // TODO: make id unique, not sure what the content of this is actually about
-    let name = "DID Key Identity Verification"; // TODO: define name
-    let purpose = "Check whether your identity key has been verified."; // TODO: define purpose
-                                                                        // Constraints request credentials
-                                                                        // See examples: https://doc.wallet-provider.io/wallet/verifier-configuration/#full-verifier-flow-example
-    let constraint_id_credential =
-            // Add a constraint fields to check if the credential
-            // conforms to a specific path.
-            input_descriptor::ConstraintsField::new("$.credentialSubject.id".parse().unwrap())
-                // Add alternative path(s) to check multiple potential formats.
-                // .add_path(
-                //     "$.vc.credentialSubject.id"
-                //         .parse()
-                //         .unwrap(),
-                // )
-                // .add_path(
-                //     "$.vp.verifiableCredential.vc.credentialSubject.id"
-                //         .parse()
-                //         .unwrap(),
-                // )
-                // .add_path(
-                //     "$.vp.verifiableCredential[0].vc.credentialSubject.id"
-                //         .parse()
-                //         .unwrap(),
-                // )
-                // .add_path("$.vp.verifiableCredential.vc.sub".parse().unwrap())
-                // .add_path("$.vp.verifiableCredential[0].vc.sub".parse().unwrap())
-                // .add_path("$.sub".parse().unwrap())
-                // .add_path("$.iss".parse().unwrap())
-                .set_name("Verify your identity".into())
-                .set_purpose("Check whether your identity has been verified.".into())
-                .set_filter(&serde_json::json!({
-                    "type": "string",
-                    "pattern": "did:(key|jwk):.*" // INFO: test if this works
-                }))
-                .expect("Failed to set filter, invalid validation schema.")
-                // TODO: set field intent_to_retain - currently, there's no setter for this property!
-                // .set_predicate(input_descriptor::Predicate::Required), // TODO: reenable this feature
-                .set_predicate(input_descriptor::Predicate::Preferred);
-    // let constraint_email_credential_fromjson: input_descriptor::ConstraintsField =
-    //     serde_json::from_value(serde_json::json!(
-    //     {
-    //         // "id": "emailpass_1",
-    //         "name": "Verify your email address",
-    //         "porpose": "Check whether your email address has been verified.",
-    //         "required": true,
-    //         "retained": true,
-    //         "constraints": {
-    //             "fields": [
-    //                 {
-    //                     "path": [
-    //                         "$.vc.credentialSubject.type"
-    //                     ],
-    //                     "filter": {
-    //                         "type": "string",
-    //                         "const": "EmailPass"
-    //                     }
-    //                 }
-    //             ]
-    //         }
-    //     }
-    //     ))
-    //     .unwrap();
+    let name = "Identity Verification"; // TODO: define name
+    let purpose = "Check whether your identity has been verified."; // TODO: define purpose
+                                                                    // Constraints request credentials
+                                                                    // See examples: https://doc.wallet-provider.io/wallet/verifier-configuration/#full-verifier-flow-example
+    let _constraint_id_credential =
     // Add a constraint fields to check if the credential
     // conforms to a specific path.
-    let constraint_email_credential =
+    input_descriptor::ConstraintsField::new("$.credentialSubject.id".parse().unwrap())
+        // Add alternative path(s) to check multiple potential formats.
+        // .add_path(
+        //     "$.vc.credentialSubject.id"
+        //         .parse()
+        //         .unwrap(),
+        // )
+        // .add_path(
+        //     "$.vp.verifiableCredential.vc.credentialSubject.id"
+        //         .parse()
+        //         .unwrap(),
+        // )
+        .add_path(
+            "$.vp.verifiableCredential.*.vc.credentialSubject.id"
+                .parse()
+                .unwrap(),
+        )
+        // .add_path("$.vp.verifiableCredential.vc.sub".parse().unwrap())
+        // .add_path("$.vp.verifiableCredential[0].vc.sub".parse().unwrap())
+        // .add_path("$.sub".parse().unwrap())
+        // .add_path("$.iss".parse().unwrap())
+        .set_name("Verify your identity".into())
+        .set_purpose("Check whether your identity key has been verified.".into())
+        .set_filter(&serde_json::json!({
+            "type": "string",
+            "pattern": "did:(key|jwk):.*" // INFO: test if this works
+        }))
+        .expect("Failed to set filter, invalid validation schema.")
+        // TODO: set field intent_to_retain - currently, there's no setter for this property!
+        // .set_predicate(input_descriptor::Predicate::Required), // TODO: reenable this feature
+        .set_predicate(input_descriptor::Predicate::Preferred);
+    let constraint_email_credential_fromjson: input_descriptor::ConstraintsField =
+        serde_json::from_value(serde_json::json!(
+        {
+            // "id": "emailpass_1",
+            "name": "Verify your email address",
+            "porpose": "Check whether your email address has been verified.",
+            "optional": false,
+            "retained": true,
+            "path": [
+                // JSONPath
+                "$.vc.credentialSubject.type"
+                // Credentials is part of a verifiable presentation
+                // "$.vp.verifiableCredential.*.vc.credentialSubject.type"
+                // "$.vp.verifiableCredential[0].vc.credentialSubject.type"
+            ],
+            "filter": {
+                // JSONSchema
+                // "anyOf": [
+                //     {
+                "type": "string", "const": "EmailPass"
+            // },
+            //         {
+            //             "type": "array",
+            //             // at least one EmailPass credentials is shared
+            //             "contains": { "type": "string", "const": "EmailPass" }
+            //         }
+            //     ]
+            }
+        }
+        ))
+        .unwrap();
+    // Add a constraint fields to check if the credential
+    // conforms to a specific path.
+    let _constraint_email_credential =
         input_descriptor::ConstraintsField::new("$.vc.credentialSubject.type".parse().unwrap())
             .set_filter(&serde_json::json!({
                 "type": "string",
@@ -207,8 +196,8 @@ async fn authrequest_create(
             .set_predicate(input_descriptor::Predicate::Required);
     let constraints = input_descriptor::Constraints::new()
         // .add_constraint(constraint_id_credential)
-        // .add_constraint(constraint_email_credential_fromjson)
-        .add_constraint(constraint_email_credential)
+        .add_constraint(constraint_email_credential_fromjson)
+        // .add_constraint(constraint_email_credential)
         // .set_limit_disclosure(input_descriptor::ConstraintsLimitDisclosure::Required);
         .set_limit_disclosure(input_descriptor::ConstraintsLimitDisclosure::Preferred);
     let prooftype_values_supported = vec![
@@ -225,23 +214,23 @@ async fn authrequest_create(
         ssi_data_integrity_suites::RsaSignature2018::NAME.to_string(),
     ];
     let alg_values_supported = vec![
-        Algorithm::ES256.to_string(),
-        Algorithm::ES256K.to_string(),
-        Algorithm::ES384.to_string(),
-        Algorithm::EdDSA.to_string(),
-        Algorithm::RS256.to_string(),
-        Algorithm::RS384.to_string(),
-        Algorithm::RS512.to_string(),
+        Algorithm::Es256.to_string(),
+        Algorithm::Es256K.to_string(),
+        Algorithm::Es384.to_string(),
+        Algorithm::EdDsa.to_string(),
+        Algorithm::Rs256.to_string(),
+        Algorithm::Rs384.to_string(),
+        Algorithm::Rs512.to_string(),
     ];
     let mut claim_formats_supported = credential_format::ClaimFormatMap::new();
     claim_formats_supported.insert(
         credential_format::ClaimFormatDesignation::JwtVcJson,
         credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
     );
-    // claim_formats_supported.insert(
-    //     credential_format::ClaimFormatDesignation::JwtVpJson,
-    //     credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
-    // );
+    claim_formats_supported.insert(
+        credential_format::ClaimFormatDesignation::JwtVpJson,
+        credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+    );
     claim_formats_supported.insert(
         credential_format::ClaimFormatDesignation::JwtVc,
         credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
@@ -254,18 +243,73 @@ async fn authrequest_create(
     //     credential_format::ClaimFormatDesignation::JwtVp,
     //     ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
     // );
-    let presentation_definition = presentation_definition::PresentationDefinition::new(
+    let group_id = "A";
+    let mut pres_definition = presentation_definition::PresentationDefinition::new(
         presentation_definition_id,
-        input_descriptor::InputDescriptor::new(ipd_id.into(), constraints)
-            .set_name(name.into())
-            .set_purpose(purpose.into())
-            .set_format(claim_formats_supported),
-    );
-    let authz_request_builder = authz_request_builder.with_presentation_definition(presentation_definition);
+        input_descriptor::InputDescriptor {
+            id: Uuid::new_v4().to_string(),
+            constraints,
+            // groups: vec![group_id.into()], // INFO: disable group for the moment
+            ..Default::default()
+        },
+    )
+    .set_format(claim_formats_supported)
+    .set_name(name.into())
+    .set_purpose(purpose.into());
+    // Submission requirements are relevant for the verification of the results
+    let submission_requirement = SubmissionRequirement::Pick(SubmissionRequirementPick {
+        submission_requirement: SubmissionRequirementBase::From {
+            from: group_id.into(),
+            submission_requirement_base: SubmissionRequirementObject {
+                name: Some("Submission of email credential".into()),
+                purpose: Some("We need to know your email address".into()),
+                property_set: None,
+            },
+        },
+        count: Some(1),
+        min: Some(1),
+        max: Some(1),
+    });
+    let mut subission_requirements = Vec::new();
+    subission_requirements.push(submission_requirement);
+    let _ = pres_definition.submission_requirements_mut().insert(&mut subission_requirements);
+    pres_definition
+}
+
+/// Create Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
+async fn authrequest_create(
+    State(state): State<AppState>,
+    params: Query<AuthrequestCreateParams>,
+) -> (StatusCode, Json<AuthRequestURIResponse>) {
+    let authz_request_builder = verifier::Verifier::build_authorization_request(&state.verifier);
+    let pres_definition = build_presentation_definition();
+    let authz_request_builder = authz_request_builder.with_presentation_definition(pres_definition);
     // TODO: initate request parameter
 
     let mut client_metadata = UntypedObject::default();
     let mut vp_formats = openid4vp::core::credential_format::ClaimFormatMap::new();
+    let prooftype_values_supported = vec![
+        ssi_data_integrity_suites::EcdsaRdfc2019::NAME.to_string(),
+        // ssi_data_integrity_suites::EcdsaSd2023::NAME.to_string(),
+        ssi_data_integrity_suites::EcdsaSecp256k1Signature2019::NAME.to_string(),
+        ssi_data_integrity_suites::EcdsaSecp256r1Signature2019::NAME.to_string(),
+        ssi_data_integrity_suites::Ed25519Signature2018::NAME.to_string(),
+        ssi_data_integrity_suites::Ed25519Signature2020::NAME.to_string(),
+        ssi_data_integrity_suites::EdDsa2022::NAME.to_string(),
+        ssi_data_integrity_suites::EdDsaRdfc2022::NAME.to_string(),
+        ssi_data_integrity_suites::EthereumEip712Signature2021::NAME.to_string(),
+        ssi_data_integrity_suites::JsonWebSignature2020::NAME.to_string(),
+        ssi_data_integrity_suites::RsaSignature2018::NAME.to_string(),
+    ];
+    let alg_values_supported = vec![
+        Algorithm::Es256.to_string(),
+        Algorithm::Es256K.to_string(),
+        Algorithm::Es384.to_string(),
+        Algorithm::EdDsa.to_string(),
+        Algorithm::Rs256.to_string(),
+        Algorithm::Rs384.to_string(),
+        Algorithm::Rs512.to_string(),
+    ];
     vp_formats.insert(
         ClaimFormatDesignation::JwtVpJson,
         ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
@@ -275,12 +319,12 @@ async fn authrequest_create(
         ClaimFormatPayload::AlgValuesSupported(alg_values_supported.clone()),
     );
     vp_formats.insert(ClaimFormatDesignation::LdpVp, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
-    vp_formats.insert(ClaimFormatDesignation::LdpVc, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
+    // vp_formats.insert(ClaimFormatDesignation::LdpVc, ClaimFormatPayload::ProofType(prooftype_values_supported.clone()));
     client_metadata.insert(VpFormats(vp_formats.clone()));
     let authz_request_builder = authz_request_builder
         .with_request_parameter(authorization_request::parameters::ResponseMode::DirectPost)
         .with_request_parameter(authorization_request::parameters::ResponseType::VpToken)
-        .with_request_parameter(authorization_request::parameters::Nonce::from(params.nonce.to_string()))
+        .with_request_parameter(authorization_request::parameters::Nonce::from(params.nonce.clone()))
         .with_request_parameter(authorization_request::parameters::ClientMetadata(client_metadata));
     // TODO: create session
     // let authorization_endpoint =
@@ -325,95 +369,160 @@ async fn authrequest_create(
     //         openid4vp::core::authorization_request::parameters::ClientIdScheme::Did,
     //     ]),
     // );
-    let (_uuid, _url) = authz_request_builder.build(wallet_metadata.clone()).await.unwrap();
-    // let request = AuthorizationRequestObject {};
-    // TODO: expose poll status via uuid
-
-    // Store the session (optional, based on your needs)
-    // let mut sessions = store.lock().await;
-    // sessions.insert(_uuid.into(), wallet_metadata);
+    let (id, url) = authz_request_builder.build(wallet_metadata.clone()).await.unwrap();
+    let mut cache = state.data_cache.lock().await;
+    assert!(cache.get(&id).is_none(), "Expect authorization request to not exist");
+    cache.insert(id, DataEntry { nonce: params.nonce.clone(), ..DataEntry::default() });
 
     // Return the session UUID and URL with 201 Created status
-    (StatusCode::CREATED, Json(AuthRequestURIResponse { id: _uuid.into(), url: _url }))
+    (StatusCode::CREATED, Json(AuthRequestURIResponse { id, url }))
 }
 
-// Retrieves the submitted OpenID4VP data.
+// Retrieves the submitted OpenID4VP data and deletes the request from the service.
 async fn authrequest_get(
     State(state): State<AppState>,
     Path(request_id): Path<Uuid>,
 ) -> (StatusCode, Json<AuthRequestObjectResponse>) {
     println!("authrequest_get");
-    let url = Url::parse(
-        format!("https://{host}/v1/authrequests/{uuid}", host = state.config.external_hostname, uuid = request_id)
-            .as_str(),
+    let status = state.verifier.poll_status(request_id).await.unwrap();
+    // state.session_store.remove_session(request_id).await.unwrap();
+    let mut cache = state.data_cache.lock().await;
+    let entry = cache.get(&request_id).unwrap().clone();
+    // Cleanup, the data is only accessible once
+    cache.remove(&request_id);
+    // TODO: cleanup session
+    (
+        StatusCode::OK,
+        Json(AuthRequestObjectResponse {
+            nonce: entry.nonce,
+            vp_token: entry.vp_token,
+            presentation_submission: entry.presentation_submission,
+            status,
+        }),
     )
-    .unwrap();
-    (StatusCode::OK, Json(AuthRequestObjectResponse { id: request_id.to_string(), url }))
 }
 
-/// Retrieves the OpenID4VP Authorization Request.
+/// Retrieves the OpenID4VP Authorization Request and sends it to the wallet.
 async fn authorize_get(State(state): State<AppState>, Path(request_id): Path<Uuid>) -> impl IntoResponse {
-    // ) -> (StatusCode, std::string::String) {
-    // TODO: make URL valid only once.
     println!("authorize_get {}", request_id);
-    let authorization_request = state.session_store.get_session(request_id).await.unwrap();
-    println!("status {:?}", authorization_request.status);
-    println!("authorization_request_jwt {}", authorization_request.authorization_request_jwt);
-    println!("authorization_request_object {:?}", authorization_request.authorization_request_object);
-    println!("presentation_definition {:?}", authorization_request.presentation_definition);
-    state.session_store.update_status(authorization_request.uuid, Status::SentRequest).await.unwrap();
-    // return an error if request has been sent before
-    (StatusCode::OK, [(header::CONTENT_TYPE, "application/jwt")], authorization_request.authorization_request_jwt)
+    let status = state.verifier.poll_status(request_id).await.unwrap();
+    assert!(
+        status == Status::SentRequest || status == Status::SentRequestByReference, // FIXME: for some unknown reason, this endpoint gets called twice, not sure why
+        "Authorization request status doesn't match expecation. Got: {:?}",
+        status
+    );
+    let auth_request = state.verifier.retrieve_authorization_request(request_id).await.unwrap();
+    (StatusCode::OK, [(header::CONTENT_TYPE, "application/jwt")], auth_request)
 }
 
-/// Accepts data for this Authorization Request.
+/// Accepts data for this Authorization Request. Data can be submitted only once!
 /// See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response-mode-direct_post
 async fn authorize_submit(
     State(state): State<AppState>,
     Path(request_id): Path<Uuid>,
-    // Json(payload): Json<serde_json::Value>,
+    // Form(payload): Form<UnencodedAuthorizationResponse>, // FIXME: For some unknown reason, decoding fails. It works when the structure is decoded in the handler
     Form(payload): Form<AuthorizationRequestSubmission>,
-) -> (StatusCode, Json<AuthorizationRequestSubmissionResponse>) {
-    // TODO: make this URL valid only once.
+) -> (StatusCode, Json<PostRedirection>) {
     println!("authorize_submit {}", request_id);
-    println!("authorize_submit payload {:?}", payload.presentation_submission);
-    let authorization_request = state.session_store.get_session(request_id).await.unwrap();
-    // let payload: AuthorizationRequestSubmission = serde_json::from_str(payload.as_str());
-    // vp_token
-    // presentation_submission
+    assert!(
+        state.verifier.poll_status(request_id).await.unwrap() == Status::SentRequest,
+        "Authorization request status doesn't match expecation"
+    );
+    // TODO: update status to Status::ReceivedResponse - however, updating the status is currently not supported
+    let presentation_submission: PresentationSubmission =
+        serde_json::from_str(&payload.presentation_submission).unwrap();
+    let new_payload = UnencodedAuthorizationResponse {
+        vp_token: payload.vp_token.clone(),
+        presentation_submission: presentation_submission.clone(),
+        state: None,
+        should_strip_quotes: false,
+    };
+    let mut cache = state.data_cache.lock().await;
+    let entry = cache.get(&request_id).unwrap().clone();
+    cache.insert(
+        request_id,
+        DataEntry {
+            nonce: entry.nonce.clone(),
+            vp_token: Some(payload.vp_token),
+            presentation_submission: Some(presentation_submission),
+        },
+    );
+    state.verifier.verify_response(request_id, AuthorizationResponse::Unencoded(new_payload), validate).await.unwrap();
+    // TODO: remove debug output
+    match state.verifier.poll_status(request_id).await.unwrap() {
+        Status::Complete(Outcome::Success { info }) => {
+            println!("success {}", info)
+        }
+        Status::Complete(Outcome::Failure { reason }) => println!("failure {}", reason),
+        Status::Complete(Outcome::Error { cause }) => println!("error {}", cause),
+        _ => println!("unknown"),
+    };
+    // Redirect to target URI regardless of the result. Let the verifier take care of error handling
     let redirect_uri = Url::parse(
         format!(
             "https://{host}/{callback_base_path}/{uuid}/{nonce}",
-            host = state.config.shop_hostname,
+            host = state.config.callback_hostname,
             callback_base_path = state.config.callback_base_path,
             uuid = request_id,
-            nonce = authorization_request.authorization_request_object.nonce()
+            nonce = entry.nonce,
         )
         .as_str(),
     )
     .unwrap();
-    (StatusCode::OK, Json(AuthorizationRequestSubmissionResponse { redirect_uri }))
+    (StatusCode::OK, Json(PostRedirection { redirect_uri }))
 }
 
-// // Retrieve session status
-// async fn session_status(State(store): State<OpenID4VPSessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
-//     let id = Uuid::new_v4().to_string();
-//     // Return the session ID with 201 Created status
-//     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
-// }
-
-// // Retrieve session status
-// async fn session_submit(State(store): State<OpenID4VPSessionStore>) -> (StatusCode, Json<AuthRequestURIResponse>) {
-//     let id = Uuid::new_v4().to_string();
-//     // Return the session ID with 201 Created status
-//     (StatusCode::CREATED, Json(AuthRequestURIResponse { id }))
-// }
-
-pub fn create_app(config: AppConfig) -> Router {
+async fn get_verifier(config: AppConfig) -> Verifier {
     // let store: OpenID4VPSessionStore = Arc::new(Mutex::new(HashMap::new()));
-    let store = Arc::new(verifier::session::MemoryStore::default());
-    let state = AppState { session_store: store, config };
+    let session_store = Arc::new(verifier::session::MemoryStore::default());
+    let verifier_builder = Verifier::builder();
+    // TODO: build request and return object
+    // TODO: then, gradually move initialization elements to other parts of application
+
+    // initate client
+    let key = fs::read_to_string(config.key_path).unwrap();
+
+    // let resolver = ssi::dids::jwk::DIDJWK.into_vm_resolver();
+    // TODO: combine internal DID method resolver with the HTTP resolver as a fallback
+    let resolver = dids::AnyDidMethod::default();
+    let vm_resolver: dids::VerificationMethodDIDResolver<_, verification_methods::AnyMethod> =
+        dids::VerificationMethodDIDResolver::new(resolver);
+    // TODO: determine key type dynamically, depending on the curve and support more key types
+    let signer =
+        verifier::request_signer::P256Signer::new(p256::SecretKey::from_jwk_str(&key).unwrap().into()).unwrap();
+    let client =
+        verifier::client::DIDClient::new(config.verification_method, Arc::new(signer), vm_resolver).await.unwrap();
+
+    let direct_post_uri =
+        Url::parse(format!("https://{host}/v1/authorize", host = config.external_hostname).as_str()).unwrap();
+    let verifier_builder = verifier_builder
+        .with_session_store(session_store)
+        .by_reference(direct_post_uri.clone()) // GET request required to retrieve session parameters - this decreases the
+        // size of the QR code since just the URL needs to be encoded in the QR code!
+        .with_submission_endpoint(direct_post_uri.clone()) // POST request to submit session data TODO: can this be the same as by_reference?
+        .with_client(Arc::new(client));
+    // TODO: initate request parameters
+    // .with_default_request_parameter(t)
+    verifier_builder.build().await.unwrap()
+    // verifier.verify_response(reference, authorization_response, validator_function)
+}
+
+/// Liveness check
+async fn health_check() -> String {
+    "Ok".to_string()
+}
+
+pub async fn create_app(config: AppConfig) -> Router {
+    let data_cache: DataCache = Arc::new(Mutex::new(HashMap::new()));
+    let verifier = get_verifier(config.clone()).await;
+    let state = AppState {
+        config,
+        // verifier: Arc::new(verifier),
+        verifier,
+        data_cache,
+    };
     Router::new()
+        .route("/_status/healthz", get(health_check))
         .nest(
             "/v1",
             Router::new()
@@ -432,7 +541,7 @@ async fn main() {
     let config = AppConfig::new().unwrap();
 
     // build our application with a single route
-    let app = create_app(config.clone());
+    let app = create_app(config.clone()).await;
 
     // TODO: Parse listen address properly, see https://rust-api.dev/docs/part-1/tokio-hyper-axum/#web-application-structure
     let host = if config.host.contains(':') {
@@ -465,11 +574,11 @@ mod tests {
             host: "::1".into(),
             port: 3000,
             external_hostname: "localhost".into(),
-            shop_hostname: "localhost".into(),
+            callback_hostname: "localhost".into(),
             key_path: "./_fixtures/key.jwk".into(),
             verification_method: "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImtYSVJicEtzTzZXZVJ1YndndWdSMWc2RGNhT3NBbmlrVXJ1WXU2QS1HVWMiLCJ5IjoiMG5WdUQ2TkhQeUFEOGF2OWdzM1h6NEoxT2c1ZEFNZDkzdTE1a0RwZklObyJ9#0".into(),
             callback_base_path: "callback".into(),
-        });
+        }).await;
 
         // Create test request
         let request = Request::builder()
@@ -489,6 +598,6 @@ mod tests {
         let response: AuthRequestURIResponse = serde_json::from_slice(&body).unwrap();
 
         // Verify that the session_id is a valid UUID
-        assert!(Uuid::parse_str(&response.id).is_ok());
+        assert!(Uuid::parse_str(&response.id.to_string()).is_ok());
     }
 }

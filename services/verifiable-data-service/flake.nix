@@ -42,22 +42,19 @@
         devShells.default = pkgs.mkShell {
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
+            cargo-watch
+            default_pkg.nativeBuildInputs
+            default_pkg.buildInputs
             deno
             gh
             git-cliff
             just
-            cargo-watch
             nushell
             skopeo
-            default_pkg.nativeBuildInputs
           ];
           env = {
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.openssl ];
           };
-          # shellHook = ''
-          #   # If not set, libssl.so.3 not found error is displayed
-          #   export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.openssl ]}";
-          # '';
         };
 
         devShells.ci = pkgs.mkShell {
@@ -97,8 +94,8 @@
           enableFakechroot = true;
           fakeRootCommands = ''
             set -exuo pipefail
-            mkdir -p /run/verifable-data-service
-            # chown 65534:65534 /run/verifable-data-service
+            mkdir -p /run/${default_pkg.pname}
+            # chown 65534:65534 /run/${default_pkg.pname}
             # mkdir /tmp
             # chmod 1777 /tmp
           '';
@@ -106,15 +103,15 @@
             # Valid values, see: https://github.com/moby/docker-image-spec
             # and https://oci-playground.github.io/specs-latest/
             ExposedPorts = {
-              "8000/tcp" = { };
+              "3000/tcp" = { };
             };
             Entrypoint = [
               "${pkgs.tini}/bin/tini"
               "--"
             ];
-            Cmd = [ "${default_pkg}/bin/verifable-data-service" ];
+            Cmd = [ "${default_pkg}/bin/${default_pkg.pname}" ];
             # Env = [ "VARNAME=xxx" ];
-            WorkingDir = "/run/verifable-data-service";
+            WorkingDir = "/run/${default_pkg.pname}";
             # WorkingDir = "/";
             # User 'nobody' and group 'nogroup'
             User = "65534";

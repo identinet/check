@@ -12,7 +12,7 @@ import { connections, store } from "~/lib/store.js";
  * Function submits a navigation request to the connected browser window via the existing SSE connection between client
  * and server, the final step in the authorization flow.
  */
-export function GET(event: APIEvent) {
+export async function GET(event: APIEvent) {
   console.debug("sse/ID/NONCE", event.params);
   const { id, nonce } = event.params;
 
@@ -25,7 +25,7 @@ export function GET(event: APIEvent) {
   const entry = store[id];
 
   const redirectionTarget = {
-    true: "/checkout",
+    true: `/checkout/${id}`,
     false: "/close",
   };
 
@@ -33,15 +33,39 @@ export function GET(event: APIEvent) {
     if (!entry?.closed && connections[id]) {
       if (nonce == entry?.nonce) {
         console.debug("event: submitted");
-        connections[id]?.enqueue(`event: submitted\ndata:\n\n`);
-        // TODO: is this too fast?
+
+        const data = await fetch(
+          `https://${process.env.EXTERNAL_VDS_HOSTNAME}/v1/authrequests/${id}`,
+          { method: "GET" },
+        ).then((res) => res.json()).catch((err) =>
+          console.error("An error occurred while fetching the results", id, nonce, err)
+        );
+        console.log("data", data);
+        const encoded_body = data?.vp_token?.split(".")?.at(1);
+        let credentials;
+        try {
+          const body = JSON.parse(atob(encoded_body));
+          /* body.vp.verifiableCredential = body?.vp?.verifiableCredential.map((data: string) => { */
+          credentials = body?.vp?.verifiableCredential.map((data: string) => {
+            const vc_encoded = data?.split(".")?.at(1);
+            if (vc_encoded) {
+              return JSON.parse(atob(vc_encoded));
+            }
+            return data;
+          });
+          console.log("body", body);
+        } catch (err) {
+          console.error("An error occurred while parsing body", id, nonce, err);
+        }
+
+        connections[id]?.enqueue(`event: submitted\ndata: ${redirectionTarget[!entry.mobile]}\n\n`);
         connections[id]?.close();
         connections[id] = null;
         /* await store.set( */
         /*   id, */
         /*   JSON.stringify({ ...entry, closed: true }), */
         /* ); */
-        store[id] = { ...entry, closed: true };
+        store[id] = { ...entry, closed: true, credentials };
         // redirect to final checkout or close page, depending on whether the flow was started on a mobile or desktop
         // browser
         return new Response(null, {

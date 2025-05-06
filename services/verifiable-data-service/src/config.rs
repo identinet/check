@@ -10,7 +10,7 @@ use serde::Deserialize;
     long_about = concat!(env!("CARGO_PKG_DESCRIPTION"), "\n\n", "All configuration options can either be specified via command line argument, environment variable or configuration file (config.yaml | config.toml | config.json).")
 )]
 struct CliConfig {
-    #[arg(long, short = 'H', help = "Server host or set via environment variable HOST (default: ::1)")]
+    #[arg(long, short = 'H', help = "Server host or set via environment variable HOST (default: ::)")]
     host: Option<String>,
 
     #[arg(long, short = 'p', help = "Server port or set via environment variable PORT (default: 3000)")]
@@ -19,16 +19,16 @@ struct CliConfig {
     #[arg(
         long,
         short = 'e',
-        help = "External hostname or set via environment variable EXTERNAL_HOSTNAME (e.g. vds.example.com)"
+        help = "External hostname or set via environment variable EXTERNAL_HOSTNAME (e.g. demo-shop.vds.example.com)"
     )]
     external_hostname: Option<String>,
 
     #[arg(
         long,
         short = 's',
-        help = "Hostname of web shop or set via environment variable SHOP_HOSTNAME (e.g. shop.example.com)"
+        help = "Callback hostname of external service or set via environment variable CALLBACK_HOSTNAME (e.g. demo-shop.example.com)"
     )]
-    shop_hostname: Option<String>,
+    callback_hostname: Option<String>,
 
     #[arg(
         long,
@@ -57,7 +57,7 @@ pub struct AppConfig {
     pub host: String,
     pub port: u16,
     pub external_hostname: String,
-    pub shop_hostname: String,
+    pub callback_hostname: String,
     pub key_path: String,
     pub verification_method: String,
     pub callback_base_path: String,
@@ -72,13 +72,13 @@ impl AppConfig {
             .add_source(File::with_name("config").required(false)) // Read from config file (TOML, YAML, JSON)
             // .add_source(Environment::with_prefix("VDS")) // Read from environment variables (e.g., APP_HOST, APP_PORT)
             .add_source(Environment::default()) // Read from environment variables (e.g., APP_HOST, APP_PORT)
-            .set_default("host", "::1")?
+            .set_default("host", "::")?
             .set_default("port", "3000")?
             .set_default("callback_base_path", "callback")?
             .set_override_option("host", cli.host)?
             .set_override_option("port", cli.port)?
             .set_override_option("external_hostname", cli.external_hostname)?
-            .set_override_option("shop_hostname", cli.shop_hostname)?
+            .set_override_option("callback_hostname", cli.callback_hostname)?
             .set_override_option("key_path", cli.key_path)?
             .set_override_option("verification_method", cli.verification_method)?
             .set_override_option("callback_base_path", cli.callback_base_path)?;
@@ -95,7 +95,7 @@ impl AppConfig {
         if config.external_hostname.is_empty() {
             return Err(ConfigError::NotFound("Error: 'external_hostname' is required but missing".into()));
         }
-        if config.shop_hostname.is_empty() {
+        if config.callback_hostname.is_empty() {
             return Err(ConfigError::NotFound("Error: 'shop_hostname' must be a valid non-zero value".into()));
         }
         if config.key_path.is_empty() {

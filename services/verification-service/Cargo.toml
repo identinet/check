@@ -29,6 +29,4 @@ serde_json = "^1.0"
 axum = { version = "^0.8.1", features = ["__private"] }
 
 [patch.crates-io]
-# there's a breaking change coming in ssi lib with commit "ef39aead TH ◯ Improve `ssi-crypto`. (#642"
-ssi = { git = "https://github.com/identinet/ssi.git", rev = "4b79532a" }
-# branch = "main"
+ssi = { git = "https://github.com/identinet/ssi.git", branch = "main" }

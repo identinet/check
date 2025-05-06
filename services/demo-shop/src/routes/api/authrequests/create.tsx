@@ -27,7 +27,7 @@ export async function POST(event: APIEvent) {
       store[authRequest.id] = { nonce, closed: false, mobile };
       return authRequest;
     }).catch((err) => {
-      console.error("Error creating authorization request", err);
+      console.error("Error creating authorization request", nonce, err);
       return new Response(null, {
         status: 503,
         statusText: "Internal error while generating authorization request",

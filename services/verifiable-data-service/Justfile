@@ -4,8 +4,6 @@
 
 import '../../justlib/lib.just'
 
-DIST_FOLDER := "target"
-
 # Print this help
 default:
     @just -l
@@ -34,7 +32,7 @@ build: test
 # Build debug version of application
 [group('development')]
 dev-build: githooks
-    cargo build
+    cargo watch -w src -x build
 
 # Test application
 [group('development')]
@@ -101,4 +99,4 @@ clean-bloat:
 # Clean build folder
 [group('development')]
 clean:
-    @rm -rvf "{{ DIST_FOLDER }}"
+    cargo clean
