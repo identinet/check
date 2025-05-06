@@ -507,6 +507,11 @@ async fn get_verifier(config: AppConfig) -> Verifier {
     // verifier.verify_response(reference, authorization_response, validator_function)
 }
 
+/// Liveness check
+async fn health_check() -> String {
+    "Ok".to_string()
+}
+
 pub async fn create_app(config: AppConfig) -> Router {
     let data_cache: DataCache = Arc::new(Mutex::new(HashMap::new()));
     let verifier = get_verifier(config.clone()).await;
@@ -517,6 +522,7 @@ pub async fn create_app(config: AppConfig) -> Router {
         data_cache,
     };
     Router::new()
+        .route("/_status/healthz", get(health_check))
         .nest(
             "/v1",
             Router::new()

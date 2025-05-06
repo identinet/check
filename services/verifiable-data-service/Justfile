@@ -4,8 +4,6 @@
 
 import '../../justlib/lib.just'
 
-DIST_FOLDER := "target"
-
 # Print this help
 default:
     @just -l
@@ -101,4 +99,4 @@ clean-bloat:
 # Clean build folder
 [group('development')]
 clean:
-    @rm -rvf "{{ DIST_FOLDER }}"
+    cargo clean

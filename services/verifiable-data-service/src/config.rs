@@ -10,7 +10,7 @@ use serde::Deserialize;
     long_about = concat!(env!("CARGO_PKG_DESCRIPTION"), "\n\n", "All configuration options can either be specified via command line argument, environment variable or configuration file (config.yaml | config.toml | config.json).")
 )]
 struct CliConfig {
-    #[arg(long, short = 'H', help = "Server host or set via environment variable HOST (default: ::1)")]
+    #[arg(long, short = 'H', help = "Server host or set via environment variable HOST (default: ::)")]
     host: Option<String>,
 
     #[arg(long, short = 'p', help = "Server port or set via environment variable PORT (default: 3000)")]
@@ -72,7 +72,7 @@ impl AppConfig {
             .add_source(File::with_name("config").required(false)) // Read from config file (TOML, YAML, JSON)
             // .add_source(Environment::with_prefix("VDS")) // Read from environment variables (e.g., APP_HOST, APP_PORT)
             .add_source(Environment::default()) // Read from environment variables (e.g., APP_HOST, APP_PORT)
-            .set_default("host", "::1")?
+            .set_default("host", "::")?
             .set_default("port", "3000")?
             .set_default("callback_base_path", "callback")?
             .set_override_option("host", cli.host)?
