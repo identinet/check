@@ -1,29 +1,19 @@
-import { Component, createSignal, Show } from "solid-js";
-import VerificationStatus from "./VerificationStatus";
-import VerificationDetails from "./VerificationDetails";
+import "virtual:uno.css";
+import { Component } from "solid-js";
+import VerificationProvider from "~/components/Context";
+import VerificationStatus from "~/VerificationStatus";
 
-import styles from "./App.module.css?no-inline";
+const VERIFICATION_SERVICE_API_URL = "https://api.check.identinet.io";
+const VERIFICATION_SERVICE_UI_URL = "https://check.identinet.io";
 
 const App: Component = () => {
-  const [details, setDetails] = createSignal(false);
-  const toggleDetails = () => setDetails(!details());
   return (
-    <div class={styles.App}>
-      <header class={styles.header}>
-        <Show
-          when={details()}
-          fallback={
-            <VerificationStatus
-              toggleDetails={toggleDetails}
-            >
-            </VerificationStatus>
-          }
-        >
-          <VerificationDetails toggleDetails={toggleDetails}>
-          </VerificationDetails>
-        </Show>
-      </header>
-    </div>
+    <VerificationProvider
+      uiUrl={VERIFICATION_SERVICE_UI_URL}
+      apiUrl={VERIFICATION_SERVICE_API_URL}
+    >
+      <VerificationStatus />
+    </VerificationProvider>
   );
 };
 
