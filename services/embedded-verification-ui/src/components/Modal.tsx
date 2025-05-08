@@ -9,7 +9,7 @@ const Modal: Component = (props) => {
       }}
     >
       <div
-        class="text-2xl text-bold"
+        class="text-bold"
         classList={{
           "text-2xl": !props.fontLarge || true,
           "text-4xl": props.fontLarge || false,
