@@ -1,33 +1,34 @@
 import { Component, createEffect, createSignal, Show } from "solid-js";
 
-import Minimized from "~/components/views/Minimized.tsx";
-import Standard from "~/components/views/Standard.tsx";
-import Details from "~/components/views/Details.tsx";
+import Minimized from "~/views/Minimized.tsx";
+import Standard from "~/views/Standard.tsx";
+import Details from "~/views/Details.tsx";
 
 import { useVerificationContext } from "~/components/Context";
 
 import styles from "./App.module.css?no-inline";
 
-const VerificationStatus: Component = (props) => {
+const VerificationStatus: Component = (_props) => {
   const xx = useVerificationContext();
-  const [verificationDetails, { refetch }] = useVerificationContext();
+  const [verificationDetails, _url, { refetch }] = useVerificationContext();
   const views = {
     minimized: 1,
     standard: 2,
     details: 3,
   };
-  const [view, setView] = createSignal(views.minimized);
-  /* const [view, setView] = createSignal(views.standard); */
+  /* const [view, setView] = createSignal(views.minimized); */
+  const [view, setView] = createSignal(views.standard);
+  /* const [view, setView] = createSignal(views.details); */
   const toggleViewMinimized = () => setView(views.minimized);
   const toggleViewStandard = () => setView(views.standard);
   const toggleViewDetails = () => setView(views.details);
-  // TOOD: setup automatic refetch operation after a certain time has passed
   createEffect(() =>
     setInterval(() => {
+      // TOOD: automatic refetch operation after a certain time has passed
       console.log("refetching verification");
       console.log("refetching verification", xx);
-      /* console.log("refetch", refetch); */
-      /* refetch(); */
+      console.log("refetch", refetch);
+      refetch();
     }, 10000)
   );
   // show app only if verification status details have become available

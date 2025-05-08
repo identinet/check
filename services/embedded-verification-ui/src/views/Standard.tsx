@@ -1,0 +1,63 @@
+import { Component, createSignal } from "solid-js";
+
+import Modal from "~/components/Modal";
+import Button from "~/components/Button";
+import Shield from "~/components/icons/Shield";
+
+const Standard: Component = (props) => {
+  const valid = true;
+  const [visible, setVisible] = createSignal(false);
+  return (
+    <>
+      <div
+        alt="Verification Status"
+        classList={{
+          /* "from-blue-200": valid, */
+          "from-[#4548FF]": valid,
+          "via-[#5092FF]": valid,
+          /* "to-blue-50": valid, */
+          "to-[#4CAFFF]": valid,
+          /* "border-blue-900": valid, */
+          "border-[#07348F]": valid,
+          "from-red-200": !valid,
+          "to-red-50": !valid,
+          "border-red-900": !valid,
+        }}
+        class="relative w-[18rem] max-w-[80vw] h-[10rem] bg-linear-10 border-l border-y rounded-l-4xl"
+      >
+        <div class="w-full h-full rounded-l-4xl bg-radial from-[#0548DD]/60 to-[#5800FC]/10">
+          {/* Radial gradient that helps increase the readibility of the cards  */}
+        </div>
+
+        <div class="absolute top-0 w-full h-full grid grid-rows-[2rem_minmax(2rem,1fr) grid-col-1] items-center">
+          <div class="z-1 absolute top-0 p-2 gap-3 flex flex-row w-full items-start justify-center max-h-[2rem]">
+            {/* Navbar */}
+            <div class="flex flex-nowrap flex-row gap-2 items-start justify-start grow">
+              <Button action={props.close} icon="i-flowbite-close-outline" />
+            </div>
+            <div class="flex flex-nowrap flex-row gap-2 items-end justify-end">
+              <Button
+                action={() => setVisible(!visible())}
+                /* icon="i-flowbite-arrow-up-right-down-left-solid" */
+              >
+                ?
+              </Button>
+              <div class="hidden">
+                <Button
+                  action={() => setVisible(!visible())}
+                  icon="i-flowbite-cog-outline"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
+            <Shield action={props.toggleView} height="100" width="90" />
+            <Modal hidden={!visible()} />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Standard;
