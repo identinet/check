@@ -8,3 +8,7 @@ import '../verification-service-ui/Justfile'
 # Print this help
 default:
     @just -l
+
+# Serve local assets
+serve: build
+    static-web-server -p $PORT -d dist/assets -z

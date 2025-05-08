@@ -67,7 +67,7 @@ export default defineConfig({
     }),
   ],
   server: {
-    port: process.env.PORT ?? 3010,
+    port: parseInt(process.env.PORT ?? "3015") + 1,
   },
   build: {
     target: "esnext",

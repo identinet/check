@@ -1,0 +1,55 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embedded-verification-ui
+  labels:
+    app: embedded-verification-ui
+spec:
+  selector:
+    matchLabels:
+      app: embedded-verification-ui
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: embedded-verification-ui
+      labels:
+        app: embedded-verification-ui
+    spec:
+      containers:
+        - name: embedded-verification-ui
+          image: identinet/check-embedded-verification-ui
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: embedded-verification-ui-env
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          livenessProbe:
+            tcpSocket:
+              port: http
+          readinessProbe:
+            tcpSocket:
+              port: http
+          ports:
+            - containerPort: 3000
+              name: http
+      restartPolicy: Always
