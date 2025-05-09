@@ -98,7 +98,7 @@ export default function VerificationSearch() {
   });
 
   // deno-lint-ignore no-unused-vars
-  const { validate, formSubmit, errors } = useForm({
+  const { validate, formSubmit, errors, resetErrors } = useForm({
     errorClass: "error-input",
   });
   const isHttpsUrl = ({ value }) => {
@@ -118,6 +118,7 @@ export default function VerificationSearch() {
 
   createEffect(() => {
     if (searchParams.url) {
+      resetErrors();
       const formData = new FormData();
       formData.set("url", searchParams.url);
       verifyUrl(formData);

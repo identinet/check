@@ -27,6 +27,12 @@ export function useForm({ errorClass }) {
   const [errors, setErrors] = createStore({}),
     fields = {};
 
+  const resetErrors = () => {
+    Object.keys(errors).forEach((k) => {
+      errors[k] = undefined;
+    });
+  };
+
   const validate = (ref, accessor) => {
     const accessorValue = accessor();
     const validators = Array.isArray(accessorValue) ? accessorValue : [];
@@ -59,5 +65,5 @@ export function useForm({ errorClass }) {
     };
   };
 
-  return { validate, formSubmit, errors };
+  return { validate, formSubmit, errors, resetErrors };
 }
