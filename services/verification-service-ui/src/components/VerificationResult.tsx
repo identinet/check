@@ -3,7 +3,11 @@ import { CredentialCard, ErrorCard } from "./CredentialCard";
 
 export default function VerificationResult({ pending, result, error }) {
   if (pending) {
-    return "pending...";
+    return (
+      <div class="max-w-md mx-auto mt-8">
+        Pending…
+      </div>
+    );
   }
 
   if (error) {
