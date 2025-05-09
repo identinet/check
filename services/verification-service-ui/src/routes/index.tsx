@@ -1,3 +1,4 @@
+import icon from "~/assets/logo-shield.svg";
 import { useLocation } from "@solidjs/router";
 import VerificationSearch from "~/components/VerificationSearch";
 
@@ -12,7 +13,7 @@ export default function Home() {
         class={`flex-col justify-center items-center mt-6 mb-10 ${showOnlyOnMain()}`}
       >
         <img
-          src="/logo-shield.svg"
+          src={icon}
           class="w-20 h-20"
           alt="check logo shield"
         />

@@ -1,3 +1,4 @@
+import icon from "~/assets/logo-shield.svg";
 import { useLocation } from "@solidjs/router";
 
 export default function Nav() {
@@ -17,7 +18,7 @@ export default function Nav() {
           class="flex items-center space-x-1 rtl:space-x-reverse uppercase"
         >
           <img
-            src="/logo-shield.svg"
+            src={icon}
             class="w-10 h-10"
             alt="check logo shield"
           />
