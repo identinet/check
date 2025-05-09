@@ -4,8 +4,30 @@ const classesInvalid =
   "bg-gradient-from-invalid-100 bg-gradient-via-invalid-100 bg-gradient-to-invalid-500 border-invalid-900";
 const classesValid =
   "bg-gradient-from-valid-100 bg-gradient-via-valid-100 bg-gradient-to-valid-500 border-valid-900";
+const classesGray =
+  "bg-gradient-from-gray-100 bg-gradient-via-gray-100 bg-gradient-to-gray-300 border-gray-500";
 //const classesRisky =
 //  "bg-gradient-from-risky-100 bg-gradient-via-risky-100 bg-gradient-to-risky-500 border-risky-900";
+
+export function NotFoundCard({ icon, message }) {
+  return (
+    <div
+      class={`p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classesGray}`}
+    >
+      {icon && (
+        <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">
+          <div class={`${icon} me-2 w-8 h-8 shrink-0`} />
+        </div>
+      )}
+      {message &&
+        (
+          <div class="mb-3">
+            {message}
+          </div>
+        )}
+    </div>
+  );
+}
 
 export function ErrorCard({ icon, message }) {
   return (

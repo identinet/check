@@ -14,9 +14,12 @@ const demoSites = [
   [
     "https://no-id-example.identinet.io",
     "No DID document available",
-    (_url) => {
-      throw new Error("Not found");
-    },
+    (_url) => ({
+      status: "NOT_FOUND",
+      presentation: {
+        verifiableCredential: [],
+      },
+    }),
   ],
   [
     "https://id-well-known-example.identinet.io",
@@ -81,6 +84,15 @@ const verifyUrlAction = action(async (formData: FormData) => {
   const response = await fetch(
     `https://${process.env.EXTERNAL_API_HOSTNAME}/v1/verification?url=${input}`,
   );
+
+  if (response.status == 404) {
+    return {
+      status: "NOT_FOUND",
+      presentation: {
+        verifiableCredential: [],
+      },
+    };
+  }
 
   if (!response.ok) throw new Error(response.statusText);
 

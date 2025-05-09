@@ -1,5 +1,5 @@
 import { For } from "solid-js";
-import { CredentialCard, ErrorCard } from "./CredentialCard";
+import { CredentialCard, ErrorCard, NotFoundCard } from "./CredentialCard";
 
 export default function VerificationResult({ pending, result, error }) {
   if (pending) {
@@ -24,12 +24,23 @@ export default function VerificationResult({ pending, result, error }) {
   const credentials = result.presentation?.verifiableCredential || [];
   const status = result.status;
 
+  if (status == "NOT_FOUND") {
+    return (
+      <div class="max-w-md mx-auto mt-8">
+        <NotFoundCard
+          icon="i-flowbite-ban-outline"
+          message="No identifier found."
+        />
+      </div>
+    );
+  }
+
   if (credentials.length == 0) {
     return (
       <div class="max-w-md mx-auto mt-8">
-        <ErrorCard
+        <NotFoundCard
           icon="i-flowbite-ban-outline"
-          message="Unfortunately, there are no credentials available for this site."
+          message="There are no credentials available for this identifier."
         />
       </div>
     );
