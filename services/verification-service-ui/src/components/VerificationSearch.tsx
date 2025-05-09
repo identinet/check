@@ -68,10 +68,15 @@ const handleDemoUrl = async (url: string) => {
 
 const verifyUrlAction = action(async (formData: FormData) => {
   "use server";
-  const input = formData.get("url") as string;
+  let input = formData.get("url") as string;
 
   const demoResult = await handleDemoUrl(input);
   if (demoResult) return demoResult;
+
+  // TODO rework, for time being API expects https URLs
+  if (input.indexOf("http") != 0) {
+    input = `https://${input}`;
+  }
 
   const response = await fetch(
     `https://${process.env.EXTERNAL_API_HOSTNAME}/v1/verification?url=${input}`,
@@ -101,7 +106,12 @@ export default function VerificationSearch() {
   const { validate, formSubmit, errors, resetErrors } = useForm({
     errorClass: "error-input",
   });
-  const isHttpsUrl = ({ value }) => {
+  const isValidInput = ({ value }) => {
+    // prepend https:// if value does not beging with http or https
+    // this allows us to parse the value as an URL
+    if (value.indexOf("http") != 0) {
+      value = `https://${value}`;
+    }
     try {
       const url = new URL(value);
       return (url.protocol != "https:") && "Please enter a 'https' URL";
@@ -148,13 +158,13 @@ export default function VerificationSearch() {
           </div>
           <input
             id="url-input"
-            type="url"
+            type="search"
             name="url"
             class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             placeholder="https://www…"
             value={searchParams.url || ""}
             required
-            use:validate={[isHttpsUrl]}
+            use:validate={[isValidInput]}
           />
           <button
             type="submit"
