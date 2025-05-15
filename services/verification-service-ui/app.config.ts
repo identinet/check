@@ -2,6 +2,7 @@
 import { defineConfig } from "@solidjs/start/config";
 import UnoCSS from "unocss/vite";
 import presetWind3 from "@unocss/preset-wind3";
+import presetWebFonts from "@unocss/preset-web-fonts";
 import { presetIcons } from "unocss";
 
 /**
@@ -58,6 +59,14 @@ export default defineConfig({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
         presetWind3(),
+        presetWebFonts({
+          provider: "google", // default provider
+          fonts: {
+            // these will extend the default theme
+            sans: "Inter",
+            // sans: 'Roboto',
+          },
+        }),
         presetIcons({
           // Documentation: https://unocss.dev/presets/icons
           collections: {

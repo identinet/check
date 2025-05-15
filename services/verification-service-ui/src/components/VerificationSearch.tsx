@@ -126,9 +126,9 @@ export default function VerificationSearch() {
     }
     try {
       const url = new URL(value);
-      return (url.protocol != "https:") && "Please enter a 'https' URL";
+      return (url.protocol != "https:") && "Please enter an entire valid URL.";
     } catch (_e) {
-      return `${value} is not a valid URL`;
+      return "Please enter an entire valid URL.";
     }
   };
   const submit = (form) => {

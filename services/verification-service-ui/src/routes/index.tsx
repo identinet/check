@@ -8,19 +8,19 @@ export default function Home() {
     location.search.indexOf("url=") < 0 ? "flex" : "hidden";
 
   return (
-    <main class="text-center mx-auto text-gray-700 p-4">
+    <main class="text-center mt-15vh mx-auto text-gray-700 p-4">
       <div
-        class={`flex-col justify-center items-center mt-6 mb-10 ${showOnlyOnMain()}`}
+        class={`flex-col justify-center items-center mb-12 ${showOnlyOnMain()}`}
       >
         <img
           src={icon}
           class="w-20 h-20"
           alt="check logo shield"
         />
-        <h2 class="uppercase text-4xl font-bold mt-8 mb-2">
+        <h2 class="uppercase text-4xl md-text-5xl font-bold mt-12 mb-2">
           Check
         </h2>
-        <p class="text-lg">
+        <p class="text-lg md-text-xl">
           Helping retailers and clients transact with confidence
         </p>
       </div>

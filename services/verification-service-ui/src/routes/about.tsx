@@ -86,7 +86,7 @@ export default function About() {
   });
 
   return (
-    <main class="mx-auto w-lg p-4">
+    <main class="mx-auto md-w-3xl p-4">
       <div
         id="accordion-open"
         data-accordion="open"

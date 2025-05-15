@@ -5,13 +5,15 @@ export default function Nav() {
   const location = useLocation();
   const isActive = (path: string) => path == location.pathname;
   const active = (path: string) =>
-    isActive(path) ? "bg-primary-500" : "bg-transparent hover:bg-primary-300";
+    isActive(path)
+      ? "bg-primary-500 text-white"
+      : "bg-transparent hover:bg-primary-300 hover:text-white";
 
   const hideOnMain = () =>
     isActive("/") && location.search.indexOf("url=") < 0 ? "hidden" : "";
 
   return (
-    <nav class={`bg-primary-600 border-gray-200 ${hideOnMain()}`}>
+    <nav class={`bg-gray-100 text-gray-700 border-gray-200 ${hideOnMain()}`}>
       <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a
           href="/"
@@ -22,7 +24,7 @@ export default function Nav() {
             class="w-10 h-10"
             alt="check logo shield"
           />
-          <span class="self-center text-2xl font-semibold whitespace-nowrap text-white">
+          <span class="self-center text-2xl font-semibold whitespace-nowrap">
             Check
           </span>
         </a>
@@ -31,7 +33,7 @@ export default function Nav() {
             <li>
               <a
                 href="/"
-                class={`block text-white px-3 py-2 ${active("/")}`}
+                class={`block px-3 py-2 mr-4 ${active("/")}`}
                 aria-current={isActive("/") ? "page" : null}
               >
                 Home
@@ -40,7 +42,7 @@ export default function Nav() {
             <li>
               <a
                 href="/about"
-                class={`block text-white px-3 py-2 ${active("/about")}`}
+                class={`block px-3 py-2 ${active("/about")}`}
                 aria-current={isActive("/about") ? "page" : null}
               >
                 About

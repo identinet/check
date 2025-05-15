@@ -24,23 +24,12 @@ export default function VerificationResult({ pending, result, error }) {
   const credentials = result.presentation?.verifiableCredential || [];
   const status = result.status;
 
-  if (status == "NOT_FOUND") {
+  if (status == "NOT_FOUND" || credentials.length == 0) {
     return (
       <div class="max-w-md mx-auto mt-8">
         <NotFoundCard
           icon="i-flowbite-ban-outline"
-          message="No identifier found."
-        />
-      </div>
-    );
-  }
-
-  if (credentials.length == 0) {
-    return (
-      <div class="max-w-md mx-auto mt-8">
-        <NotFoundCard
-          icon="i-flowbite-ban-outline"
-          message="There are no credentials available for this identifier."
+          message="Unfortunately, there is no entry for this shop."
         />
       </div>
     );
@@ -89,7 +78,7 @@ export default function VerificationResult({ pending, result, error }) {
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <For each={credentials}>
             {(credential) => (
-              <div class="flex">
+              <div class="flex h-fit">
                 <CredentialCard status={status} credential={credential} />
               </div>
             )}
