@@ -42,15 +42,14 @@
         devShells.default = pkgs.mkShell {
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
-            cargo-watch
-            default_pkg.nativeBuildInputs
-            default_pkg.buildInputs
             deno
             gh
             git-cliff
             just
+            cargo-watch
             nushell
             skopeo
+            default_pkg.nativeBuildInputs
           ];
           env = {
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.openssl ];
@@ -94,8 +93,8 @@
           enableFakechroot = true;
           fakeRootCommands = ''
             set -exuo pipefail
-            mkdir -p /run/${default_pkg.pname}
-            # chown 65534:65534 /run/${default_pkg.pname}
+            mkdir -p /run/verification-service
+            # chown 65534:65534 /run/verification-service
             # mkdir /tmp
             # chmod 1777 /tmp
           '';
@@ -103,15 +102,15 @@
             # Valid values, see: https://github.com/moby/docker-image-spec
             # and https://oci-playground.github.io/specs-latest/
             ExposedPorts = {
-              "3000/tcp" = { };
+              "8000/tcp" = { };
             };
             Entrypoint = [
               "${pkgs.tini}/bin/tini"
               "--"
             ];
-            Cmd = [ "${default_pkg}/bin/${default_pkg.pname}" ];
+            Cmd = [ "${default_pkg}/bin/verification-service" ];
             # Env = [ "VARNAME=xxx" ];
-            WorkingDir = "/run/${default_pkg.pname}";
+            WorkingDir = "/run/verification-service";
             # WorkingDir = "/";
             # User 'nobody' and group 'nogroup'
             User = "65534";

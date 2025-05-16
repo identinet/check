@@ -2,6 +2,7 @@
 import { defineConfig } from "@solidjs/start/config";
 import UnoCSS from "unocss/vite";
 import presetWind3 from "@unocss/preset-wind3";
+import presetWebFonts from "@unocss/preset-web-fonts";
 import { presetIcons } from "unocss";
 
 /**
@@ -48,11 +49,24 @@ export default defineConfig({
           "**/node_modules/**",
         ],
       },
+      fs: {
+        // workaround for dev env: allow serving files outside of workspace root
+        // TODO follow https://github.com/vitejs/vite/issues/19795 for a solution
+        strict: process.env.NODE_ENV != "development",
+      },
     },
     plugins: [UnoCSS({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
         presetWind3(),
+        presetWebFonts({
+          provider: "google", // default provider
+          fonts: {
+            // these will extend the default theme
+            sans: "Inter",
+            // sans: 'Roboto',
+          },
+        }),
         presetIcons({
           // Documentation: https://unocss.dev/presets/icons
           collections: {
@@ -71,17 +85,29 @@ export default defineConfig({
       theme: {
         colors: {
           primary: {
-            "50": "#eff6ff",
-            "100": "#dbeafe",
-            "200": "#bfdbfe",
-            "300": "#93c5fd",
-            "400": "#60a5fa",
-            "500": "#3b82f6",
-            "600": "#2563eb",
-            "700": "#1d4ed8",
-            "800": "#1e40af",
-            "900": "#1e3a8a",
-            "950": "#172554",
+            50: "#EAF6FF", // card bg start
+            100: "#ADDCFF", // card bg end
+            200: "#64C4F3", // about section bg
+            300: "#0EA5E9", // button bg check / menu hover
+            400: "#039BE5", // card border
+            500: "#0284C7", // button bg active / links
+            600: "#1E5785", // nav bg
+            700: "#1E429F", // button bg check hover
+          },
+          valid: {
+            100: "#EAF6FF",
+            500: "#ADDCFF",
+            900: "#039BE5",
+          },
+          risky: {
+            100: "#FFF7EA",
+            500: "#FEEDDE",
+            900: "#FFCFAD",
+          },
+          invalid: {
+            100: "#FFEAF3",
+            500: "#FFADCA",
+            900: "#E5036C",
           },
         },
       },

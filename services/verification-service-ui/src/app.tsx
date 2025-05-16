@@ -4,23 +4,19 @@ import "virtual:uno.css";
 import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 
-import { onMount, Suspense } from "solid-js";
+import { Suspense } from "solid-js";
 import Nav from "~/components/Nav";
-
-import { initFlowbite } from "flowbite";
+import Footer from "~/components/Footer";
 
 export default function App() {
-  onMount(() => {
-    initFlowbite();
-  });
-
   return (
     <Router
       root={(props) => (
-        <>
+        <div class="font-sans flex flex-col min-h-vh">
           <Nav />
           <Suspense>{props.children}</Suspense>
-        </>
+          <Footer />
+        </div>
       )}
     >
       <FileRoutes />
