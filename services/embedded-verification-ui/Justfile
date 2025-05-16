@@ -9,6 +9,16 @@ import '../verification-service-ui/Justfile'
 default:
     @just -l
 
+# Build release version of application
+[group('development')]
+build: install
+    #!/usr/bin/env nu
+    deno task build
+    cd "{{ DIST_FOLDER }}/assets"
+    ln -s *.css evi.css
+    ln -s *.js evi.js
+
 # Serve local assets
+[group('development')]
 serve: build
-    static-web-server -p $PORT -d dist/assets -z
+    static-web-server -p $PORT -d dist/assets -z -c '*'
