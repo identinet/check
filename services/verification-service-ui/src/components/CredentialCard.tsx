@@ -86,12 +86,12 @@ export function CredentialCard({ credential, status }) {
   const credentialDetails = (credential) => {
     return (
       <dl class="text-sm text-left rtl:text-right w-full">
-        <div class="preview grid grid-cols-[1fr_2fr] gap-4 mb-4">
+          <div class="preview grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 mb-4">
           {renderClaim(["Issuer", credential.issuer])}
           {renderClaim(["Issued", credential.issuanceDate])}
         </div>
         <div
-          class={`full grid grid-cols-[1fr_2fr] gap-4 ${
+          class={`full grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 ${
             collapsed() ? "hidden" : ""
           }`}
         >
@@ -173,8 +173,8 @@ const renderClaim = ([key, value]) => {
   if (!isObject(value)) {
     return (
       <>
-        <dt class="font-semibold">{formatClaimKey(key)}</dt>
-        <dd>{formatClaimValue(value)}</dd>
+        <dt class="font-semibold overflow-hidden text-ellipsis">{formatClaimKey(key)}</dt>
+        <dd class="break-words">{formatClaimValue(value)}</dd>
       </>
     );
   }
