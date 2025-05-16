@@ -3,7 +3,7 @@ import solidPlugin from "vite-plugin-solid";
 
 import UnoCSS from "unocss/vite";
 import presetWind4 from "@unocss/preset-wind4";
-import presetWind3 from "@unocss/preset-wind3";
+import presetWebFonts from "@unocss/preset-web-fonts";
 import { presetIcons } from "unocss";
 
 import process from "node:process";
@@ -18,10 +18,17 @@ export default defineConfig({
     UnoCSS({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
-        // presetWind3(),
         presetWind4({
           preflights: {
             reset: true,
+          },
+        }),
+        presetWebFonts({
+          // use axios with an https proxy
+          provider: "google",
+          fonts: {
+            sans: "Inter",
+            // mono: ["Fira Code", "Fira Mono:400,700"],
           },
         }),
         presetIcons({
