@@ -3,9 +3,9 @@ import { Component } from "solid-js";
 const Modal: Component = (props) => {
   return (
     <div
-      class="absolute w-full h-full flex flex-col items-center justify-center gap-2 bg-radial from-blue-800/80"
+      class="absolute w-full h-full flex-col items-center justify-center gap-2 bg-radial from-blue-800/80"
       classList={{
-        [props.show ? "display" : "hidden"]: true,
+        [props.show ? "flex" : "hidden"]: true,
       }}
     >
       <div
