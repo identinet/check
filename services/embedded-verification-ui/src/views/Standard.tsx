@@ -6,7 +6,7 @@ import Shield from "~/components/icons/Shield";
 
 const Standard: Component = (props) => {
   const valid = true;
-  const [visible, setVisible] = createSignal(false);
+  const [modalVisible, setVisible] = createSignal(false);
   return (
     <>
       <div
@@ -37,14 +37,14 @@ const Standard: Component = (props) => {
             </div>
             <div class="flex flex-nowrap flex-row gap-2 items-end justify-end">
               <Button
-                action={() => setVisible(!visible())}
+                action={() => setVisible(!modalVisible())}
                 /* icon="i-flowbite-arrow-up-right-down-left-solid" */
               >
                 ?
               </Button>
               <div class="hidden">
                 <Button
-                  action={() => setVisible(!visible())}
+                  action={() => setVisible(!modalVisible())}
                   icon="i-flowbite-cog-outline"
                 />
               </div>
@@ -52,7 +52,7 @@ const Standard: Component = (props) => {
           </div>
           <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
             <Shield action={props.toggleView} height="100" width="90" />
-            <Modal hidden={!visible()} />
+            <Modal show={modalVisible()} />
           </div>
         </div>
       </div>

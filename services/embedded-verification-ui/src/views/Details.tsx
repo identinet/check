@@ -8,7 +8,7 @@ import { useVerificationContext } from "~/components/Context.tsx";
 import { createSignal } from "solid-js";
 
 const Details: Component = (props) => {
-  const [visible, setVisible] = createSignal(false);
+  const [modalVisible, setVisible] = createSignal(false);
   const valid = true;
   const [verificationDetails, url, { refetch }] = useVerificationContext();
   const identityUrl = new URL(document.URL);
@@ -52,7 +52,7 @@ const Details: Component = (props) => {
               About the Retailer
             </div>
             <div class="flex flex-nowrap flex-row gap-3 items-end justify-end flex-none">
-              <Button action={() => setVisible(!visible())}>?</Button>
+              <Button action={() => setVisible(!modalVisible())}>?</Button>
             </div>
           </div>
           <div class="relative ">
@@ -85,7 +85,7 @@ const Details: Component = (props) => {
                   issuer="Amtsgericht Bremen"
                 />
               </div>
-              <Modal fontLarge={true} hidden={!visible()} />
+              <Modal fontLarge={true} show={modalVisible()} />
             </div>
           </div>
           <div class="">

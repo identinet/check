@@ -5,7 +5,7 @@ const Modal: Component = (props) => {
     <div
       class="absolute w-full h-full flex flex-col items-center justify-center gap-2 bg-radial from-blue-800/80"
       classList={{
-        hidden: props.hidden,
+        [props.show ? "display" : "hidden"]: true,
       }}
     >
       <div
