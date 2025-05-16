@@ -25,14 +25,15 @@ export default defineConfig({
             reset: true,
           },
         }),
-        presetWebFonts({
-          // use axios with an https proxy
-          provider: "google",
-          fonts: {
-            sans: "Inter",
-            // mono: ["Fira Code", "Fira Mono:400,700"],
-          },
-        }),
+        // INFO: Doesn't work in nixos' build environment, because unocss tries to fetch the fonts during build
+        // presetWebFonts({
+        //   // use axios with an https proxy
+        //   provider: "google",
+        //   fonts: {
+        //     sans: "Inter",
+        //     // mono: ["Fira Code", "Fira Mono:400,700"],
+        //   },
+        // }),
         presetIcons({
           // Documentation: https://unocss.dev/presets/icons
           collections: {
