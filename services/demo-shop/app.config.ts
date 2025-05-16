@@ -1,8 +1,7 @@
 // Documentation: https://vite.dev/config/
 import { defineConfig } from "@solidjs/start/config";
 import UnoCSS from "unocss/vite";
-// import presetWind4 from "@unocss/preset-wind4";
-import presetWind3 from "@unocss/preset-wind3";
+import presetWind4 from "@unocss/preset-wind4";
 import { presetIcons } from "unocss";
 
 /**
@@ -48,7 +47,11 @@ export default defineConfig({
     plugins: [UnoCSS({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
-        presetWind3(),
+        presetWind4({
+          preflights: {
+            reset: true,
+          },
+        }),
         presetIcons({
           // Documentation: https://unocss.dev/presets/icons
           collections: {
@@ -62,7 +65,8 @@ export default defineConfig({
             "vertical-align": "middle",
           },
         }),
-        presetFlowbite(),
+        // FIXME: causes problem with unocss 66.1.2
+        // presetFlowbite(),
       ],
       theme: {
         colors: {
