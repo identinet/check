@@ -14,9 +14,10 @@ default:
 build: install
     #!/usr/bin/env nu
     deno task build
-    cd "{{ DIST_FOLDER }}/assets"
-    ln -s *.css evi.css
-    ln -s *.js evi.js
+    cd "{{ DIST_FOLDER }}"
+    let buildManifest = open ".vite/manifest.json"
+    cp -v $buildManifest."index.html".file ([($buildManifest."index.html".file | path dirname) "evi.js"] | path join)
+    cp -v $buildManifest."index.html".css.0 ([($buildManifest."index.html".css.0 | path dirname) "evi.css"] | path join)
 
 # Serve local assets
 [group('development')]

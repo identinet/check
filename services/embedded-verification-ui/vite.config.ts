@@ -1,3 +1,5 @@
+// Documentation: https://vite.dev/config/
+
 import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 
@@ -78,6 +80,7 @@ export default defineConfig({
   },
   build: {
     target: "esnext",
+    manifest: true,
   },
   resolve: {
     alias: {
