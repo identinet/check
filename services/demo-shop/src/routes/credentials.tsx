@@ -1,8 +1,12 @@
 import { createEffect, createSignal, onCleanup, Show, Suspense } from "solid-js";
 import { createAsync, query, useBeforeLeave, useNavigate } from "@solidjs/router";
-import QRCode from "~/components/QRCode";
 import isMobile from "~/lib/isMobile.js";
 import process from "node:process";
+import Frame from "~/components/verification/Frame.tsx";
+import Start from "~/components/verification/Start.tsx";
+import Pre from "~/components/verification/Pre.tsx";
+import Verify from "~/components/verification/Verify.tsx";
+import Thanks from "~/components/verification/Thanks.tsx";
 
 const createAuthorizationRequest = query((mobile) => {
   "use server";
@@ -30,6 +34,14 @@ export default function Credentials() {
   };
   const authRequest = createAsync(() => createAuthorizationRequest(isMobile()));
   const navigate = useNavigate();
+
+  const views = {
+    START: 0,
+    PRE: 1,
+    VERIFY: 2,
+    THANKS: 3,
+  };
+  const [view, setView] = createSignal(views.PRE);
 
   // SSE connection between client and server
   // See https://javascript.info/server-sent-events
@@ -73,7 +85,10 @@ export default function Credentials() {
         const url = event.data;
         setEventSourceStatus(eventSourceStatusOptions.closed);
         eventSource?.close();
-        navigate(url);
+        setView(views.THANKS);
+        setTimeout(() => {
+          navigate(url);
+        }, 5000);
       });
       eventSource.addEventListener("ping", (event) => {
         if (eventSourceStatus() != eventSourceStatusOptions.established) {
@@ -131,45 +146,36 @@ export default function Credentials() {
 
   return (
     <section class="bg-white py-8 antialiased dark:bg-gray-900 md:py-16">
-      <div class="mx-auto container px-4 2xl:px-0">
+      <div class="mx-auto container px-4 2xl:px-0 flex flex-col items-center justify-center gap-10">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-          Requesting Credentials
+          Pre-Checkout: Requesting Verifying Credentials
         </h2>
 
-        <div>
+        <div class="hidden">
           EventSource status: {eventSourceStatus()}
         </div>
 
-        <Show
-          when={isMobile()}
-          fallback={
-            <p>
-              Please proceed by scanning this QR code from the wallet app on your mobile device.
-            </p>
-          }
-        >
-          <p>Please proceed by opening the wallet app.</p>
-        </Show>
-
-        <Suspense fallback={<div>Loading...</div>}>
-          <Show
-            when={isMobile()}
-            fallback={
-              <QRCode class="mx-auto p-8 w-full max-w-80">
-                {authRequest()?.url}
-              </QRCode>
-            }
-          >
-            <div class="flex gap-10 p-8 wrap">
-              <a
-                href={authRequest()?.url}
-                class="flex w-full items-center justify-center rounded-lg bg-primary-700 p-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 inactive"
-              >
-                Open Wallet
-              </a>
-            </div>
-          </Show>
-        </Suspense>
+        <div class=" leading-10">
+          <Frame>
+            <Show
+              when={view() === views.START}
+              fallback={
+                <Show
+                  when={view() === views.PRE}
+                  fallback={
+                    <Show when={view() === views.VERIFY} fallback={<Thanks></Thanks>}>
+                      <Verify>{authRequest()?.url}</Verify>
+                    </Show>
+                  }
+                >
+                  <Pre action={() => setView(views.VERIFY)}></Pre>
+                </Show>
+              }
+            >
+              <Start action={() => setView(views.PRE)}></Start>
+            </Show>
+          </Frame>
+        </div>
       </div>
     </section>
   );
