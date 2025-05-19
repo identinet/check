@@ -18,8 +18,10 @@ info:
     email: support@identinet.io
 
 servers:
-  - url: http://localhost:3011
+  - url: http://localhost:3020
     description: Local development server
+  - url: https://demo-shop.vds.check.identinet.io
+    description: Demo shop deployment
 
 tags:
   - name: openid4vp-wallet

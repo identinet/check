@@ -18,8 +18,10 @@ info:
     email: support@identinet.io
 
 servers:
-  - url: http://localhost:3010
+  - url: http://localhost:3012
     description: Local development server
+  - url: https://api.check.identinet.io
+    description: Demo deployment
 
 tags:
   - name: verification
