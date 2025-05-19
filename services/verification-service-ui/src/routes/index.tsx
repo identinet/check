@@ -1,16 +1,21 @@
 import icon from "~/assets/logo-shield.svg";
-import { useLocation } from "@solidjs/router";
+import { useLocation, useSearchParams } from "@solidjs/router";
 import VerificationSearch from "~/components/VerificationSearch";
 
 export default function Home() {
-  const location = useLocation();
-  const showOnlyOnMain = () =>
-    location.search.indexOf("url=") < 0 ? "flex" : "hidden";
-
+  const [searchParams] = useSearchParams();
   return (
-    <main class="text-center mt-15vh mx-auto text-gray-700 p-4">
+    <main
+      class="text-center mx-auto text-gray-700 p-4"
+      classList={{
+        [searchParams.url === undefined ? "mt-15vh" : "mt-8"]: true,
+      }}
+    >
       <div
-        class={`flex-col justify-center items-center mb-12 ${showOnlyOnMain()}`}
+        class="flex-col justify-center items-center mb-12"
+        classList={{
+          [searchParams.url === undefined ? "flex" : "hidden"]: true,
+        }}
       >
         <img
           src={icon}
