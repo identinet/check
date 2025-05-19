@@ -80,6 +80,13 @@
           enableFakechroot = true;
           fakeRootCommands = ''
             set -exuo pipefail
+            # Default configuration
+            mkdir -p /app
+            cat > /app/config.json <<END
+            {
+              "vsi": "https://check.identinet.io"
+            }
+            END
             mkdir -p /run/app
             chown 65534:65534 /run/app
             # mkdir /tmp
