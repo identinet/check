@@ -35,6 +35,7 @@ pkgs.rustPlatform.buildRustPackage {
     cargo
     clippy
     pkg-config
+    openssl.dev
     rust-analyzer
     rustc
     rustfmt
