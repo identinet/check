@@ -4,21 +4,21 @@
   description = "NixOS docker image";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs_unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
   outputs =
     {
       self,
       nixpkgs,
-      nixpkgs-unstable,
+      nixpkgs_unstable,
       flake-utils,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        unstable = nixpkgs-unstable.legacyPackages.${system};
+        # unstable = nixpkgs_unstable.legacyPackages.${system};
         default_pkg = pkgs.callPackage ./default.nix {
           inherit pkgs;
           nodejs = pkgs.nodejs_22;
@@ -37,9 +37,9 @@
             gh
             git-cliff
             just
-            unstable.cargo-watch
-            unstable.nushell
-            unstable.skopeo
+            nushell
+            skopeo
+            # valkey
             # default_pkg.nativeBuildInputs
           ];
         };
@@ -48,8 +48,8 @@
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
             just
-            unstable.nushell
-            unstable.skopeo
+            nushell
+            skopeo
           ];
         };
 
