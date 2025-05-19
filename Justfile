@@ -141,5 +141,5 @@ tunnel:
     # cloudflared tunnel route dns $env.TUNNEL_USER $"vds-($env.TUNNEL_USER).($env.TUNNEL_DOMAIN)"
     cloudflared tunnel run --cred-file .cloudflared/tunnel.json --url $"http://localhost:80" $env.TUNNEL_USER
 
-# Run tests - current none
+# Run tests - currently none
 test:
