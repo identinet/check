@@ -24,13 +24,13 @@ spec:
       volumes:
         - name: config
           configMap:
-            - name: demo-shop-config
+            name: demo-shop-config
       containers:
         - name: demo-shop
           image: identinet/check-demo-shop
           imagePullPolicy: IfNotPresent
           volumeMounts:
-            - name: demo-shop-config
+            - name: config
               mountPath: /app/config.json
               subPath: config.json
           envFrom:
