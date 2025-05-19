@@ -1,5 +1,5 @@
-import { createSignal } from "solid-js";
 import Shield from "~/components/icons/Shield.tsx";
+import { useConfigContext } from "~/components/ConfigContext";
 
 /**
  * Pre display additional information.
@@ -13,6 +13,7 @@ import Shield from "~/components/icons/Shield.tsx";
  * ```
  */
 export default function Pre(props) {
+  const [config] = useConfigContext();
   return (
     <>
       <div class="text-2xl font-medium text-center">
@@ -26,7 +27,7 @@ export default function Pre(props) {
       >
         Verify & Fill
       </a>
-      <a href="todo" class="text-sm underline">What is CHECK?</a>
+      <a href={`${config()?.vsi}/about`} target="_blank" class="text-sm underline">What is CHECK?</a>
     </>
   );
 }

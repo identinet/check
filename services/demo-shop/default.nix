@@ -47,6 +47,9 @@ pkgs_with_overlay.denoPlatform.mkDenoDerivation {
   installPhase = ''
     mkdir -p $out/bin
     cp -r .output/* $out
+    # Replace config with a link to /app/config.json to make it easy to mount custom configs into the image
+    rm $out/public/config.json
+    ln -s /app/config.json $out/public/config.json
     cat > $out/bin/serve << EOF
     #!/bin/sh
     cd $out

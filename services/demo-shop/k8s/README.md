@@ -1,8 +1,7 @@
 # Kubernetes Configuration
 
-This Kubernetes configuration is meant to be used with
-[kustomize](https://kustomize.io/) to give you full control over the deployed
-resources.
+This Kubernetes configuration is meant to be used with [kustomize](https://kustomize.io/) to give you full control over
+the deployed resources.
 
 Minimum configuration via your `kustomization.yaml`:
 
@@ -29,10 +28,14 @@ secretGenerator:
   - name: demo-shop-env
     envs:
       - demo-shop.env
+configMapGenerator:
+  # Custom configuration for the web shop
+  - name: demo-shop-config
+    files:
+      - config.json
 ```
 
-The configuration of the service is done via environment variables. Example
-environment file `demo-shop.env`:
+The configuration of the service is done via environment variables. Example environment file `demo-shop.env`:
 
 ```dotenv
 # External hostname
@@ -45,4 +48,12 @@ EXTERNAL_VDS_HOSTNAME=demo-shop.vds.example.com
 # HOST=::
 # # Host port that the service will bind to
 # PORT=3000
+```
+
+The frontend configuration of the service is done via a configuration file. Example environment file `config.json`:
+
+```json
+{
+  "vsi": "https://check.example.com"
+}
 ```

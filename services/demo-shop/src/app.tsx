@@ -1,8 +1,8 @@
-import "@unocss/reset/tailwind.css";
 import "virtual:uno.css";
 
 import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
+import ConfigProvider from "~/components/ConfigContext";
 
 import { onMount, Suspense } from "solid-js";
 import Nav from "~/components/Nav";
@@ -19,7 +19,11 @@ export default function App() {
       root={(props) => (
         <>
           <Nav />
-          <Suspense>{props.children}</Suspense>
+          <Suspense>
+            <ConfigProvider>
+              {props.children}
+            </ConfigProvider>
+          </Suspense>
         </>
       )}
     >

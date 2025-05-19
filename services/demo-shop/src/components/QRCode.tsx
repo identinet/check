@@ -1,6 +1,5 @@
 import { createEffect, createResource, onMount } from "solid-js";
 import { generate } from "lean-qr";
-/* import { isServer } from "solid-js/web"; */
 
 /**
  * QRCode renders children as QR code.
@@ -30,7 +29,6 @@ export default function QRCode(props) {
   const [_, { mutate, refetch }] = createResource(
     generatedQRCode,
     (render) => {
-      /* if (isServer) return; */
       const code = generatedQRCode();
       if (code && canvas) {
         code?.toCanvas(canvas);
@@ -39,14 +37,12 @@ export default function QRCode(props) {
   );
 
   createEffect(() => {
-    /* if (isServer) return; */
     if (render && oldText !== props.children) {
       oldText = props.children;
       refetch();
     }
   });
   onMount(() => {
-    /* if (isServer) return; */
     render = true;
     refetch();
   });

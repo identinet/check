@@ -10,8 +10,6 @@ import Thanks from "~/components/verification/Thanks.tsx";
 
 const createAuthorizationRequest = query((mobile) => {
   "use server";
-  console.debug("createAuthorizationRequest");
-  console.debug("isMobile", mobile);
   return fetch(
     `https://${process.env.EXTERNAL_HOSTNAME}/api/authrequests/create?mobile=${mobile}`,
     { method: "POST" },

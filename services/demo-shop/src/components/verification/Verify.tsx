@@ -1,7 +1,7 @@
-import { createEffect } from "solid-js";
 import QRCode from "../QRCode.tsx";
 import { Suspense } from "solid-js/web";
 import isMobile from "~/lib/isMobile.js";
+import { useConfigContext } from "~/components/ConfigContext";
 
 /**
  * Verify displays the QR code.
@@ -15,6 +15,7 @@ import isMobile from "~/lib/isMobile.js";
  * ```
  */
 export default function Verify(props) {
+  const [config] = useConfigContext();
   return (
     <>
       <div class="text-2xl font-medium text-center">
@@ -60,7 +61,7 @@ export default function Verify(props) {
           I agree to share this information
         </label>
       </div>
-      <a href="todo" class="text-sm underline">How to use CHECK?</a>
+      <a href={`${config()?.vsi}/about`} target="_blank" class="text-sm underline">How to use CHECK?</a>
     </>
   );
 }

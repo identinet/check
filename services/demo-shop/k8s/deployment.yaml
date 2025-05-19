@@ -21,10 +21,18 @@ spec:
       labels:
         app: demo-shop
     spec:
+      volumes:
+        - name: config
+          configMap:
+            - name: demo-shop-config
       containers:
         - name: demo-shop
           image: identinet/check-demo-shop
           imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: demo-shop-config
+              mountPath: /app/config.json
+              subPath: config.json
           envFrom:
             - secretRef:
                 name: demo-shop-env
