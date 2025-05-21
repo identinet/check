@@ -7,7 +7,7 @@ const Card: Component = (props) => {
       classList={props.classList || {}}
     >
       <div>{props.title}</div>
-      <div class="text-4xl text-semibold grow">{props.value}</div>
+      <div class="text-3xl text-semibold grow">{props.value}</div>
       <div>Credential Issuer:</div>
       <div class="text-1xl">{props.issuer}</div>
     </div>

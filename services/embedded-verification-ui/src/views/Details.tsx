@@ -75,26 +75,26 @@ const Details: Component = (props) => {
                 class="gap-4 flex flex-wrap items-center justify-center"
               >
                 <Card
-                  title="Registered Retailer:"
-                  value="Yes"
-                  issuer="Amtsgericht Bremen"
+                  title="Registered Organization:"
+                  value="2025-05-16"
+                  issuer="identinet GmbH"
                 />
                 <Card
-                  title="Registered Retailer:"
-                  value="Yes"
-                  issuer="Amtsgericht Bremen"
-                />
-                <Card
-                  classList={{ "max-sm:hidden": true }}
-                  title="Registered Retailer:"
-                  value="Yes"
-                  issuer="Amtsgericht Bremen"
+                  title="Company Location:"
+                  value="Shopping City, DE"
+                  issuer="Demo Shop"
                 />
                 <Card
                   classList={{ "max-sm:hidden": true }}
-                  title="Registered Retailer:"
-                  value="Yes"
-                  issuer="Amtsgericht Bremen"
+                  title="Awards:"
+                  value="Outstanding Service 2025"
+                  issuer="identinet GmbH"
+                />
+                <Card
+                  classList={{ "max-sm:hidden": true }}
+                  title="Return Policy:"
+                  value="Mail & In Store - Full Refund"
+                  issuer="Demo Shop"
                 />
               </div>
               <Modal fontLarge={true} show={modalVisible()} />
