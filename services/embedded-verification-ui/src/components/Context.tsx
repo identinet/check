@@ -34,19 +34,13 @@ export const VerificationContext = createContext([
 
 export default function VerificationProvider(props) {
   function fetcher(source, { value, refetching }) {
-    console.log("source", source);
-    console.log("value", value);
-    console.log("refetching", refetching);
-    console.log("document.URL", document.URL);
-    console.log("apiUrl", props.apiUrl);
-    console.log("uiUrl", props.uiUrl);
+    // TODO: pull status from Verification Service
     return Promise.resolve({ verified: true }).then((res) => {
       return { verificationDetails: res, fetched: new Date() };
     });
   }
 
-  const [verificationDetails, { refetch: refetchVerificationDetails }] =
-    createResource(fetcher);
+  const [verificationDetails, { refetch: refetchVerificationDetails }] = createResource(fetcher);
 
   const verification = [
     verificationDetails,
