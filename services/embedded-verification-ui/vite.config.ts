@@ -78,6 +78,19 @@ export default defineConfig({
   ],
   server: {
     port: parseInt(process.env.PORT ?? "3015") + 1,
+    watch: {
+      ignored: [
+        // speed up vite by ignoring nixos directory contents
+        "**/.direnv/**",
+        "**/.output/**",
+        "**/.vinxi/**",
+        "**/.vite/**",
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/result/**",
+      ],
+    },
   },
   build: {
     target: "esnext",
