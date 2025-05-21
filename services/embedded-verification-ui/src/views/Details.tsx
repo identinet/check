@@ -16,6 +16,8 @@ const Details: Component = (props) => {
   identityUrl.search = "";
   const checkUrl = new URL(url);
   checkUrl.searchParams.set("url", document.URL);
+  const aboutUrl = new URL(url);
+  aboutUrl.pathname = "/about";
   return (
     <>
       <div
@@ -46,13 +48,23 @@ const Details: Component = (props) => {
           <div class="gap-3 flex w-full items-start justify-center h-full overflow-hidden">
             {/* Navbar */}
             <div class="flex flex-nowrap flex-row gap-3 items-start justify-start flex-none">
-              <Button action={props.close} icon="i-flowbite-close-outline" />
+              <Button
+                title="Close"
+                action={props.close}
+                icon="i-flowbite-close-outline"
+              />
             </div>
             <div class="grow font-bold text-3xl text-center tracking-normal font-extrabold">
               About the Retailer
             </div>
             <div class="flex flex-nowrap flex-row gap-3 items-end justify-end flex-none">
-              <Button action={() => setVisible(!modalVisible())}>?</Button>
+              <Button
+                actionx={() => setVisible(!modalVisible())}
+                href={aboutUrl}
+                title="Learn about CHECK"
+              >
+                ?
+              </Button>
             </div>
           </div>
           <div class="relative ">

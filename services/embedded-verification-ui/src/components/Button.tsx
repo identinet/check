@@ -2,8 +2,12 @@ import { Component } from "solid-js";
 
 const Button: Component = (props) => {
   return (
-    <div
+    <a
+      alt={props.alt || props.title || ""}
+      title={props.title || ""}
       onclick={props.action}
+      target={props.target || (props.href ? "_blank" : "")}
+      href={props.action ? "#" : (props.href || "")}
       class="bg-white/80 border border-color-[#07348F] p-1 size-[2rem] rounded-full cursor-pointer"
     >
       <div
@@ -12,7 +16,7 @@ const Button: Component = (props) => {
       >
         {props.children}
       </div>
-    </div>
+    </a>
   );
 };
 

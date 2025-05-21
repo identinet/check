@@ -3,10 +3,14 @@ import { Component, createSignal } from "solid-js";
 import Modal from "~/components/Modal";
 import Button from "~/components/Button";
 import Shield from "~/components/icons/Shield";
+import { useVerificationContext } from "~/components/Context.tsx";
 
 const Standard: Component = (props) => {
   const valid = true;
   const [modalVisible, setVisible] = createSignal(false);
+  const [verificationDetails, url, { refetch }] = useVerificationContext();
+  const aboutUrl = new URL(url);
+  aboutUrl.pathname = "/about";
   return (
     <>
       <div
@@ -33,11 +37,17 @@ const Standard: Component = (props) => {
           <div class="z-1 absolute top-0 p-2 gap-3 flex flex-row w-full items-start justify-center max-h-[2rem]">
             {/* Navbar */}
             <div class="flex flex-nowrap flex-row gap-2 items-start justify-start grow">
-              <Button action={props.close} icon="i-flowbite-close-outline" />
+              <Button
+                title="Close"
+                action={props.close}
+                icon="i-flowbite-close-outline"
+              />
             </div>
             <div class="flex flex-nowrap flex-row gap-2 items-end justify-end">
               <Button
-                action={() => setVisible(!modalVisible())}
+                actionx={() => setVisible(!modalVisible())}
+                href={aboutUrl}
+                title="Learn about CHECK"
                 /* icon="i-flowbite-arrow-up-right-down-left-solid" */
               >
                 ?
