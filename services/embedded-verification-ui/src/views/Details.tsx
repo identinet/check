@@ -36,7 +36,7 @@ const Details: Component = (props) => {
       >
         <div class="w-full h-full flex items-center justify-center blur-xs">
           {/* Shield background */}
-          <Shield height="40%" width="40%" />
+          <Shield size={3.0} />
         </div>
         <div class="absolute top-0 w-full h-full rounded-l-4xl bg-radial from-[#0548DD]/60 to-[#5800FC]/10">
           {/* Radial gradient that helps increase the readibility of the cards  */}

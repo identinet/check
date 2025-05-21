@@ -51,7 +51,7 @@ const Standard: Component = (props) => {
             </div>
           </div>
           <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
-            <Shield action={props.toggleView} height="100" width="90" />
+            <Shield action={props.toggleView} size={1.2} />
             <Modal show={modalVisible()} />
           </div>
         </div>

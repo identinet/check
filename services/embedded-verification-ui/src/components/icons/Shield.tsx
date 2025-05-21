@@ -7,8 +7,8 @@ const Shield: Component = (props) => {
         "cursor-pointer": props.action ? true : false,
       }}
       onclick={props.action}
-      width={props.size || props.width || 68}
-      height={props.size || props.height || 78}
+      width={(props.size || props.width || 1) * 68}
+      height={(props.size || props.height || 1) * 78}
       viewBox="0 12 68 54"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
