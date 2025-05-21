@@ -1,4 +1,5 @@
 import { Component } from "solid-js";
+import { isServer } from "solid-js/web";
 
 import Modal from "~/components/Modal";
 import Card from "~/components/Card";
@@ -8,14 +9,13 @@ import { useVerificationContext } from "~/components/Context.tsx";
 import { createSignal } from "solid-js";
 
 const Details: Component = (props) => {
+  if (isServer) return;
   const [modalVisible, setVisible] = createSignal(false);
   const valid = true;
   const [verificationDetails, url, { refetch }] = useVerificationContext();
   const identityUrl = new URL(document.URL);
-  identityUrl.pathname = "";
-  identityUrl.search = "";
   const checkUrl = new URL(url);
-  checkUrl.searchParams.set("url", document.URL);
+  checkUrl.searchParams.set("url", identityUrl.origin);
   const aboutUrl = new URL(url);
   aboutUrl.pathname = "/about";
   return (
