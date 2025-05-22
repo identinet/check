@@ -7,12 +7,12 @@ import ConfigProvider from "~/components/ConfigContext";
 import { onMount, Suspense } from "solid-js";
 import Nav from "~/components/Nav";
 
-import { initFlowbite } from "flowbite";
+/* import { initFlowbite } from "flowbite"; */
 
 export default function App() {
-  onMount(() => {
-    initFlowbite();
-  });
+  /* onMount(() => { */
+  /*   initFlowbite(); */
+  /* }); */
 
   return (
     <Router

@@ -39,8 +39,11 @@ export default defineConfig({
           "**/.direnv/**",
           "**/.output/**",
           "**/.vinxi/**",
+          "**/.vite/**",
           "**/.git/**",
           "**/node_modules/**",
+          "**/dist/**",
+          "**/result/**",
         ],
       },
     },
@@ -89,7 +92,7 @@ export default defineConfig({
         pipeline: {
           include: [
             /\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/, // copy default
-            /flowbite\.js($|\?)/, // include dynamic classes from flowbite
+            // /flowbite\.js($|\?)/, // include dynamic classes from flowbite
           ],
         },
       },
