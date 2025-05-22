@@ -31,13 +31,13 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: KEY_PATH
-              value: /key.jwk
+              value: /secret/key.jwk
           envFrom:
             - secretRef:
                 name: verifiable-data-service-env
           volumeMounts:
             - name: key
-              mountPath: /key.jwk
+              mountPath: /secret/key.jwk
               subPath: key.jwk
           securityContext:
             capabilities:
