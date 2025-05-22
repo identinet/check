@@ -45,9 +45,11 @@ pkgs_with_overlay.denoPlatform.mkDenoDerivation {
     deno task build
   '';
   installPhase = ''
-    mkdir -p $out/public
+    mkdir -p $out/public/config
+    cp -r config $out/public
     cp -r dist/assets/* $out/public
     cd $out/public
+    # FIXME: not nice, better leverage manifest file and copy the files manually
     ln -s *.css evi.css
     ln -s *.js evi.js
   '';

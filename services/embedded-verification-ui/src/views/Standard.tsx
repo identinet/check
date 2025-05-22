@@ -3,14 +3,22 @@ import { Component, createSignal } from "solid-js";
 import Modal from "~/components/Modal";
 import Button from "~/components/Button";
 import Shield from "~/components/icons/Shield";
-import { useVerificationContext } from "~/components/Context.tsx";
+import { useVerificationContext } from "~/components/VerificationContext";
+import { useConfigContext } from "~/components/ConfigContext";
 
 const Standard: Component = (props) => {
   const valid = true;
   const [modalVisible, setVisible] = createSignal(false);
-  const [verificationDetails, url, { refetch }] = useVerificationContext();
-  const aboutUrl = new URL(url);
-  aboutUrl.pathname = "/about";
+  const [config] = useConfigContext();
+  // TODO: use verification
+  const [verificationDetails, { refetch }] = useVerificationContext();
+  const aboutUrl = () => {
+    if (config()) {
+      const url = new URL(config().vsi);
+      url.pathname = "/about";
+      return url;
+    }
+  };
   return (
     <>
       <div
@@ -46,7 +54,7 @@ const Standard: Component = (props) => {
             <div class="flex flex-nowrap flex-row gap-2 items-end justify-end">
               <Button
                 actionx={() => setVisible(!modalVisible())}
-                href={aboutUrl}
+                href={aboutUrl()}
                 title="Learn about CHECK"
                 /* icon="i-flowbite-arrow-up-right-down-left-solid" */
               >

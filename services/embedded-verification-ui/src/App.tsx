@@ -1,20 +1,26 @@
 import "virtual:uno.css";
-import { Component } from "solid-js";
-import VerificationProvider from "~/components/Context";
+import { Component, createEffect, onMount } from "solid-js";
+import VerificationProvider from "~/components/VerificationContext";
+import { default as ConfigProvider, useConfigContext } from "~/components/ConfigContext";
 import VerificationStatus from "~/VerificationStatus";
 
-const VERIFICATION_SERVICE_API_URL = "https://api.check.identinet.io";
-const VERIFICATION_SERVICE_UI_URL = "https://check.identinet.io";
-
 const App: Component = () => {
+  const [config] = useConfigContext();
   return (
     <VerificationProvider
-      uiUrl={VERIFICATION_SERVICE_UI_URL}
-      apiUrl={VERIFICATION_SERVICE_API_URL}
+      apiUrl={config()?.vs}
     >
       <VerificationStatus />
     </VerificationProvider>
   );
 };
 
-export default App;
+const Root: Component = () => {
+  return (
+    <ConfigProvider>
+      <App />
+    </ConfigProvider>
+  );
+};
+
+export default Root;

@@ -21,10 +21,18 @@ spec:
       labels:
         app: embedded-verification-ui
     spec:
+      volumes:
+        - name: config
+          configMap:
+            name: embedded-verification-ui-config
       containers:
         - name: embedded-verification-ui
           image: identinet/check-embedded-verification-ui
           imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: config
+              mountPath: /public/config/config.json
+              subPath: config.json
           envFrom:
             - secretRef:
                 name: embedded-verification-ui-env

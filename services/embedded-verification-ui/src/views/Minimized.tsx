@@ -1,11 +1,12 @@
 import { Component } from "solid-js";
 
 import Check from "~/components/icons/Check";
-/* import CheckHtml from "~/components/icons/CheckHtml"; */
+import { useVerificationContext } from "~/components/VerificationContext";
 
 const Minimized: Component = (props) => {
   const valid = true;
-  /* <CheckHtml valid={valid} /> */
+  // TODO: use verification
+  const [verificationDetails, { refetch }] = useVerificationContext();
   return (
     <div
       onclick={props.toggleView}

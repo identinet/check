@@ -5,13 +5,12 @@ import Standard from "~/views/Standard.tsx";
 import Details from "~/views/Details.tsx";
 import isMobile from "~/lib/isMobile.js";
 
-import { useVerificationContext } from "~/components/Context";
+import { useVerificationContext } from "~/components/VerificationContext";
 
 import styles from "./App.module.css?no-inline";
 
 const VerificationStatus: Component = (_props) => {
-  const xx = useVerificationContext();
-  const [verificationDetails, _url, { refetch }] = useVerificationContext();
+  const [verificationDetails, { refetch }] = useVerificationContext();
   const views = {
     minimized: 1,
     standard: 2,
@@ -27,10 +26,8 @@ const VerificationStatus: Component = (_props) => {
     setInterval(() => {
       // TOOD: automatic refetch operation after a certain time has passed
       console.log("refetching verification");
-      console.log("refetching verification", xx);
-      console.log("refetch", refetch);
       refetch();
-    }, 10000)
+    }, 60000)
   );
   // show app only if verification status details have become available
   return (

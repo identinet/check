@@ -14,6 +14,7 @@ default:
 build: install
     #!/usr/bin/env nu
     deno task build
+    cp -r config "{{ DIST_FOLDER }}/assets"
     cd "{{ DIST_FOLDER }}"
     let buildManifest = open ".vite/manifest.json"
     cp -v $buildManifest."index.html".file ([($buildManifest."index.html".file | path dirname) "evi.js"] | path join)

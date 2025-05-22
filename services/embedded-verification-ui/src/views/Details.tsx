@@ -1,23 +1,35 @@
-import { Component } from "solid-js";
+import { Component, createEffect } from "solid-js";
 import { isServer } from "solid-js/web";
 
 import Modal from "~/components/Modal";
 import Card from "~/components/Card";
 import Button from "~/components/Button";
 import Shield from "~/components/icons/Shield";
-import { useVerificationContext } from "~/components/Context.tsx";
+import { useVerificationContext } from "~/components/VerificationContext";
 import { createSignal } from "solid-js";
+import { useConfigContext } from "~/components/ConfigContext";
 
 const Details: Component = (props) => {
   if (isServer) return;
   const [modalVisible, setVisible] = createSignal(false);
   const valid = true;
-  const [verificationDetails, url, { refetch }] = useVerificationContext();
-  const identityUrl = new URL(document.URL);
-  const checkUrl = new URL(url);
-  checkUrl.searchParams.set("url", identityUrl.origin);
-  const aboutUrl = new URL(url);
-  aboutUrl.pathname = "/about";
+  const [config] = useConfigContext();
+  // TODO: use verification
+  const [verificationDetails, { refetch }] = useVerificationContext();
+  const checkUrl = () => {
+    if (config()) {
+      const url = new URL(config().vsi);
+      url.searchParams.set("q", new URL(document.URL).origin.toString());
+      return url;
+    }
+  };
+  const aboutUrl = () => {
+    if (config()) {
+      const url = new URL(config().vsi);
+      url.pathname = "/about";
+      return url;
+    }
+  };
   return (
     <>
       <div
@@ -60,7 +72,7 @@ const Details: Component = (props) => {
             <div class="flex flex-nowrap flex-row gap-3 items-end justify-end flex-none">
               <Button
                 actionx={() => setVisible(!modalVisible())}
-                href={aboutUrl}
+                href={aboutUrl()}
                 title="Learn about CHECK"
               >
                 ?
@@ -103,7 +115,7 @@ const Details: Component = (props) => {
           <div class="">
             {/* Footer */}
             <a
-              href={checkUrl}
+              href={checkUrl()}
               target="_blank"
               class="text-sm underline flex flex-nowrap items-center justify-center gap-1 c-white"
             >
