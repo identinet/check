@@ -3,9 +3,7 @@ extern crate ssi;
 use url::Url;
 
 use super::{
-    dto::{
-        VerificationError, VerificationRequestDto, VerificationResponse, VerificationResponseDto,
-    },
+    dto::{VerificationError, VerificationRequestDto, VerificationResponse},
     service::{self, Error},
 };
 
@@ -15,7 +13,7 @@ pub async fn verify_domain(
     // save to unwrap, URL has been parsed during DTO validation already
     let url = Url::parse(&params.url).unwrap();
 
-    service::verify_by_url(&url)
+    let dto = service::verify_by_url(&url)
         .await
         .map_err(|err| match err {
             Error::UrlNotSupported(s) => VerificationError::bad_request_from(s),
@@ -28,10 +26,7 @@ pub async fn verify_domain(
             _ => VerificationError::bad_request_from("Should not happen".to_string()),
         })?;
 
-    let json = VerificationResponseDto {
-        status: "OK".to_string(),
-    };
-    Ok(VerificationResponse::OK(json))
+    Ok(VerificationResponse::OK(dto))
 }
 
 #[cfg(test)]

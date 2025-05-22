@@ -1,12 +1,18 @@
 use reqwest;
 use serde::Deserialize;
-use ssi::dids::{
-    document::{service::Endpoint, Service},
-    resolution::Output,
-    AnyDidMethod, DIDBuf, DIDResolver,
+use serde_json::from_str;
+use ssi::{
+    claims::vc::v1::JsonPresentation,
+    dids::{
+        document::{service::Endpoint, Service},
+        resolution::Output,
+        AnyDidMethod, DIDBuf, DIDResolver, Document,
+    },
 };
 use tokio::task::JoinSet;
 use url::Url;
+
+use super::dto::VerificationResponseDto;
 
 type DidDocument = Output;
 
@@ -40,7 +46,7 @@ struct DidConfig {
 }
 
 /// Verifies the given URL
-pub async fn verify_by_url(url: &Url) -> Result<bool, Error> {
+pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> {
     let dids = lookup_dids(url).await?;
 
     let tasks: JoinSet<_> = dids
@@ -64,23 +70,35 @@ pub async fn verify_by_url(url: &Url) -> Result<bool, Error> {
     }
 
     // Collect all successfully resolved DID documents
-    let did_docs: Vec<_> = oks.into_iter().filter_map(|r| r.ok()).collect();
+    let did_documents: Vec<Document> = oks
+        .into_iter()
+        .filter_map(|r| r.ok())
+        .map(|out| out.document.into_document())
+        .collect();
 
-    for did_doc in did_docs {
+    let mut dto = VerificationResponseDto {
+        documents: did_documents.clone(),
+        credentials: Vec::new(),
+        results: Vec::new(),
+    };
+
+    for did_doc in &did_documents {
         println!("***** DID document *****");
         println!("did doc: {:?}", did_doc);
         println!();
 
-        let linked_presentations = fetch_all_linked_presentations(&did_doc.document.service).await;
+        let linked_presentations = fetch_all_linked_presentations(&did_doc.service).await;
 
         println!("***** Linked VPs *****");
         for presentation in &linked_presentations {
             println!("linked presentation: {:?}", presentation);
+            let vcs = presentation.verifiable_credentials.clone();
+            dto.credentials.extend(vcs);
         }
         println!();
     }
 
-    Ok(true)
+    Ok(dto)
 }
 
 /// Performs a DID document lookup based on the DIDs attached to the given URL
@@ -172,14 +190,14 @@ async fn resolve_did(did: &DIDBuf) -> Result<DidDocument, Error> {
 /// Given a set of services returns all verifiable presentations. Only the "LinkedVerifiablePresentation" services are
 /// considered.
 /// https://identity.foundation/linked-vp/spec/v1.0.0/
-async fn fetch_all_linked_presentations(services: &Vec<Service>) -> Vec<String> {
+async fn fetch_all_linked_presentations(services: &Vec<Service>) -> Vec<JsonPresentation> {
     let linked_vp_type = String::from("LinkedVerifiablePresentation");
 
     let linked_vp_services = services
         .iter()
         .filter(|s| s.type_.contains(&linked_vp_type)); // pick services with type "LinkedVerifiablePresentation"
 
-    let mut linked_presentations: Vec<String> = Vec::new();
+    let mut linked_presentations: Vec<JsonPresentation> = Vec::new();
     for svc in linked_vp_services {
         match fetch_linked_presentation(svc).await {
             Some(vp) => linked_presentations.push(vp),
@@ -192,12 +210,15 @@ async fn fetch_all_linked_presentations(services: &Vec<Service>) -> Vec<String> 
 
 /// Iterates over all endpoints of the given service. Each endpoint's body is fetched and the first successful response
 /// is returned. `None` is returned if all endpoints fail.
-async fn fetch_linked_presentation(service: &Service) -> Option<String> {
+async fn fetch_linked_presentation(service: &Service) -> Option<JsonPresentation> {
     let endpoint_iter = service.service_endpoint.iter().flat_map(|e| e.into_iter());
 
     for endpoint in endpoint_iter {
         match fetch_endpoint_body(endpoint).await {
-            Ok(vp) => return Some(vp),
+            Ok(vp) => match from_str(&vp) {
+                Ok(presentation) => return presentation,
+                Err(_) => continue,
+            },
             Err(_) => continue,
         }
     }

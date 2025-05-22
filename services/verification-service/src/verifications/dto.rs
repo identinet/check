@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use ssi::{claims::vc::v1::SpecializedJsonCredential, dids::Document};
 use url::Url;
 
 pub enum VerificationResponse {
@@ -55,9 +56,12 @@ impl IntoResponse for VerificationError {
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?
-#[derive(Serialize, Deserialize)]
+// FIXME update openapi docs
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VerificationResponseDto {
-    pub status: String,
+    pub documents: Vec<Document>,
+    pub credentials: Vec<SpecializedJsonCredential>,
+    pub results: Vec<String>,
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?
