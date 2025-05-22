@@ -31,10 +31,10 @@ pub async fn verify_domain(
 
 #[cfg(test)]
 mod tests {
-    use crate::verifications::dto::VerificationErrorResponseDto;
+    // use crate::verifications::dto::VerificationErrorResponseDto;
 
-    use super::*;
-    use axum::{http::StatusCode, routing::get, test_helpers::TestClient, Extension, Router};
+    // use super::*;
+    // use axum::{http::StatusCode, routing::get, test_helpers::TestClient, Extension, Router};
 
     // FIXME: disable test that performs a network request. Such a test is not permissible in the nix build environment
     // #[tokio::test]
