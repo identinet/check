@@ -96,18 +96,20 @@ const Details: Component = (props) => {
                   value="Shopping City, DE"
                   issuer="Demo Shop"
                 />
-                <Card
-                  classList={{ "max-sm:hidden": true }}
-                  title="Awards:"
-                  value="Outstanding Service 2025"
-                  issuer="identinet GmbH"
-                />
-                <Card
-                  classList={{ "max-sm:hidden": true }}
-                  title="Return Policy:"
-                  value="Mail & In Store - Full Refund"
-                  issuer="Demo Shop"
-                />
+                <div class="max-sm:hidden">
+                  <Card
+                    title="Awards:"
+                    value="Outstanding Service 2025"
+                    issuer="identinet GmbH"
+                  />
+                </div>
+                <div class="max-sm:hidden">
+                  <Card
+                    title="Return Policy:"
+                    value="Mail & In Store - Full Refund"
+                    issuer="Demo Shop"
+                  />
+                </div>
               </div>
               <Modal fontLarge={true} show={modalVisible()} />
             </div>

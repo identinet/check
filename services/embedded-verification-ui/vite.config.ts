@@ -16,7 +16,6 @@ const root = resolve(__dirname, "src");
 
 export default defineConfig({
   plugins: [
-    solidPlugin(),
     UnoCSS({
       // Documentation: https://unocss.dev/guide/config-file
       presets: [
@@ -75,6 +74,7 @@ export default defineConfig({
         },
       },
     }),
+    solidPlugin(),
   ],
   server: {
     port: parseInt(process.env.PORT ?? "3015") + 1,
