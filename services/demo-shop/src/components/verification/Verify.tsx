@@ -38,7 +38,7 @@ export default function Verify(props) {
           </a>
         }
       >
-        <div class="bg-white/60 rounded-xl p-3 size-64">
+        <div class="bg-white/95 rounded-xl p-3 size-64">
           <Suspense fallback={<div class="c-black size-58 mx-auto">Loading...</div>}>
             <ErrorBoundary fallback={<div class="c-black Gx-auto">Something went terribly wrong</div>}>
               <QRCode>{props.children}</QRCode>
