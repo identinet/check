@@ -2,14 +2,14 @@
   "version": "4",
   "specifiers": {
     "npm:@iconify-json/flowbite@^1.2.5": "1.2.5",
-    "npm:@solidjs/router@0.15": "0.15.3_solid-js@1.9.6__seroval@1.3.1",
-    "npm:@solidjs/start@^1.1.4": "1.1.4_vinxi@0.5.6__@babel+core@7.27.1_seroval@1.3.1_solid-js@1.9.6__seroval@1.3.1",
+    "npm:@solidjs/router@0.15": "0.15.3_solid-js@1.9.7__seroval@1.3.1",
+    "npm:@solidjs/start@^1.1.4": "1.1.4_vinxi@0.5.6__@babel+core@7.27.1_seroval@1.3.1_solid-js@1.9.7__seroval@1.3.1",
     "npm:@unocss/preset-wind4@^66.1.2": "66.1.2",
     "npm:@vonagam/unocss-preset-flowbite@^0.0.1": "0.0.1_@unocss+core@0.65.4",
     "npm:flowbite@^3.1.2": "3.1.2",
     "npm:iovalkey@~0.3.1": "0.3.1",
-    "npm:lean-qr@^2.4.1": "2.4.1",
-    "npm:solid-js@^1.9.6": "1.9.6_seroval@1.3.1",
+    "npm:lean-qr@^2.5.0": "2.5.0",
+    "npm:solid-js@^1.9.7": "1.9.7_seroval@1.3.1",
     "npm:unocss@^66.1.2": "66.1.2",
     "npm:vinxi@~0.5.6": "0.5.6_@babel+core@7.27.1"
   },
@@ -471,12 +471,12 @@
     "@isaacs/cliui@8.0.2": {
       "integrity": "sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==",
       "dependencies": [
-        "string-width@5.1.2",
         "string-width-cjs@npm:string-width@4.2.3",
-        "strip-ansi@7.1.0",
+        "string-width@5.1.2",
         "strip-ansi-cjs@npm:strip-ansi@6.0.1",
-        "wrap-ansi@8.1.0",
-        "wrap-ansi-cjs@npm:wrap-ansi@7.0.0"
+        "strip-ansi@7.1.0",
+        "wrap-ansi-cjs@npm:wrap-ansi@7.0.0",
+        "wrap-ansi@8.1.0"
       ]
     },
     "@isaacs/fs-minipass@4.0.1": {
@@ -1024,13 +1024,13 @@
     "@sindresorhus/merge-streams@2.3.0": {
       "integrity": "sha512-LtoMMhxAlorcGhmFYI+LhPgbPZCkgP6ra1YL604EeF6U98pLlQ3iWIGMdWSC+vWmPBWBNgmDBAhnAobLROJmwg=="
     },
-    "@solidjs/router@0.15.3_solid-js@1.9.6__seroval@1.3.1": {
+    "@solidjs/router@0.15.3_solid-js@1.9.7__seroval@1.3.1": {
       "integrity": "sha512-iEbW8UKok2Oio7o6Y4VTzLj+KFCmQPGEpm1fS3xixwFBdclFVBvaQVeibl1jys4cujfAK5Kn6+uG2uBm3lxOMw==",
       "dependencies": [
         "solid-js"
       ]
     },
-    "@solidjs/start@1.1.4_vinxi@0.5.6__@babel+core@7.27.1_seroval@1.3.1_solid-js@1.9.6__seroval@1.3.1": {
+    "@solidjs/start@1.1.4_vinxi@0.5.6__@babel+core@7.27.1_seroval@1.3.1_solid-js@1.9.7__seroval@1.3.1": {
       "integrity": "sha512-ma1TBYqoTju87tkqrHExMReM5Z/+DTXSmi30CCTavtwuR73Bsn4rVGqm528p4sL2koRMfAuBMkrhuttjzhL68g==",
       "dependencies": [
         "@tanstack/server-functions-plugin",
@@ -2404,15 +2404,15 @@
       "integrity": "sha512-+9egpBW8I3CD5XPe0n6BfT5fxLzxrlDzqydF3aviG+9ni1lDC/OvMHcxqEFV0+LANZG5R1bFMWfUrjVsdwxJvA==",
       "dependencies": [
         "@esbuild/aix-ppc64@0.24.2",
-        "@esbuild/android-arm@0.24.2",
         "@esbuild/android-arm64@0.24.2",
+        "@esbuild/android-arm@0.24.2",
         "@esbuild/android-x64@0.24.2",
         "@esbuild/darwin-arm64@0.24.2",
         "@esbuild/darwin-x64@0.24.2",
         "@esbuild/freebsd-arm64@0.24.2",
         "@esbuild/freebsd-x64@0.24.2",
-        "@esbuild/linux-arm@0.24.2",
         "@esbuild/linux-arm64@0.24.2",
+        "@esbuild/linux-arm@0.24.2",
         "@esbuild/linux-ia32@0.24.2",
         "@esbuild/linux-loong64@0.24.2",
         "@esbuild/linux-mips64el@0.24.2",
@@ -2434,15 +2434,15 @@
       "integrity": "sha512-16854zccKPnC+toMywC+uKNeYSv+/eXkevRAfwRD/G9Cleq66m8XFIrigkbvauLLlCfDL45Q2cWegSg53gGBnQ==",
       "dependencies": [
         "@esbuild/aix-ppc64@0.25.2",
-        "@esbuild/android-arm@0.25.2",
         "@esbuild/android-arm64@0.25.2",
+        "@esbuild/android-arm@0.25.2",
         "@esbuild/android-x64@0.25.2",
         "@esbuild/darwin-arm64@0.25.2",
         "@esbuild/darwin-x64@0.25.2",
         "@esbuild/freebsd-arm64@0.25.2",
         "@esbuild/freebsd-x64@0.25.2",
-        "@esbuild/linux-arm@0.25.2",
         "@esbuild/linux-arm64@0.25.2",
+        "@esbuild/linux-arm@0.25.2",
         "@esbuild/linux-ia32@0.25.2",
         "@esbuild/linux-loong64@0.25.2",
         "@esbuild/linux-mips64el@0.25.2",
@@ -2464,15 +2464,15 @@
       "integrity": "sha512-8pgjLUcUjcgDg+2Q4NYXnPbo/vncAY4UmyaCm0jZevERqCHZIaWwdJHkf8XQtu4AxSKCdvrUbT0XUr1IdZzI8Q==",
       "dependencies": [
         "@esbuild/aix-ppc64@0.25.4",
-        "@esbuild/android-arm@0.25.4",
         "@esbuild/android-arm64@0.25.4",
+        "@esbuild/android-arm@0.25.4",
         "@esbuild/android-x64@0.25.4",
         "@esbuild/darwin-arm64@0.25.4",
         "@esbuild/darwin-x64@0.25.4",
         "@esbuild/freebsd-arm64@0.25.4",
         "@esbuild/freebsd-x64@0.25.4",
-        "@esbuild/linux-arm@0.25.4",
         "@esbuild/linux-arm64@0.25.4",
+        "@esbuild/linux-arm@0.25.4",
         "@esbuild/linux-ia32@0.25.4",
         "@esbuild/linux-loong64@0.25.4",
         "@esbuild/linux-mips64el@0.25.4",
@@ -3238,8 +3238,8 @@
         "readable-stream@2.3.8"
       ]
     },
-    "lean-qr@2.4.1": {
-      "integrity": "sha512-jUJ1KsSExqUln07S4P1Pgo/i+jsSDtFuHuW1Jdw/7zJolzqFYRJ6ySDlX0VdnZG1kDStirdK/ewJdZFAgN8fZg=="
+    "lean-qr@2.5.0": {
+      "integrity": "sha512-NFHxjN/R10Lmdpam5B7xxk5/SvZuvXzTNZiFslxxt+Ki8MC9fbMoPbKMVbnj7PD7Ayn1jtxRmVSk96gNXDfdIA=="
     },
     "listhen@1.9.0": {
       "integrity": "sha512-I8oW2+QL5KJo8zXNWX046M134WchxsXC7SawLPvRQpogCbkyQIaFxPE89A2HiwR7vAK2Dm2ERBAmyjTYGYEpBg==",
@@ -3603,8 +3603,8 @@
         "pkg-types@2.1.0",
         "pretty-bytes",
         "radix3",
-        "rollup@4.40.2",
         "rollup-plugin-visualizer",
+        "rollup@4.40.2",
         "scule",
         "semver@7.7.2",
         "serve-placeholder",
@@ -4383,15 +4383,15 @@
     "smob@1.5.0": {
       "integrity": "sha512-g6T+p7QO8npa+/hNx9ohv1E5pVCmWrVCUzUXJyLdMmftX6ER0oiWY/w9knEonLpnOp6b6FenKnMfR8gqwWdwig=="
     },
-    "solid-js@1.9.6_seroval@1.3.1": {
-      "integrity": "sha512-PoasAJvLk60hRtOTe9ulvALOdLjjqxuxcGZRolBQqxOnXrBXHGzqMT4ijNhGsDAYdOgEa8ZYaAE94PSldrFSkA==",
+    "solid-js@1.9.7_seroval@1.3.1": {
+      "integrity": "sha512-/saTKi8iWEM233n5OSi1YHCCuh66ZIQ7aK2hsToPe4tqGm7qAejU1SwNuTPivbWAYq7SjuHVVYxxuZQNRbICiw==",
       "dependencies": [
         "csstype",
         "seroval",
         "seroval-plugins"
       ]
     },
-    "solid-refresh@0.6.3_solid-js@1.9.6__seroval@1.3.1": {
+    "solid-refresh@0.6.3_solid-js@1.9.7__seroval@1.3.1": {
       "integrity": "sha512-F3aPsX6hVw9ttm5LYlth8Q15x6MlI/J3Dn+o3EQyRTtTxidepSTwAYdozt01/YA+7ObcciagGEyXIopGZzQtbA==",
       "dependencies": [
         "@babel/generator",
@@ -4400,7 +4400,7 @@
         "solid-js"
       ]
     },
-    "solid-use@0.9.1_solid-js@1.9.6__seroval@1.3.1": {
+    "solid-use@0.9.1_solid-js@1.9.7__seroval@1.3.1": {
       "integrity": "sha512-UwvXDVPlrrbj/9ewG9ys5uL2IO4jSiwys2KPzK4zsnAcmEl7iDafZWW1Mo4BSEWOmQCGK6IvpmGHo1aou8iOFw==",
       "dependencies": [
         "solid-js"
@@ -4581,7 +4581,7 @@
         "yallist@5.0.0"
       ]
     },
-    "terracotta@1.0.6_solid-js@1.9.6__seroval@1.3.1": {
+    "terracotta@1.0.6_solid-js@1.9.7__seroval@1.3.1": {
       "integrity": "sha512-yVrmT/Lg6a3tEbeYEJH8ksb1PYkR5FA9k5gr1TchaSNIiA2ZWs5a+koEbePXwlBP0poaV7xViZ/v50bQFcMgqw==",
       "dependencies": [
         "solid-js",
@@ -4751,8 +4751,8 @@
         "scule",
         "strip-literal",
         "tinyglobby",
-        "unplugin@2.3.4",
-        "unplugin-utils"
+        "unplugin-utils",
+        "unplugin@2.3.4"
       ]
     },
     "unist-util-is@6.0.0": {
@@ -4970,7 +4970,7 @@
         "zod"
       ]
     },
-    "vite-plugin-solid@2.11.6_solid-js@1.9.6__seroval@1.3.1_vite@6.3.5__picomatch@4.0.2_@babel+core@7.27.1": {
+    "vite-plugin-solid@2.11.6_solid-js@1.9.7__seroval@1.3.1_vite@6.3.5__picomatch@4.0.2_@babel+core@7.27.1": {
       "integrity": "sha512-Sl5CTqJTGyEeOsmdH6BOgalIZlwH3t4/y0RQuFLMGnvWMBvxb4+lq7x3BSiAw6etf0QexfNJW7HSOO/Qf7pigg==",
       "dependencies": [
         "@babel/core",
@@ -5219,8 +5219,8 @@
         "npm:@vonagam/unocss-preset-flowbite@^0.0.1",
         "npm:flowbite@^3.1.2",
         "npm:iovalkey@~0.3.1",
-        "npm:lean-qr@^2.4.1",
-        "npm:solid-js@^1.9.6",
+        "npm:lean-qr@^2.5.0",
+        "npm:solid-js@^1.9.7",
         "npm:unocss@^66.1.2",
         "npm:vinxi@~0.5.6"
       ]
