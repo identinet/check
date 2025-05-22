@@ -67,7 +67,7 @@ const Details: Component = (props) => {
               />
             </div>
             <div class="grow font-bold text-3xl text-center tracking-normal font-extrabold">
-              About the Retailer
+              <span class="max-sm:hidden">About the</span> Retailer
             </div>
             <div class="flex flex-nowrap flex-row gap-3 items-end justify-end flex-none">
               <Button
