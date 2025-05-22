@@ -17,6 +17,6 @@
     "@unocss/preset-wind4": "^66.1.2",
     "@unocss/preset-web-fonts": "^66.1.2",
     "unocss": "^66.1.2",
-    "solid-js": "^1.9.6"
+    "solid-js": "^1.9.7"
   }
 }

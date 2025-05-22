@@ -4,10 +4,10 @@
     "npm:@iconify-json/flowbite@^1.2.5": "1.2.5",
     "npm:@unocss/preset-web-fonts@^66.1.2": "66.1.2",
     "npm:@unocss/preset-wind4@^66.1.2": "66.1.2",
-    "npm:solid-js@^1.9.6": "1.9.6_seroval@1.3.0",
+    "npm:solid-js@^1.9.7": "1.9.7_seroval@1.3.1",
     "npm:typescript@^5.7.2": "5.8.3",
     "npm:unocss@^66.1.2": "66.1.2_vite@6.3.5__picomatch@4.0.2_typescript@5.8.3",
-    "npm:vite-plugin-solid@^2.11.6": "2.11.6_solid-js@1.9.6__seroval@1.3.0_vite@6.3.5__picomatch@4.0.2_@babel+core@7.27.1",
+    "npm:vite-plugin-solid@^2.11.6": "2.11.6_solid-js@1.9.7__seroval@1.3.1_vite@6.3.5__picomatch@4.0.2_@babel+core@7.27.1",
     "npm:vite@^6.3.5": "6.3.5_picomatch@4.0.2"
   },
   "npm": {
@@ -639,6 +639,14 @@
         "vue"
       ]
     },
+    "@vue/server-renderer@3.5.14_vue@3.5.14__typescript@5.8.3_typescript@5.8.3": {
+      "integrity": "sha512-Rf/ISLqokIvcySIYnv3tNWq40PLpNLDLSJwwVWzG6MNtyIhfbcrAxo5ZL9nARJhqjZyWWa40oRb2IDuejeuv6w==",
+      "dependencies": [
+        "@vue/compiler-ssr",
+        "@vue/shared",
+        "vue"
+      ]
+    },
     "@vue/shared@3.5.14": {
       "integrity": "sha512-oXTwNxVfc9EtP1zzXAlSlgARLXNC84frFYkS0HHz0h3E4WZSP9sywqjqzGCP9Y34M8ipNmd380pVgmMuwELDyQ=="
     },
@@ -692,8 +700,8 @@
     "cac@6.7.14": {
       "integrity": "sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ=="
     },
-    "caniuse-lite@1.0.30001717": {
-      "integrity": "sha512-auPpttCq6BDEG8ZAuHJIplGw6GODhjw+/11e7IjpnYCxZcW/ONgPs0KVBJ0d1bY3e2+7PRe5RCLyP+PfwVgkYw=="
+    "caniuse-lite@1.0.30001718": {
+      "integrity": "sha512-AflseV1ahcSunK53NfEs9gFWgOEmzr0f+kaMFA4xiLZlr9Hzt7HxcSpIFcnNCUkz6R6dWKa54rUz3HUmI3nVcw=="
     },
     "chokidar@3.6.0": {
       "integrity": "sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw==",
@@ -748,8 +756,8 @@
     "duplexer@0.1.2": {
       "integrity": "sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg=="
     },
-    "electron-to-chromium@1.5.151": {
-      "integrity": "sha512-Rl6uugut2l9sLojjS4H4SAr3A4IgACMLgpuEMPYCVcKydzfyPrn5absNRju38IhQOf/NwjJY8OGWjlteqYeBCA=="
+    "electron-to-chromium@1.5.155": {
+      "integrity": "sha512-ps5KcGGmwL8VaeJlvlDlu4fORQpv3+GIcF5I3f9tUKUlJ/wsysh6HU8P5L1XWRYeXfA0oJd4PyM8ds8zTFf6Ng=="
     },
     "entities@4.5.0": {
       "integrity": "sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw=="
@@ -1022,14 +1030,14 @@
     "semver@6.3.1": {
       "integrity": "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="
     },
-    "seroval-plugins@1.3.0_seroval@1.3.0": {
-      "integrity": "sha512-FFu/UE3uA8L1vj0CXXZo2Nlh10MtYoOs0G//ptwlQMjfPFSeIVYUNy0zewfV8iM0CrOebAfHEG6J3xA9c+lsaQ==",
+    "seroval-plugins@1.3.1_seroval@1.3.1": {
+      "integrity": "sha512-dOlUoiI3fgZbQIcj6By+l865pzeWdP3XCSLdI3xlKnjCk5983yLWPsXytFOUI0BUZKG9qwqbj78n9yVcVwUqaQ==",
       "dependencies": [
         "seroval"
       ]
     },
-    "seroval@1.3.0": {
-      "integrity": "sha512-4tYQDy3HVM0JjJ1CfDK3K8FhBKIDDri27oc2AyabuuHfQw6/yTDPp2Abt1h2cNtf1R0T+7AQYAzPhUgqXztaXw=="
+    "seroval@1.3.1": {
+      "integrity": "sha512-F+T9EQPdLzgdewgxnBh4mSc+vde+EOkU6dC9BDuu/bfGb+UyUlqM6t8znFCTPQSuai/ZcfFg0gu79h+bVW2O0w=="
     },
     "sirv@3.0.1": {
       "integrity": "sha512-FoqMu0NCGBLCcAkS1qA+XJIQTR6/JHfQXl+uGteNCQ76T91DMUjPa9xfmeqMY3z80nLSg9yQmNjK0Px6RWsH/A==",
@@ -1039,15 +1047,15 @@
         "totalist"
       ]
     },
-    "solid-js@1.9.6_seroval@1.3.0": {
-      "integrity": "sha512-PoasAJvLk60hRtOTe9ulvALOdLjjqxuxcGZRolBQqxOnXrBXHGzqMT4ijNhGsDAYdOgEa8ZYaAE94PSldrFSkA==",
+    "solid-js@1.9.7_seroval@1.3.1": {
+      "integrity": "sha512-/saTKi8iWEM233n5OSi1YHCCuh66ZIQ7aK2hsToPe4tqGm7qAejU1SwNuTPivbWAYq7SjuHVVYxxuZQNRbICiw==",
       "dependencies": [
         "csstype",
         "seroval",
         "seroval-plugins"
       ]
     },
-    "solid-refresh@0.6.3_solid-js@1.9.6__seroval@1.3.0": {
+    "solid-refresh@0.6.3_solid-js@1.9.7__seroval@1.3.1": {
       "integrity": "sha512-F3aPsX6hVw9ttm5LYlth8Q15x6MlI/J3Dn+o3EQyRTtTxidepSTwAYdozt01/YA+7ObcciagGEyXIopGZzQtbA==",
       "dependencies": [
         "@babel/generator",
@@ -1136,7 +1144,7 @@
     "validate-html-nesting@1.2.2": {
       "integrity": "sha512-hGdgQozCsQJMyfK5urgFcWEqsSSrK63Awe0t/IMR0bZ0QMtnuaiHzThW81guu3qx9abLi99NEuiaN6P9gVYsNg=="
     },
-    "vite-plugin-solid@2.11.6_solid-js@1.9.6__seroval@1.3.0_vite@6.3.5__picomatch@4.0.2_@babel+core@7.27.1": {
+    "vite-plugin-solid@2.11.6_solid-js@1.9.7__seroval@1.3.1_vite@6.3.5__picomatch@4.0.2_@babel+core@7.27.1": {
       "integrity": "sha512-Sl5CTqJTGyEeOsmdH6BOgalIZlwH3t4/y0RQuFLMGnvWMBvxb4+lq7x3BSiAw6etf0QexfNJW7HSOO/Qf7pigg==",
       "dependencies": [
         "@babel/core",
@@ -1179,7 +1187,7 @@
         "@vue/compiler-dom",
         "@vue/compiler-sfc",
         "@vue/runtime-dom",
-        "@vue/server-renderer",
+        "@vue/server-renderer@3.5.14_vue@3.5.14__typescript@5.8.3_typescript@5.8.3",
         "@vue/shared",
         "typescript"
       ]
@@ -1194,7 +1202,7 @@
         "npm:@iconify-json/flowbite@^1.2.5",
         "npm:@unocss/preset-web-fonts@^66.1.2",
         "npm:@unocss/preset-wind4@^66.1.2",
-        "npm:solid-js@^1.9.6",
+        "npm:solid-js@^1.9.7",
         "npm:typescript@^5.7.2",
         "npm:unocss@^66.1.2",
         "npm:vite-plugin-solid@^2.11.6",
