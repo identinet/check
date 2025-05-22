@@ -1,5 +1,6 @@
 // @refresh reload
 import { createHandler, StartServer } from "@solidjs/start/server";
+import process from "node:process";
 
 export default createHandler(() => (
   <StartServer
@@ -12,15 +13,14 @@ export default createHandler(() => (
           {/* <link rel="stylesheet" href="https://evi.identinet.io.localhost/evi.css" /> */}
           <link
             rel="stylesheet"
-            href="https://evi.check.identinet.io/evi.css"
+            href={`https://${process.env.EXTERNAL_EVI_HOSTNAME}/evi.css`}
           />
           {assets}
         </head>
         <body>
           <div id="app">{children}</div>
           <div id="evi-identinet"></div>
-          {/* <script src="https://evi.identinet.io.localhost/evi.js" type="module"> */}
-          <script src="https://evi.check.identinet.io/evi.js" type="module">
+          <script src={`https://${process.env.EXTERNAL_EVI_HOSTNAME}/evi.js`} type="module">
           </script>
           {scripts}
         </body>

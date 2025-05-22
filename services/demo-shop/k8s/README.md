@@ -42,6 +42,8 @@ The configuration of the service is done via environment variables. Example envi
 EXTERNAL_HOSTNAME=demo-shop.example.com
 # External hostname of the Verifiable Data Service
 EXTERNAL_VDS_HOSTNAME=demo-shop.vds.example.com
+# External hostname of the Embedded Verification Interface
+EXTERNAL_EVI_HOSTNAME=evi.example.com
 
 # Variables with default values
 # # Host interface that the service will bind to
