@@ -1,4 +1,5 @@
 import QRCode from "../QRCode.tsx";
+import { ErrorBoundary } from "solid-js";
 import { Suspense } from "solid-js/web";
 import isMobile from "~/lib/isMobile.js";
 import { useConfigContext } from "~/components/ConfigContext";
@@ -39,7 +40,9 @@ export default function Verify(props) {
       >
         <div class="bg-white/60 rounded-xl p-3 size-64">
           <Suspense fallback={<div class="c-black size-58 mx-auto">Loading...</div>}>
-            <QRCode>{props.children}</QRCode>
+            <ErrorBoundary fallback={<div class="c-black Gx-auto">Something went terribly wrong</div>}>
+              <QRCode>{props.children}</QRCode>
+            </ErrorBoundary>
           </Suspense>
         </div>
       </Show>
@@ -61,7 +64,7 @@ export default function Verify(props) {
           I agree to share this information
         </label>
       </div>
-      <a href={`${config()?.vsi}/about`} target="_blank" class="text-sm underline">How to use CHECK?</a>
+      <a href={new URL(`${config()?.vsi || ""}/about`)} target="_blank" class="text-sm underline">How to use CHECK?</a>
     </>
   );
 }

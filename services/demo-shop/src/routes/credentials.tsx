@@ -162,7 +162,7 @@ export default function Credentials() {
                   when={view() === views.PRE}
                   fallback={
                     <Show when={view() === views.VERIFY} fallback={<Thanks></Thanks>}>
-                      <Verify>{authRequest()?.url}</Verify>
+                      <Verify>{new URL(authRequest()?.url)}</Verify>
                     </Show>
                   }
                 >

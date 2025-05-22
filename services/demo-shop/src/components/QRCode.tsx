@@ -21,7 +21,7 @@ export default function QRCode(props) {
     () => (props.children),
     (source, { value, refetching }) => {
       if (source && source != "") {
-        const code = generate(source);
+        const code = generate(source instanceof URL ? source.toString() : source);
         return code;
       }
     },
@@ -31,7 +31,7 @@ export default function QRCode(props) {
     (render) => {
       const code = generatedQRCode();
       if (code && canvas) {
-        code?.toCanvas(canvas);
+        code.toCanvas(canvas);
       }
     },
   );
