@@ -20,7 +20,13 @@ build: install
     cp -v $buildManifest."index.html".file ([($buildManifest."index.html".file | path dirname) "evi.js"] | path join)
     cp -v $buildManifest."index.html".css.0 ([($buildManifest."index.html".css.0 | path dirname) "evi.css"] | path join)
 
+# Build debug version of application
+[group('development')]
+dev-build: build
+    #!/usr/bin/env nu
+    watch src {|| just build }
+
 # Serve local assets
 [group('development')]
 serve: build
-    static-web-server -p $PORT -d dist/assets -z -c '*'
+    SERVER_CACHE_CONTROL_HEADERS=false SERVER_PORT=$PORT SERVER_DIRECTORY_LISTING=true SERVER_CORS_ALLOW_ORIGINS=* SERVER_ROOT=dist/assets static-web-server
