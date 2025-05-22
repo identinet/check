@@ -112,11 +112,10 @@
               # Documentation static-web-server https://static-web-server.net/configuration/environment-variables/
               "SERVER_PORT=3000"
               "SERVER_HOST=::"
-              "SERVER_ROOT=./public/"
+              "SERVER_ROOT=/public"
               "DISABLE_SYMLINKS=false"
             ];
-            WorkingDir = "${default_pkg}";
-            # WorkingDir = "/";
+            WorkingDir = "/";
             # User 'nobody' and group 'nogroup'
             User = "65534";
             Group = "65534";
