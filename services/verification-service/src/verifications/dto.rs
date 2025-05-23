@@ -22,16 +22,20 @@ impl IntoResponse for VerificationResponse {
 
 pub enum VerificationError {
     BadRequestJson(VerificationErrorResponseDto),
-    NotFoundJson(VerificationErrorResponseDto),
+    NotFoundJson(VerificationResponseDto),
 }
 
 impl VerificationError {
     // fn not_found(message: &str) -> Self {
     //     Self::not_found_from(message.to_string())
     // }
-    pub fn not_found_from(message: String) -> Self {
-        let error = VerificationErrorResponseDto { error: message };
-        VerificationError::NotFoundJson(error)
+    pub fn not_found_from(_message: String) -> Self {
+        let empty = VerificationResponseDto {
+            documents: Vec::new(),
+            credentials: Vec::new(),
+            results: Vec::new(),
+        };
+        VerificationError::NotFoundJson(empty)
     }
     pub fn bad_request(message: &str) -> Self {
         let error = VerificationErrorResponseDto {
@@ -140,7 +144,7 @@ mod tests {
             match self {
                 // _ => Ok(()),
                 Self::BadRequestJson(arg0) => f.debug_struct(&arg0.error).finish(),
-                Self::NotFoundJson(arg0) => f.debug_struct(&arg0.error).finish(),
+                Self::NotFoundJson(_) => f.debug_struct("VerificationError::NotFound").finish(),
             }
         }
     }
@@ -180,7 +184,7 @@ mod tests {
                 .await
                 .map_err(|err| match err {
                     VerificationError::BadRequestJson(json) => json.error,
-                    VerificationError::NotFoundJson(json) => json.error,
+                    VerificationError::NotFoundJson(_) => "xyz".to_string(),
                 })
                 .unwrap_err(),
             value

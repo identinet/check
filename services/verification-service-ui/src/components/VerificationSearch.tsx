@@ -10,54 +10,58 @@ import VerificationResult from "~/components/VerificationResult";
 import process from "node:process";
 import { initDropdowns } from "flowbite";
 
+const fetchDemoResult = async (url) => {
+  const documentUrl = `${url}/.well-known/did-configuration.json`;
+  const documentResponse = await fetch(documentUrl);
+  const didDocument = documentResponse.ok
+    ? await documentResponse.json()
+    : null;
+
+  let credentials = [];
+  if (didDocument) {
+    const presentationUrl = `${url}/.well-known/presentation.json`;
+    const presentationResponse = await fetch(presentationUrl);
+    const presentation = presentationResponse.ok
+      ? await presentationResponse.json()
+      : null;
+    credentials = presentation?.verifiableCredential || [];
+  }
+
+  return {
+    documents: didDocument ? [didDocument] : [],
+    credentials,
+    results: [
+      ...credentials.map(() => true),
+    ],
+  };
+};
+
 const demoSites = [
   [
     "https://no-id-example.identinet.io",
     "No DID document available",
-    (_url) => ({
-      status: "NOT_FOUND",
-      presentation: {
-        verifiableCredential: [],
-      },
-    }),
+    fetchDemoResult,
   ],
   [
     "https://id-well-known-example.identinet.io",
     "DID document available, no credentials",
-    (_url) => (
-      {
-        status: "NO_CREDENTIAL",
-        presentation: {
-          verifiableCredential: [],
-        },
-      }
-    ),
+    fetchDemoResult,
   ],
   [
     "https://id-plus-well-known-example.identinet.io",
     "DID document available, multiple credentials",
-    async (url) => {
-      const presentationUrl = `${url}/.well-known/presentation.json`;
-      const response = await fetch(presentationUrl);
-      if (!response.ok) throw new Error(response.statusText);
-      /* return response.json(); */
-      return {
-        status: "CREDENTIAL",
-        presentation: await response.json(),
-      };
-    },
+    fetchDemoResult,
   ],
   [
     "https://id-broken-plus-well-known-example.identinet.io",
     "DID document available, invalid credential",
     async (url) => {
-      const presentationUrl = `${url}/.well-known/presentation.json`;
-      const response = await fetch(presentationUrl);
-      if (!response.ok) throw new Error(response.statusText);
-      /* return response.json(); */
+      const result = await fetchDemoResult(url);
       return {
-        status: "NOT_VERIFIED",
-        presentation: await response.json(),
+        ...result,
+        results: [
+          ...result.credentials.map(() => false),
+        ],
       };
     },
   ],
@@ -86,17 +90,18 @@ const verifyUrlAction = action(async (formData: FormData) => {
   );
 
   if (response.status == 404) {
-    return {
-      status: "NOT_FOUND",
-      presentation: {
-        verifiableCredential: [],
-      },
-    };
+    return await response.json();
   }
 
   if (!response.ok) throw new Error(response.statusText);
 
-  return response.json();
+  const result = await response.json();
+  return {
+    ...result,
+    results: [
+      ...result.credentials.map(() => true),
+    ],
+  };
 }, "verifyUrl");
 
 const ErrorMessage = (props) => (

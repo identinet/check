@@ -21,10 +21,10 @@ export default function VerificationResult({ pending, result, error }) {
     );
   }
 
-  const credentials = result.presentation?.verifiableCredential || [];
-  const status = result.status;
+  const credentials = result.credentials || [];
+  const results = result.results || [];
 
-  if (status == "NOT_FOUND" || credentials.length == 0) {
+  if (credentials.length == 0) {
     return (
       <div class="max-w-md mx-auto mt-8">
         <NotFoundCard
@@ -77,9 +77,12 @@ export default function VerificationResult({ pending, result, error }) {
       <div class="flex justify-center mt-8">
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <For each={credentials}>
-            {(credential) => (
+            {(credential, idx) => (
               <div class="flex h-fit">
-                <CredentialCard status={status} credential={credential} />
+                <CredentialCard
+                  verified={results[idx()]}
+                  credential={credential}
+                />
               </div>
             )}
           </For>

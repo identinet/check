@@ -83,19 +83,11 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
     };
 
     for did_doc in &did_documents {
-        println!("***** DID document *****");
-        println!("did doc: {:?}", did_doc);
-        println!();
-
         let linked_presentations = fetch_all_linked_presentations(&did_doc.service).await;
-
-        println!("***** Linked VPs *****");
         for presentation in &linked_presentations {
-            println!("linked presentation: {:?}", presentation);
             let vcs = presentation.verifiable_credentials.clone();
             dto.credentials.extend(vcs);
         }
-        println!();
     }
 
     Ok(dto)
