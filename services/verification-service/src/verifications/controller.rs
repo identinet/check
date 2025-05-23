@@ -11,7 +11,7 @@ pub async fn verify_domain(
     params: VerificationRequestDto,
 ) -> Result<VerificationResponse, VerificationError> {
     // save to unwrap, URL has been parsed during DTO validation already
-    let url = Url::parse(&params.url).unwrap();
+    let url = Url::parse(&params.q).unwrap();
 
     let dto = service::verify_by_url(&url)
         .await

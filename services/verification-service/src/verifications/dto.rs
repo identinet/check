@@ -73,7 +73,7 @@ pub struct VerificationErrorResponseDto {
 // TODO Debug is only required during tests - can we conditionally derive?
 #[derive(Deserialize, Debug)]
 pub struct VerificationRequestDto {
-    pub url: String,
+    pub q: String,
 }
 
 impl<S> FromRequestParts<S> for VerificationRequestDto
@@ -99,12 +99,12 @@ where
                 ),
             })?;
 
-        if query.url.is_empty() {
-            return Err(VerificationError::bad_request("empty 'url' param")); // TODO mute in prod
+        if query.q.is_empty() {
+            return Err(VerificationError::bad_request("empty 'q' param")); // TODO mute in prod
         }
 
-        if !is_valid_url(&query.url) {
-            return Err(VerificationError::bad_request("invalid 'url' param"));
+        if !is_valid_url(&query.q) {
+            return Err(VerificationError::bad_request("invalid 'q' param"));
             // TODO mute in prod
         }
 
@@ -147,7 +147,7 @@ mod tests {
 
     impl PartialEq for VerificationRequestDto {
         fn eq(&self, other: &Self) -> bool {
-            self.url == other.url
+            self.q == other.q
         }
     }
 
@@ -190,21 +190,21 @@ mod tests {
     #[tokio::test]
     async fn test_query() {
         check_ok(
-            "http://ver.svc/verify?url=https://www.abc.com",
+            "http://ver.svc/verify?q=https://www.abc.com",
             VerificationRequestDto {
-                url: "https://www.abc.com".to_string(),
+                q: "https://www.abc.com".to_string(),
             },
         )
         .await;
 
         check_err(
             "http://ver.svc/verify",
-            "Failed to deserialize query string: missing field `url`",
+            "Failed to deserialize query string: missing field `q`",
         )
         .await;
 
-        check_err("http://ver.svc/verify?url=", "empty 'url' param").await;
+        check_err("http://ver.svc/verify?q=", "empty 'q' param").await;
 
-        check_err("http://ver.svc/verify?url=abc.com", "invalid 'url' param").await;
+        check_err("http://ver.svc/verify?q=abc.com", "invalid 'q' param").await;
     }
 }

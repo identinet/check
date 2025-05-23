@@ -10,7 +10,7 @@ export default function Nav() {
       : "bg-transparent hover:bg-primary-300 hover:text-white";
 
   const hideOnMain = () =>
-    isActive("/") && location.search.indexOf("url=") < 0 ? "hidden" : "";
+    isActive("/") && location.search.indexOf("q=") < 0 ? "hidden" : "";
 
   return (
     <nav class={`bg-gray-100 text-gray-700 border-gray-200 ${hideOnMain()}`}>

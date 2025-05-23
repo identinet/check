@@ -71,7 +71,7 @@ const handleDemoUrl = async (url: string) => {
 
 const verifyUrlAction = action(async (formData: FormData) => {
   "use server";
-  let input = formData.get("url") as string;
+  let input = formData.get("q") as string;
 
   const demoResult = await handleDemoUrl(input);
   if (demoResult) return demoResult;
@@ -119,7 +119,7 @@ export default function VerificationSearch() {
     errorClass: "error-input",
   });
   const isValidInput = ({ value }) => {
-    // prepend https:// if value does not beging with http or https
+    // prepend https:// if value does not begin with http or https
     // this allows us to parse the value as an URL
     if (value.indexOf("http") != 0) {
       value = `https://${value}`;
@@ -133,16 +133,16 @@ export default function VerificationSearch() {
   };
   const submit = (form) => {
     const formData = new FormData(form);
-    const url = formData.get("url") as string;
-    setSearchParams({ url });
+    const q = formData.get("q") as string;
+    setSearchParams({ q });
     verifyUrl(formData);
   };
 
   createEffect(() => {
-    if (searchParams.url) {
+    if (searchParams.q) {
       resetErrors();
       const formData = new FormData();
-      formData.set("url", searchParams.url);
+      formData.set("q", searchParams.q);
       verifyUrl(formData);
     }
   });
@@ -169,24 +169,24 @@ export default function VerificationSearch() {
             </svg>
           </div>
           <input
-            id="url-input"
+            id="verify-input"
             type="search"
-            name="url"
+            name="q"
             class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             placeholder="https://www…"
-            value={searchParams.url || ""}
+            value={searchParams.q || ""}
             required
             use:validate={[isValidInput]}
           />
           <button
             type="submit"
-            disabled={submission.pending || errors.url}
+            disabled={submission.pending || errors.q}
             class="text-white absolute end-2.5 bottom-2.5 bg-primary-300 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
           >
             CHECK!
           </button>
         </div>
-        {errors.url && <ErrorMessage error={errors.url} />}
+        {errors.q && <ErrorMessage error={errors.q} />}
       </form>
 
       <span class="text-xs">
@@ -216,7 +216,7 @@ export default function VerificationSearch() {
             {([url, title]) => (
               <li>
                 <a
-                  href={`/?url=${url}`}
+                  href={`/?q=${url}`}
                   class="block p-1 hover:underline"
                 >
                   {title}
