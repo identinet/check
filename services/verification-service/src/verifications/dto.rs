@@ -60,7 +60,6 @@ impl IntoResponse for VerificationError {
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?
-// FIXME update openapi docs
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VerificationResponseDto {
     pub documents: Vec<Document>,
