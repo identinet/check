@@ -153,7 +153,7 @@ export default function Credentials() {
           EventSource status: {eventSourceStatus()}
         </div>
 
-        <div class=" leading-10">
+        <div class="leading-10">
           <Frame>
             <Show
               when={view() === views.START}

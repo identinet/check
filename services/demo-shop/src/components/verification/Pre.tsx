@@ -17,7 +17,7 @@ export default function Pre(props) {
   return (
     <>
       <div class="text-2xl font-medium text-center">
-        To simply checkout, please verify your data
+        To simplify the checkout, please verify your data
       </div>
       <Shield size={2} />
       <a

@@ -22,7 +22,7 @@ export default function Frame(props) {
       class="w-[30rem] max-w-[80vw] h-[40rem] bg-linear-10 border rounded-lg py-14 px-8"
     >
       <div
-        class="w-full h-full flex flex-col items-center justify-center gap-8 c-white p-8"
+        class="w-full h-full flex flex-col items-center justify-center gap-8 c-white md:p-8 p-2"
         classList={{
           "border": props.subframe,
           "rounded-xl": props.subframe,

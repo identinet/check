@@ -32,7 +32,7 @@ export default function Verify(props) {
         fallback={
           <a
             href={props.children}
-            class="h-24 inline-flex justify-center justify-items-center items-center rounded-lg bg-primary-700 p-8 py-2.5 text-md font-semibold text-white bg-linear-5 from-[#5558FF] to-[#00C0FF]"
+            class="inline-flex justify-center justify-items-center items-center rounded-lg bg-primary-700 px-8 py-4 text-md font-semibold text-white bg-linear-5 from-[#5558FF] to-[#00C0FF]"
           >
             Open Wallet
           </a>
@@ -51,7 +51,7 @@ export default function Verify(props) {
           Please share the following details:
         </div>
         <div class="text-md">
-          <ul class="list-disc">
+          <ul class="list-disc leading-6">
             <li>First and lastname</li>
             <li>Shipping address</li>
             <li>Email address</li>
