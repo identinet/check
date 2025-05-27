@@ -40,14 +40,19 @@ impl ClaimsDecoder<serde_json::Value> for VerifyingClaimsDecoder {
         match format {
             ClaimFormatDesignation::JwtVpJson | ClaimFormatDesignation::JwtVcJson => {
                 let jws: String = serde_json::from_value(value.clone()).expect("unable to convert value to string");
-                // TODO: return jwt
                 let (_jwt, payload) = get_jws_payload(jws).expect("unable to decode JWS payload");
                 let payload_json: serde_json::Value =
                     serde_json::from_str(&payload).expect("unable to deserialize payload");
                 println!("decoded payload {}", payload_json);
                 Ok((payload_json.clone(), Some(Cow::Owned(payload_json))))
             }
-            ClaimFormatDesignation::LdpVp | ClaimFormatDesignation::LdpVc => {
+            ClaimFormatDesignation::LdpVp => {
+                let str: String = serde_json::from_value(value.clone()).expect("unable to convert value to string");
+                let payload_json: serde_json::Value =
+                    serde_json::from_str(&str).expect("unable to deserialize payload");
+                Ok((payload_json.clone(), Some(Cow::Owned(payload_json.clone()))))
+            }
+            ClaimFormatDesignation::LdpVc => {
                 // No decoding required
                 Ok((value.clone(), Some(Cow::Owned(value.clone()))))
             }

@@ -160,7 +160,8 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
             "path": [
                 // JSONPath
                 "$.vc.credentialSubject.type",
-                "$.credentialSubject.type"
+                "$.credentialSubject.type",
+                "$[0].credentialSubject.type"
                 // Credentials is part of a verifiable presentation
                 // "$.vp.verifiableCredential.*.vc.credentialSubject.type"
                 // "$.vp.verifiableCredential[0].vc.credentialSubject.type"
@@ -232,18 +233,22 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
         credential_format::ClaimFormatDesignation::JwtVpJson,
         credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
     );
-    claim_formats_supported.insert(
-        credential_format::ClaimFormatDesignation::JwtVc,
-        credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
-    );
-    claim_formats_supported.insert(
-        credential_format::ClaimFormatDesignation::LdpVc,
-        ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
-    );
+    // claim_formats_supported.insert(
+    //     credential_format::ClaimFormatDesignation::JwtVc,
+    //     credential_format::ClaimFormatPayload::Alg(alg_values_supported.clone()),
+    // );
     // claim_formats_supported.insert(
     //     credential_format::ClaimFormatDesignation::JwtVp,
     //     ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
     // );
+    claim_formats_supported.insert(
+        credential_format::ClaimFormatDesignation::LdpVc,
+        ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
+    );
+    claim_formats_supported.insert(
+        credential_format::ClaimFormatDesignation::LdpVp,
+        ClaimFormatPayload::ProofType(prooftype_values_supported.clone()),
+    );
     let group_id = "A";
     let mut pres_definition = presentation_definition::PresentationDefinition::new(
         presentation_definition_id,
