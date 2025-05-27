@@ -15,6 +15,8 @@ default:
 install: githooks
     deno install --frozen --lock
 
+alias d := dev
+
 # Continuously run and build application for development purposes
 [group('development')]
 dev: install
@@ -27,10 +29,7 @@ dev: install
 dev-redis: install
     valkey-server
 
-# TODO
-[group('development')]
-dev-test tests='': githooks
-    # Continuously test application
+alias o := open
 
 # Open URL in browser.
 [group('development')]
@@ -38,20 +37,28 @@ open:
     #!/usr/bin/env nu
     deno run -A npm:open-cli $"https://($env.EXTERNAL_HOSTNAME)"
 
+alias b := build
+
 # Build release version of application
 [group('development')]
 build: install
     deno task build
+
+alias p := preview
 
 # Preview the build
 [group('development')]
 preview: build
     deno task preview
 
+alias l := lint
+
 # Lint code
 [group('linter')]
 lint: githooks
     deno lint
+
+alias lf := lint-fix
 
 # Lint code and fix issues
 [group('linter')]
@@ -68,6 +75,8 @@ _bump_files CURRENT_VERSION NEW_VERSION:
     # let manifest = (open manifest.json)
     open manifest.json | upsert version "{{ NEW_VERSION }}" | save -f manifest.json; git add manifest.json
     open package.json | upsert version "{{ NEW_VERSION }}" | save -f package.json; git add package.json
+
+alias c := clean
 
 # Clean build folder
 [group('development')]
