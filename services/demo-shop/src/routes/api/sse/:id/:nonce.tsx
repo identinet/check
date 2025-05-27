@@ -47,45 +47,29 @@ export async function GET(event: APIEvent) {
           let credential = {};
           // INFO: This is not a propoer implementation for decoding credentials!
           // Ideally, this should be done by the API!
-          if (presentation_submission.descriptor_map[0].format === "ldp_vp") {
-            presentation = data;
-          } else if (presentation_submission.descriptor_map[0].format === "jwt_vp_json") {
+          const submission = presentation_submission.descriptor_map[0];
+          if (submission.format === "ldp_vp") {
+            const encoded_body = data.vp_token;
+            presentation = JSON.parse(encoded_body);
+          } else if (submission.format === "jwt_vp_json") {
             const encoded_body = data?.vp_token?.split(".")?.at(1);
-            console.log("pres", encoded_body);
             presentation = JSON.parse(atob(encoded_body));
           } else {
-            throw `Unsupported presentation format: ${presentation_submission.descriptor_map[0].format}`;
+            throw `Unsupported presentation format: ${submission.format}`;
           }
-          if (presentation_submission.descriptor_map[0].path_nested.format === "ldp_vc") {
+          if (submission.path_nested.format === "ldp_vc") {
             credential = presentation.verifiableCredential instanceof Array
               ? presentation.verifiableCredential[0]
               : presentation.verifiableCredential;
-          } else if (presentation_submission.descriptor_map[0].path_nested.format === "jwt_vc_json") {
+          } else if (submission.path_nested.format === "jwt_vc_json") {
             const _credential = presentation.vp.verifiableCredential instanceof Array
               ? presentation.vp.verifiableCredential[0]
               : presentation.vp.verifiableCredential;
-            console.log("cred", _credential);
             const _credential_encoded = _credential.split(".")?.at(1);
             credential = JSON.parse(atob(_credential_encoded));
           } else {
-            throw `Unsupported credential format: ${presentation_submission.descriptor_map[0].path_nested.format}`;
+            throw `Unsupported credential format: ${submission.path_nested.format}`;
           }
-          /* let credentials; */
-          /* try { */
-          /*   const body = JSON.parse(atob(encoded_body)); */
-          /* // body.vp.verifiableCredential = body?.vp?.verifiableCredential.map((data: string) => { */
-          /*   credentials = body?.vp?.verifiableCredential.map((data: string) => { */
-          /*     const vc_encoded = data?.split(".")?.at(1); */
-          /*     if (vc_encoded) { */
-          /*       return JSON.parse(atob(vc_encoded)); */
-          /*     } */
-          /*     return data; */
-          /*   }); */
-          /*   console.log("body", body); */
-          /* } catch (err) { */
-          /*   console.error("An error occurred while parsing body", id, nonce, err); */
-          /* } */
-
           connections[id]?.enqueue(`event: submitted\ndata: ${redirectionTarget[!entry.mobile]}\n\n`);
           connections[id]?.close();
           connections[id] = null;
