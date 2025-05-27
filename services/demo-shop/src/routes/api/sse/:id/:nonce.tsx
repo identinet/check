@@ -41,39 +41,70 @@ export async function GET(event: APIEvent) {
           console.error("An error occurred while fetching the results", id, nonce, err)
         );
         console.log("data", data);
-        const encoded_body = data?.vp_token?.split(".")?.at(1);
-        let credentials;
         try {
-          const body = JSON.parse(atob(encoded_body));
-          /* body.vp.verifiableCredential = body?.vp?.verifiableCredential.map((data: string) => { */
-          credentials = body?.vp?.verifiableCredential.map((data: string) => {
-            const vc_encoded = data?.split(".")?.at(1);
-            if (vc_encoded) {
-              return JSON.parse(atob(vc_encoded));
-            }
-            return data;
+          const presentation_submission = data.presentation_submission;
+          let presentation = {};
+          let credential = {};
+          // INFO: This is not a propoer implementation for decoding credentials!
+          // Ideally, this should be done by the API!
+          if (presentation_submission.descriptor_map[0].format === "ldp_vp") {
+            presentation = data;
+          } else if (presentation_submission.descriptor_map[0].format === "jwt_vp_json") {
+            const encoded_body = data?.vp_token?.split(".")?.at(1);
+            console.log("pres", encoded_body);
+            presentation = JSON.parse(atob(encoded_body));
+          } else {
+            throw `Unsupported presentation format: ${presentation_submission.descriptor_map[0].format}`;
+          }
+          if (presentation_submission.descriptor_map[0].path_nested.format === "ldp_vc") {
+            credential = presentation.verifiableCredential instanceof Array
+              ? presentation.verifiableCredential[0]
+              : presentation.verifiableCredential;
+          } else if (presentation_submission.descriptor_map[0].path_nested.format === "jwt_vc_json") {
+            const _credential = presentation.vp.verifiableCredential instanceof Array
+              ? presentation.vp.verifiableCredential[0]
+              : presentation.vp.verifiableCredential;
+            console.log("cred", _credential);
+            const _credential_encoded = _credential.split(".")?.at(1);
+            credential = JSON.parse(atob(_credential_encoded));
+          } else {
+            throw `Unsupported credential format: ${presentation_submission.descriptor_map[0].path_nested.format}`;
+          }
+          /* let credentials; */
+          /* try { */
+          /*   const body = JSON.parse(atob(encoded_body)); */
+          /* // body.vp.verifiableCredential = body?.vp?.verifiableCredential.map((data: string) => { */
+          /*   credentials = body?.vp?.verifiableCredential.map((data: string) => { */
+          /*     const vc_encoded = data?.split(".")?.at(1); */
+          /*     if (vc_encoded) { */
+          /*       return JSON.parse(atob(vc_encoded)); */
+          /*     } */
+          /*     return data; */
+          /*   }); */
+          /*   console.log("body", body); */
+          /* } catch (err) { */
+          /*   console.error("An error occurred while parsing body", id, nonce, err); */
+          /* } */
+
+          connections[id]?.enqueue(`event: submitted\ndata: ${redirectionTarget[!entry.mobile]}\n\n`);
+          connections[id]?.close();
+          connections[id] = null;
+          /* await store.set( */
+          /*   id, */
+          /*   JSON.stringify({ ...entry, closed: true }), */
+          /* ); */
+          store[id] = { ...entry, closed: true, credentials: [credential] };
+          // redirect to final checkout or close page, depending on whether the flow was started on a mobile or desktop
+          // browser
+          return new Response(null, {
+            status: 302,
+            headers: {
+              "Location": redirectionTarget[entry.mobile],
+            },
           });
-          console.log("body", body);
         } catch (err) {
           console.error("An error occurred while parsing body", id, nonce, err);
         }
-
-        connections[id]?.enqueue(`event: submitted\ndata: ${redirectionTarget[!entry.mobile]}\n\n`);
-        connections[id]?.close();
-        connections[id] = null;
-        /* await store.set( */
-        /*   id, */
-        /*   JSON.stringify({ ...entry, closed: true }), */
-        /* ); */
-        store[id] = { ...entry, closed: true, credentials };
-        // redirect to final checkout or close page, depending on whether the flow was started on a mobile or desktop
-        // browser
-        return new Response(null, {
-          status: 302,
-          headers: {
-            "Location": redirectionTarget[entry.mobile],
-          },
-        });
       } else {
         console.error("Nonce doesn't match:", id, entry.nonce, nonce);
       }
