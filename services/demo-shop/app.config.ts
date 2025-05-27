@@ -8,11 +8,10 @@ import { presetIcons } from "unocss";
  * TODO flowbite preset is outdated, we probably want to update the included preflight CSS results with the CSS provided
  * in the official tailwind plugin at https://github.com/themesberg/flowbite/blob/main/plugin.js
  */
-import { presetFlowbite } from "@vonagam/unocss-preset-flowbite";
+// import { presetFlowbite } from "@vonagam/unocss-preset-flowbite";
 const host = process.env.HOST || "::";
 const external_hostname = process.env.EXTERNAL_HOSTNAME;
 const internal_hostname = process.env.INTERNAL_HOSTNAME;
-const vds_hostname = process.env.EXTERNAL_VDS_HOSTNAME;
 const port = parseInt(process.env.PORT || "3000");
 
 export default defineConfig({

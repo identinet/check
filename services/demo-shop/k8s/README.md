@@ -28,11 +28,6 @@ secretGenerator:
   - name: demo-shop-env
     envs:
       - demo-shop.env
-configMapGenerator:
-  # Custom configuration for the web shop
-  - name: demo-shop-config
-    files:
-      - config.json
 ```
 
 The configuration of the service is done via environment variables. Example environment file `demo-shop.env`:
@@ -44,18 +39,12 @@ EXTERNAL_HOSTNAME=demo-shop.example.com
 EXTERNAL_VDS_HOSTNAME=demo-shop.vds.example.com
 # External hostname of the Embedded Verification Interface
 EXTERNAL_EVI_HOSTNAME=evi.example.com
+# External hostname of the Verification Service Interface
+EXTERNAL_VSI_HOSTNAME=check.example.com
 
 # Variables with default values
 # # Host interface that the service will bind to
 # HOST=::
 # # Host port that the service will bind to
 # PORT=3000
-```
-
-The frontend configuration of the service is done via a configuration file. Example environment file `config.json`:
-
-```json
-{
-  "vsi": "https://check.example.com"
-}
 ```

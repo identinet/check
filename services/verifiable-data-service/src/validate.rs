@@ -26,27 +26,30 @@ fn get_jws_payload(jws_string: String) -> Result<(JwsBuf, String), FromUtf8Error
 
 struct VerifyingClaimsDecoder;
 
-/// The decoder only decodes the payload. Currently, only ClaimFormatDesignation::JwtVpJson and
-/// ClaimFormatDesignation::JwtVcJson are supported.
-impl ClaimsDecoder<JwsBuf> for VerifyingClaimsDecoder {
+/// The decoder only decodes the payload.
+impl ClaimsDecoder<serde_json::Value> for VerifyingClaimsDecoder {
     fn decode<'a>(
         &self,
         value: &'a serde_json::Value,
         format: &ClaimFormatDesignation,
         _format_constraint: Option<&ClaimFormatPayload>,
-    ) -> Result<(JwsBuf, Option<Cow<'a, serde_json::Value>>), ClaimDecodingError> {
+    ) -> Result<(serde_json::Value, Option<Cow<'a, serde_json::Value>>), ClaimDecodingError> {
         println!("decode value {}", serde_json::to_string(value).unwrap());
         println!("format {:?}", format);
         println!("format_constraint {:?}", _format_constraint);
         match format {
             ClaimFormatDesignation::JwtVpJson | ClaimFormatDesignation::JwtVcJson => {
-                // ClaimFormatDesignation::LdpVp => { }, // TODO: support it
                 let jws: String = serde_json::from_value(value.clone()).expect("unable to convert value to string");
-                let (jwt, payload) = get_jws_payload(jws).expect("unable to decode JWS payload");
+                // TODO: return jwt
+                let (_jwt, payload) = get_jws_payload(jws).expect("unable to decode JWS payload");
                 let payload_json: serde_json::Value =
                     serde_json::from_str(&payload).expect("unable to deserialize payload");
                 println!("decoded payload {}", payload_json);
-                Ok((jwt, Some(Cow::Owned(payload_json))))
+                Ok((payload_json.clone(), Some(Cow::Owned(payload_json))))
+            }
+            ClaimFormatDesignation::LdpVp | ClaimFormatDesignation::LdpVc => {
+                // No decoding required
+                Ok((value.clone(), Some(Cow::Owned(value.clone()))))
             }
             _ => Err(ClaimDecodingError::UnknownFormat(format.clone())),
         }

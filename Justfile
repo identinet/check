@@ -2,7 +2,7 @@
 # Documentation: https://just.systems/man/en/
 # Documentation: https://www.nushell.sh/book/
 
-import 'justlib/lib.just'
+import 'justlib/default.just'
 
 # Print this help
 default:

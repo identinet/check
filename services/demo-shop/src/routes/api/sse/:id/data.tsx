@@ -1,7 +1,6 @@
 import type { APIEvent } from "@solidjs/start/server";
 /* import { getJson, getValkeyStore } from "~/lib/store_redis.js"; */
-import { connections, store } from "~/lib/store.js";
-import { isMethod } from "vinxi/http";
+import { store } from "~/lib/store.js";
 
 /* function retry(delay: number) { */
 /*   return new Promise((resolve) => { */

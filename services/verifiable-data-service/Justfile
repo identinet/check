@@ -8,6 +8,8 @@ import '../../justlib/lib.just'
 default:
     @just -l
 
+alias d := dev
+
 # Continuously run and build application for development purposes
 [group('development')]
 dev: githooks
@@ -24,20 +26,28 @@ check:
 dev-check: githooks
     cargo watch -w src -x check
 
+alias b := build
+
 # Build release version of application
 [group('development')]
 build: test
     cargo build --release --features=fail-on-warnings
+
+alias db := dev-build
 
 # Build debug version of application
 [group('development')]
 dev-build: githooks
     cargo watch -w src -x build
 
+alias t := test
+
 # Test application
 [group('development')]
 test tests='':
     cargo test --features=fail-on-warnings {{ tests }}
+
+alias dt := dev-test
 
 # Continuously test application
 [group('development')]
@@ -47,15 +57,20 @@ dev-test tests='': githooks
     # - `RUST_BACKTRACE=1` shows reasons for failing tests
     RUST_BACKTRACE=1 cargo watch -w src -x 'test {{ tests }} -- --nocapture'
 
+alias l := lint
+
 # Lint code
 [group('linter')]
 lint:
-    cargo clippy -- -D warnings
+    # Clippy configuration: https://doc.rust-lang.org/clippy/
+    cargo clippy -- -D warnings -W clippy:pedantic -W clippy::restriction -W clippy::nursery -W clippy::cargo
+
+alias lf := lint-fix
 
 # Lint code and fix issues
 [group('linter')]
 lint-fix:
-    cargo clippy --fix --allow-staged
+    cargo clippy --fix --allow-staged -W clippy:pedantic -W clippy::restriction -W clippy::nursery -W clippy::cargo
 
 # Generate and open documentation
 [group('documentation')]
@@ -95,6 +110,8 @@ clean-dups:
 [group('development')]
 clean-bloat:
     cargo bloat --release --crates
+
+alias c := clean
 
 # Clean build folder
 [group('development')]

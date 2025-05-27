@@ -5,6 +5,6 @@ export async function GET(event: APIEvent) {
   console.debug("config");
 
   return {
-    "vsi": `https://${process.env.EXTERNAL_EVI_HOSTNAME}`,
+    "vsi": `https://${process.env.EXTERNAL_VSI_HOSTNAME}`,
   };
 }

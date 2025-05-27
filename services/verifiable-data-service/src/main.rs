@@ -159,7 +159,8 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
             "retained": true,
             "path": [
                 // JSONPath
-                "$.vc.credentialSubject.type"
+                "$.vc.credentialSubject.type",
+                "$.credentialSubject.type"
                 // Credentials is part of a verifiable presentation
                 // "$.vp.verifiableCredential.*.vc.credentialSubject.type"
                 // "$.vp.verifiableCredential[0].vc.credentialSubject.type"
