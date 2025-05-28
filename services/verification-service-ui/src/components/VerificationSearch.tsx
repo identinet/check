@@ -86,7 +86,7 @@ const verifyUrlAction = action(async (formData: FormData) => {
   }
 
   const response = await fetch(
-    `https://${process.env.EXTERNAL_API_HOSTNAME}/v1/verification?url=${input}`,
+    `https://${process.env.EXTERNAL_API_HOSTNAME}/v1/verification?q=${input}`,
   );
 
   if (response.status == 404) {
