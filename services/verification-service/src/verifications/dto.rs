@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use ssi::{claims::vc::v1::SpecializedJsonCredential, dids::Document};
 use url::Url;
 
 pub enum VerificationResponse {
@@ -21,16 +22,20 @@ impl IntoResponse for VerificationResponse {
 
 pub enum VerificationError {
     BadRequestJson(VerificationErrorResponseDto),
-    NotFoundJson(VerificationErrorResponseDto),
+    NotFoundJson(VerificationResponseDto),
 }
 
 impl VerificationError {
     // fn not_found(message: &str) -> Self {
     //     Self::not_found_from(message.to_string())
     // }
-    pub fn not_found_from(message: String) -> Self {
-        let error = VerificationErrorResponseDto { error: message };
-        VerificationError::NotFoundJson(error)
+    pub fn not_found_from(_message: String) -> Self {
+        let empty = VerificationResponseDto {
+            documents: Vec::new(),
+            credentials: Vec::new(),
+            results: Vec::new(),
+        };
+        VerificationError::NotFoundJson(empty)
     }
     pub fn bad_request(message: &str) -> Self {
         let error = VerificationErrorResponseDto {
@@ -55,9 +60,11 @@ impl IntoResponse for VerificationError {
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VerificationResponseDto {
-    pub status: String,
+    pub documents: Vec<Document>,
+    pub credentials: Vec<SpecializedJsonCredential>,
+    pub results: Vec<String>,
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?
@@ -69,7 +76,7 @@ pub struct VerificationErrorResponseDto {
 // TODO Debug is only required during tests - can we conditionally derive?
 #[derive(Deserialize, Debug)]
 pub struct VerificationRequestDto {
-    pub url: String,
+    pub q: String,
 }
 
 impl<S> FromRequestParts<S> for VerificationRequestDto
@@ -95,12 +102,12 @@ where
                 ),
             })?;
 
-        if query.url.is_empty() {
-            return Err(VerificationError::bad_request("empty 'url' param")); // TODO mute in prod
+        if query.q.is_empty() {
+            return Err(VerificationError::bad_request("empty 'q' param")); // TODO mute in prod
         }
 
-        if !is_valid_url(&query.url) {
-            return Err(VerificationError::bad_request("invalid 'url' param"));
+        if !is_valid_url(&query.q) {
+            return Err(VerificationError::bad_request("invalid 'q' param"));
             // TODO mute in prod
         }
 
@@ -136,14 +143,14 @@ mod tests {
             match self {
                 // _ => Ok(()),
                 Self::BadRequestJson(arg0) => f.debug_struct(&arg0.error).finish(),
-                Self::NotFoundJson(arg0) => f.debug_struct(&arg0.error).finish(),
+                Self::NotFoundJson(_) => f.debug_struct("VerificationError::NotFound").finish(),
             }
         }
     }
 
     impl PartialEq for VerificationRequestDto {
         fn eq(&self, other: &Self) -> bool {
-            self.url == other.url
+            self.q == other.q
         }
     }
 
@@ -176,7 +183,7 @@ mod tests {
                 .await
                 .map_err(|err| match err {
                     VerificationError::BadRequestJson(json) => json.error,
-                    VerificationError::NotFoundJson(json) => json.error,
+                    VerificationError::NotFoundJson(_) => "xyz".to_string(),
                 })
                 .unwrap_err(),
             value
@@ -186,21 +193,21 @@ mod tests {
     #[tokio::test]
     async fn test_query() {
         check_ok(
-            "http://ver.svc/verify?url=https://www.abc.com",
+            "http://ver.svc/verify?q=https://www.abc.com",
             VerificationRequestDto {
-                url: "https://www.abc.com".to_string(),
+                q: "https://www.abc.com".to_string(),
             },
         )
         .await;
 
         check_err(
             "http://ver.svc/verify",
-            "Failed to deserialize query string: missing field `url`",
+            "Failed to deserialize query string: missing field `q`",
         )
         .await;
 
-        check_err("http://ver.svc/verify?url=", "empty 'url' param").await;
+        check_err("http://ver.svc/verify?q=", "empty 'q' param").await;
 
-        check_err("http://ver.svc/verify?url=abc.com", "invalid 'url' param").await;
+        check_err("http://ver.svc/verify?q=abc.com", "invalid 'q' param").await;
     }
 }

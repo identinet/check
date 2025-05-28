@@ -3,9 +3,7 @@ extern crate ssi;
 use url::Url;
 
 use super::{
-    dto::{
-        VerificationError, VerificationRequestDto, VerificationResponse, VerificationResponseDto,
-    },
+    dto::{VerificationError, VerificationRequestDto, VerificationResponse},
     service::{self, Error},
 };
 
@@ -13,9 +11,9 @@ pub async fn verify_domain(
     params: VerificationRequestDto,
 ) -> Result<VerificationResponse, VerificationError> {
     // save to unwrap, URL has been parsed during DTO validation already
-    let url = Url::parse(&params.url).unwrap();
+    let url = Url::parse(&params.q).unwrap();
 
-    service::verify_by_url(&url)
+    let dto = service::verify_by_url(&url)
         .await
         .map_err(|err| match err {
             Error::UrlNotSupported(s) => VerificationError::bad_request_from(s),
@@ -28,18 +26,15 @@ pub async fn verify_domain(
             _ => VerificationError::bad_request_from("Should not happen".to_string()),
         })?;
 
-    let json = VerificationResponseDto {
-        status: "OK".to_string(),
-    };
-    Ok(VerificationResponse::OK(json))
+    Ok(VerificationResponse::OK(dto))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::verifications::dto::VerificationErrorResponseDto;
+    // use crate::verifications::dto::VerificationErrorResponseDto;
 
-    use super::*;
-    use axum::{http::StatusCode, routing::get, test_helpers::TestClient, Extension, Router};
+    // use super::*;
+    // use axum::{http::StatusCode, routing::get, test_helpers::TestClient, Extension, Router};
 
     // FIXME: disable test that performs a network request. Such a test is not permissible in the nix build environment
     // #[tokio::test]

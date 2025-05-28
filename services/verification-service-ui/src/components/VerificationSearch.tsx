@@ -10,54 +10,58 @@ import VerificationResult from "~/components/VerificationResult";
 import process from "node:process";
 import { initDropdowns } from "flowbite";
 
+const fetchDemoResult = async (url) => {
+  const documentUrl = `${url}/.well-known/did-configuration.json`;
+  const documentResponse = await fetch(documentUrl);
+  const didDocument = documentResponse.ok
+    ? await documentResponse.json()
+    : null;
+
+  let credentials = [];
+  if (didDocument) {
+    const presentationUrl = `${url}/.well-known/presentation.json`;
+    const presentationResponse = await fetch(presentationUrl);
+    const presentation = presentationResponse.ok
+      ? await presentationResponse.json()
+      : null;
+    credentials = presentation?.verifiableCredential || [];
+  }
+
+  return {
+    documents: didDocument ? [didDocument] : [],
+    credentials,
+    results: [
+      ...credentials.map(() => true),
+    ],
+  };
+};
+
 const demoSites = [
   [
     "https://no-id-example.identinet.io",
     "No DID document available",
-    (_url) => ({
-      status: "NOT_FOUND",
-      presentation: {
-        verifiableCredential: [],
-      },
-    }),
+    fetchDemoResult,
   ],
   [
     "https://id-well-known-example.identinet.io",
     "DID document available, no credentials",
-    (_url) => (
-      {
-        status: "NO_CREDENTIAL",
-        presentation: {
-          verifiableCredential: [],
-        },
-      }
-    ),
+    fetchDemoResult,
   ],
   [
     "https://id-plus-well-known-example.identinet.io",
     "DID document available, multiple credentials",
-    async (url) => {
-      const presentationUrl = `${url}/.well-known/presentation.json`;
-      const response = await fetch(presentationUrl);
-      if (!response.ok) throw new Error(response.statusText);
-      /* return response.json(); */
-      return {
-        status: "CREDENTIAL",
-        presentation: await response.json(),
-      };
-    },
+    fetchDemoResult,
   ],
   [
     "https://id-broken-plus-well-known-example.identinet.io",
     "DID document available, invalid credential",
     async (url) => {
-      const presentationUrl = `${url}/.well-known/presentation.json`;
-      const response = await fetch(presentationUrl);
-      if (!response.ok) throw new Error(response.statusText);
-      /* return response.json(); */
+      const result = await fetchDemoResult(url);
       return {
-        status: "NOT_VERIFIED",
-        presentation: await response.json(),
+        ...result,
+        results: [
+          ...result.credentials.map(() => false),
+        ],
       };
     },
   ],
@@ -71,7 +75,7 @@ const handleDemoUrl = async (url: string) => {
 
 const verifyUrlAction = action(async (formData: FormData) => {
   "use server";
-  let input = formData.get("url") as string;
+  let input = formData.get("q") as string;
 
   const demoResult = await handleDemoUrl(input);
   if (demoResult) return demoResult;
@@ -82,21 +86,22 @@ const verifyUrlAction = action(async (formData: FormData) => {
   }
 
   const response = await fetch(
-    `https://${process.env.EXTERNAL_API_HOSTNAME}/v1/verification?url=${input}`,
+    `https://${process.env.EXTERNAL_API_HOSTNAME}/v1/verification?q=${input}`,
   );
 
   if (response.status == 404) {
-    return {
-      status: "NOT_FOUND",
-      presentation: {
-        verifiableCredential: [],
-      },
-    };
+    return await response.json();
   }
 
   if (!response.ok) throw new Error(response.statusText);
 
-  return response.json();
+  const result = await response.json();
+  return {
+    ...result,
+    results: [
+      ...result.credentials.map(() => true),
+    ],
+  };
 }, "verifyUrl");
 
 const ErrorMessage = (props) => (
@@ -119,7 +124,7 @@ export default function VerificationSearch() {
     errorClass: "error-input",
   });
   const isValidInput = ({ value }) => {
-    // prepend https:// if value does not beging with http or https
+    // prepend https:// if value does not begin with http or https
     // this allows us to parse the value as an URL
     if (value.indexOf("http") != 0) {
       value = `https://${value}`;
@@ -133,16 +138,16 @@ export default function VerificationSearch() {
   };
   const submit = (form) => {
     const formData = new FormData(form);
-    const url = formData.get("url") as string;
-    setSearchParams({ url });
+    const q = formData.get("q") as string;
+    setSearchParams({ q });
     verifyUrl(formData);
   };
 
   createEffect(() => {
-    if (searchParams.url) {
+    if (searchParams.q) {
       resetErrors();
       const formData = new FormData();
-      formData.set("url", searchParams.url);
+      formData.set("q", searchParams.q);
       verifyUrl(formData);
     }
   });
@@ -169,24 +174,24 @@ export default function VerificationSearch() {
             </svg>
           </div>
           <input
-            id="url-input"
+            id="verify-input"
             type="search"
-            name="url"
+            name="q"
             class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             placeholder="https://www…"
-            value={searchParams.url || ""}
+            value={searchParams.q || ""}
             required
             use:validate={[isValidInput]}
           />
           <button
             type="submit"
-            disabled={submission.pending || errors.url}
+            disabled={submission.pending || errors.q}
             class="text-white absolute end-2.5 bottom-2.5 bg-primary-300 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
           >
             CHECK!
           </button>
         </div>
-        {errors.url && <ErrorMessage error={errors.url} />}
+        {errors.q && <ErrorMessage error={errors.q} />}
       </form>
 
       <span class="text-xs">
@@ -216,7 +221,7 @@ export default function VerificationSearch() {
             {([url, title]) => (
               <li>
                 <a
-                  href={`/?url=${url}`}
+                  href={`/?q=${url}`}
                   class="block p-1 hover:underline"
                 >
                   {title}

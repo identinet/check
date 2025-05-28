@@ -33,7 +33,7 @@ paths:
       operationId: getVerification
       tags:
         - verification
-      summary: Verifies a URL based on associated Decentralized Identifier and Linked Verifiable Presentations.
+      summary: Verifies DIDs or URLs based on associated Decentralized Identifier and Linked Verifiable Presentations.
       description: |
         Resolves the Decentralized Identifier for the given DNS Domain name or DID
         and discovers and verifies Linked Verifiable Presentations and Credentials.
@@ -88,52 +88,51 @@ paths:
               schema:
                 type: object
                 required:
-                  - status
-                  - verified
+                  - documents
+                  - credentials
+                  - results
                 properties:
-                  did:
-                    type: string
-                    format: url
+                  documents:
+                    type: array
                     description: |
-                      W3C Decentralized Identifier
-                    example: did:web:identinet.io
+                      List of DID documents associated with the given URL or DID
+                    items:
+                      type: object
+                      example: { "TODO": {} }
                   presentations:
                     type: array
                     description: |
-                      List of Linked Verifiable Presentations and includede Verifiable Credentials.
+                      List of Linked Verifiable Presentations and included Verifiable Credentials.
 
                       Not included if a brief result has been requested.
                     items:
                       type: object
                       example: { "TODO": {} }
-                  verification_results:
+                  credentials:
                     type: array
                     description: |
-                      Detailed list of verification results per presentation and credential.
+                      List of Verifiable Credentials listed by Linked Verifiable Presentations associated
+                      with the given URL.
 
                       Not included if a brief result has been requested.
                     items:
                       type: object
                       example: { "TODO": {} }
-                  verified:
-                    type: boolean
+                  results:
+                    type: array
                     description: |
-                      `True` if an identifier was found AND at least one Verifiable Presentation with one Verifiable
-                      Credentials has been found AND all Linked Verifiable Presentations and Credentials were verified
-                      successfully, otherwise `False`.
-                  status:
-                    type: string
-                    enum:
-                      - VERIFIED
-                      - NOT_VERIFIED
-                      - NO_CREDENTIAL
-                    description: |
-                      Verification result:
-                      - `VERIFIED` - All verifications were successful.
-                      - `NOT_VERIFIED` - Verification of a Verifiable Presentation or Credential failed.
-                      - `NO_CREDENTIAL` - No Verifiable Credential found in any Linked Verifiable Presentation for DID.
-                    example: "VERIFIED"
+                      Detailed list of verification results per credential.
+
+                      Not included if a brief result has been requested.
+                    items:
+                      type: object
+                      example: { "TODO": {} }
         "400":
           description: Bad request
         "404":
-          description: Identifier not found for provided domain name / DID.
+          description: |
+            Identifier not found for provided domain name / DID.
+            Thus empty lists are returned for all properties.
+          content:
+            application/json:
+              example: {"documents":[], "credentials": [], "results": []}
