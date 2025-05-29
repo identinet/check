@@ -1,4 +1,5 @@
 # OpenAPI Specification Explained: https://learn.openapis.org/specification/
+# OpenAPI Specification: https://swagger.io/specification/
 # Documentation: https://spec.openapis.org/oas/v3.1.1.html
 # Learning OpenAPI: https://redoc.ly/docs/resources/learning-openapi/
 # Learning JSON-Schema: https://www.learnjsonschema.com/
@@ -28,8 +29,6 @@ tags:
     description: OpenID4VP Operations used by Wallets
   - name: openid4vp-verifier
     description: OpenID4VP Operations used by Verifiers
-  - name: linked-vp
-    description: Operations used to interact with Linked Verifiable Presentations
 
 paths:
   /v1/authrequests:
@@ -43,19 +42,12 @@ paths:
             type: string
           description: Client bearer token
           required: true
-        - name: traceId
-          in: header
-          description: Optional trace ID for correlating requests across services.
-          schema:
-            type: string
-            format: uuid
-          required: false
         - name: nonce
-          in: path
+          in: query
           required: true
-          description: Nonce value
+          description: Nonce value that becomes part of the authorization request sent to the client
           schema:
-            type: string
+            $ref: "#/components/schemas/Nonce"
       operationId: createRequest
       summary: Creates a new OpenID4VP Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-11.5.
       description: Returns Authorization Request transaction ID and request URI for submitting the response. The authorization URI needs to be extended with the nonce generated on the side of the verifier.
@@ -71,35 +63,22 @@ paths:
           description: Unauthorized.
 
   /v1/authrequests/{requestId}:
-    parameters:
-      - name: requestId
-        in: path
-        required: true
-        description: Authorization Request ID.
-        schema:
-          type: string
-      - name: transactionId
-        in: query
-        required: true
-        description: Transaction ID.
-        schema:
-          type: string
-      - name: responseCode
-        in: query
-        required: true
-        description: Response code.
-        schema:
-          type: string
-      - name: traceId
-        in: header
-        description: Optional trace ID for correlating requests across services.
-        schema:
-          type: string
-          format: uuid
-        required: false
     get:
       tags:
         - openid4vp-verifier
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          description: Client bearer token
+          required: true
+        - name: requestId
+          in: path
+          required: true
+          description: Authorization Request ID
+          schema:
+            $ref: "#/components/schemas/RequestId"
       operationId: getResponse
       summary: Retrieves the submitted OpenID4VP data.
       description: Returns the submitted data and the verification result.
@@ -109,9 +88,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-              example: |
-                { "data": {}, "verification_result": {} }
+                $ref: "#/components/schemas/AuthRequestObjectResponse"
         "204":
           description: No content has been submitted, yet.
         "401":
@@ -124,46 +101,41 @@ paths:
         required: true
         description: Authorization Request ID.
         schema:
-          type: string
-      - name: traceId
-        in: header
-        description: Optional trace ID for correlating requests across services.
-        schema:
-          type: string
-          format: uuid
-        required: false
+          $ref: "#/components/schemas/RequestId"
     get:
       tags:
         - openid4vp-wallet
       operationId: getRequest
       summary: Retrieves the OpenID4VP Authorization Request.
-      description: Returns the OpenID4VP Authorization Request.
+      description: Returns the OpenID4VP Authorization Request. Usually used by the wallet.
       responses:
         "200":
-          description: Returns Authorization Request.
+          description: Returns Authorization Request, see https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
           content:
             application/json:
-              example: |
-                { "TODO": {} }
               schema:
                 type: object
     post:
       tags:
         - openid4vp-wallet
       operationId: submitResponse
-      summary: Accepts data for this Authorization Request.
-      description: Returns redirect to callback URL.
+      summary: Accepts data for this Authorization Request
+      description: Accepts data for this Authorization Request, see https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response
       requestBody:
         required: true
         content:
           application/x-www-form-urlencoded:
-            {}
-            # description: See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-6.2
-            # schema: {}
-            # examples: {}
+            examples:
+              submission:
+                description: See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-6.2
+                value:
+                  {
+                    vp_token: "..data",
+                    presentation_submission: { more: data },
+                  }
       responses:
         "200":
-          description: Data submission successful.
+          description: Data submission successful. Returns redirect to callback URL.
           content:
             application/json:
               schema:
@@ -173,6 +145,7 @@ paths:
                 properties:
                   redirect_uri:
                     type: string
+                    format: uri
               example: |
                 {
                   "redirect_uri": "https://client.example.org/callback#response_code=091535f699ea575c7937fa5f0f454aee"
@@ -180,122 +153,61 @@ paths:
         "400":
           description: Bad Request.
 
-  /vp:
-    get:
-      tags:
-        - linked-vp
-      operationId: getVp
-      summary: Retrieves the published Verifiable Presentation, see https://identity.foundation/linked-vp/.
-      description: Returns the published Verifiable Presentation.
-      responses:
-        "200":
-          description: Returns Linked Verifiable Presentation.
-          content:
-            # TODO: add support for additional linked-vp types like jwt+vp
-            application/json:
-              schema:
-                type: object
-              example: |
-                {
-                  "@context":
-                    [
-                      "https://www.w3.org/ns/did/v1",
-                      "https://identity.foundation/linked-vp/contexts/v1"
-                    ],
-                  "id": "did:example:123",
-                  "verificationMethod":
-                    [
-                      {
-                        "id": "did:example:123#_Qq0UL2Fq651Q0Fjd6TvnYE-faHiOpRlPVQcY_-tA4A",
-                        "type": "JsonWebKey2020",
-                        "controller": "did:example:123",
-                        "publicKeyJwk":
-                          {
-                            "kty": "OKP",
-                            "crv": "Ed25519",
-                            "x": "VCpo2LMLhn6iWku8MKvSLg2ZAoC-nlOyPVQaO3FxVeQ"
-                          }
-                      }
-                    ],
-                  "service":
-                    [
-                      {
-                        "id": "did:example:123#foo",
-                        "type": "LinkedVerifiablePresentation",
-                        "serviceEndpoint":
-                          [
-                            "https://bar.example.com/verifiable-presentation.jsonld"
-                          ]
-                      },
-                      {
-                        "id": "did:example:123#baz",
-                        "type": "LinkedVerifiablePresentation",
-                        "serviceEndpoint": "ipfs://bafybeihkoviema7g3gxyt6la7vd5ho32ictqbilu3wnlo3rs7ewhnp7lly/verifiable-presentation.jwt"
-                      }
-                    ]
-                }
-
 components:
-  # parameters:
-  #   forwardPathParam:
-  #     name: path
-  #     in: query
-  #     required: true
-  #     description: Path on the agent's API, e.g. /connections
-  #     schema:
-  #       type: string
-
   schemas:
-    # UserId:
-    #   type: string
-    #   description: "User ID."
-
-    # ForwardRequest:
-    #   type: object
-    #   description: "Data format depends on the aries-go request."
-
-    # ConnectRequest:
-    #   type: object
-    #   properties:
-    #     user:
-    #       $ref: "#/components/schemas/UserId"
-    #     url:
-    #       type: string
-    #       description: "URL of the agent."
-    #   example:
-    #     user: "user1"
-    #     url: "http://test.1234.com:1234"
-
-    # DeploymentRequest:
-    #   type: object
-    #   properties:
-    #     user:
-    #       $ref: "#/components/schemas/UserId"
-    #   example:
-    #     user: "user1"
-
-    DID:
+    RequestId:
       type: string
-      description: "Decentralized Identifier."
-      # minLength: 5
-      # maxLength: 64
+      format: uuid
+      description: Id of the authorization request
+      example: 777cab68-3666-4bcb-be11-8f264dc6fa1b
+
+    Nonce:
+      type: string
+      description: Nonce value that becomes part of the authorization request sent to the client
+      example: RBx289XF4nCK9Cu6Tx08efcBELwjqQYc6HNORJCE
 
     AuthorizationRequest:
       type: object
       properties:
-        requestId:
-          type: string
-          description: Id of the request
-          example: 777cab68-3666-4bcb-be11-8f264dc6fa1b
-        transactionId:
-          type: string
-          description: Id of the transaction
-          example: 9989e29c-89af-4cc8-b0de-af19767e67ab
+        id:
+          schema:
+            $ref: "#/components/schemas/RequestId"
         url:
           type: string
-          description: FIXME
-          example: "openid://localhost:3011/authorize?request=xxx"
+          format: uri
+          description: URL to respond to the request, usually passed to wallet via QRCode or link.
+          example: openid4vp://?client_id=did:web:example.com&request_uri=https://example.com/v1/authorize/777cab68-3666-4bcb-be11-8f264dc6fa1b
       required:
-        - requestId
-        - transactionId
+        - id
         - url
+
+    AuthRequestObjectResponse:
+      type: object
+      properties:
+        nonce:
+          schema:
+            $ref: "#/components/schemas/Nonce"
+        vp_token:
+          type: string
+          description: Submitted Verifiable Presentation
+        presentation_submission:
+          type: Object
+          description: Presentation Submission that describes how to decode the presentation
+        status:
+          type: object
+          description: Status information about the state of the request
+          examples:
+            error:
+              description: Error
+              value: { cause: "Cause of error" }
+            failure:
+              description: Failure
+              value: { reason: "Reason for failure" }
+            success:
+              description: Success
+              value: { info: { more: data } }
+      required:
+        - nonce
+        - vp_token
+        - presentation_submission
+        - status
