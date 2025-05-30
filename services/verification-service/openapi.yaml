@@ -1,4 +1,5 @@
 # OpenAPI Specification Explained: https://learn.openapis.org/specification/
+# OpenAPI Specification: https://swagger.io/specification/
 # Documentation: https://spec.openapis.org/oas/v3.1.1.html
 # Learning OpenAPI: https://redoc.ly/docs/resources/learning-openapi/
 # Learning JSON-Schema: https://www.learnjsonschema.com/
@@ -50,36 +51,27 @@ paths:
             DNS domain name or DID to verify.
             If no path has been specified in the URL, `/.well-known` is appended.
             `/did.json` is appended to complete the URL in any case.
-
-            Examples:
-            - `https://www.identinet.io`\
-              URL, only the top-level domain will be considered
-            - `identinet.io`\
-              Top-level domain name
-            - `id.identinet.io`\
-              Sub-domain name
-            - `did:web:identinet.io`\
-              Decentralized Identifiers
-            - `did:key:92cbf90d-1410-4a4e-99a5-a1470273ca4f`\
-              Decentralized Identifiers
           required: true
           schema:
             type: string
-            example: identinet.io
+            format: uri
+            examples:
+              url:
+                description: URL, only the top-level domain will be considered
+                value: https://example.com
+              domain:
+                description: Top-level domain name
+                value: sub.example.com
+              did:
+                description: Decentralized Identifier
+                value: did:key:92cbf90d-1410-4a4e-99a5-a1470273ca4f
         - name: brief
           in: query
-          description: If `True`, returns a shortened version of the verification result.
+          description: If `true`, returns a shortened version of the verification result.
           required: false
           schema:
             type: boolean
             default: false
-        - name: traceId
-          in: header
-          description: Optional trace ID for correlating requests across services.
-          schema:
-            type: string
-            format: uuid
-          required: false
       responses:
         "200":
           description: Verification result.
@@ -135,4 +127,4 @@ paths:
             Thus empty lists are returned for all properties.
           content:
             application/json:
-              example: {"documents":[], "credentials": [], "results": []}
+              example: { "documents": [], "credentials": [], "results": [] }
