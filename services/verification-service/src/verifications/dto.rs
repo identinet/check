@@ -60,11 +60,11 @@ impl IntoResponse for VerificationError {
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct VerificationResponseDto {
     pub documents: Vec<Document>,
     pub credentials: Vec<SpecializedJsonCredential>,
-    pub results: Vec<String>,
+    pub results: Vec<VcVerificationResult>,
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?
@@ -119,6 +119,25 @@ fn is_valid_url(url: &str) -> bool {
     Url::parse(url)
         .map(|url| url.scheme() == "https")
         .unwrap_or(false)
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub enum VcVerificationResult {
+    VcValid,
+    VpParseError,
+    VpProofError,
+    VpVerificationError,
+    VcParseError,
+    VcProofError,
+    VcProofErrorMissing,
+    VcProofErrorSignature,
+    VcProofErrorKeyMismatch,
+    VcProofErrorAlgorithmMismatch,
+    VcVerificationError,
+    VcValidationErrorOther,
+    VcValidationErrorPremature,
+    VcValidationErrorExpired,
+    VcValidationErrorMissingIssuance,
 }
 
 #[cfg(test)]

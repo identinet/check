@@ -1,18 +1,18 @@
 use reqwest;
 use serde::Deserialize;
 use serde_json::from_str;
-use ssi::{
-    claims::vc::v1::JsonPresentation,
-    dids::{
-        document::{service::Endpoint, Service},
-        resolution::Output,
-        AnyDidMethod, DIDBuf, DIDResolver, Document,
-    },
+use ssi::claims::vc::v1::JsonPresentation;
+use ssi::dids::DIDResolver;
+use ssi::dids::{
+    document::{service::Endpoint, Service},
+    resolution::Output,
+    AnyDidMethod, DIDBuf, Document,
 };
 use tokio::task::JoinSet;
 use url::Url;
 
 use super::dto::VerificationResponseDto;
+use super::verification_service;
 
 type DidDocument = Output;
 
@@ -88,6 +88,11 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
             let vcs = presentation.verifiable_credentials.clone();
             dto.credentials.extend(vcs);
         }
+
+        // verify VPs and nested VCs
+        let verification_results =
+            verification_service::verify_presentations(linked_presentations).await;
+        dto.results.extend(verification_results);
     }
 
     Ok(dto)
