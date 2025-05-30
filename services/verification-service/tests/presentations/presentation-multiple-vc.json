@@ -1,0 +1,89 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1"
+  ],
+  "id": "urn:uuid:bbe12b2e-be05-44e7-b554-0f40e3b96408",
+  "type": [
+    "VerifiablePresentation"
+  ],
+  "verifiableCredential": [
+    {
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "id": "urn:uuid:33f90a33-d5bd-403d-9489-179de461cc74",
+      "type": [
+        "VerifiableCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ"
+      },
+      "issuer": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ",
+      "issuanceDate": "2025-05-30T14:06:33Z",
+      "proof": {
+        "@context": [
+          "https://w3id.org/security/suites/jws-2020/v1"
+        ],
+        "type": "JsonWebSignature2020",
+        "proofPurpose": "assertionMethod",
+        "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ#0",
+        "created": "2025-05-30T14:06:33.904495993Z",
+        "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..yGuciieLtnXcm2iAuDAhvuM2P3Dnj76JCemYtx_oWztyfEsCQgYXLjARNCaRTBSXbqwIgVokax5vBdo0ss_eBQ"
+      }
+    },
+    {
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "id": "urn:uuid:8e3ae915-ced8-48c9-ba2b-7d64b286cd11",
+      "type": [
+        "VerifiableCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ"
+      },
+      "issuer": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6ImVCWkViNEdSbkVGbXBVZi1WeV95S01Cb2RKb3NJYlR2dHB4djE1WFd0TjgifQ",
+      "issuanceDate": "2025-05-30T14:06:33Z",
+      "proof": {
+        "@context": [
+          "https://w3id.org/security/suites/jws-2020/v1"
+        ],
+        "type": "JsonWebSignature2020",
+        "proofPurpose": "assertionMethod",
+        "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6ImVCWkViNEdSbkVGbXBVZi1WeV95S01Cb2RKb3NJYlR2dHB4djE1WFd0TjgifQ#0",
+        "created": "2025-05-30T14:06:34.115984488Z",
+        "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..lbQjG5fzEEPOQQhmIUvOP0v-wFoUCr8ViWSwoIbTRyuXyAshGmNTVaCEpY_1dymB0JZlLtSt5NNtUIwcIQ_FBA"
+      }
+    },
+    {
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "id": "urn:uuid:fd1802d9-e00f-4a42-9cd8-c37340b13cce",
+      "type": [
+        "VerifiableCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ"
+      },
+      "issuer": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6ImVCWkViNEdSbkVGbXBVZi1WeV95S01Cb2RKb3NJYlR2dHB4djE1WFd0TjgifQ",
+      "issuanceDate": "2025-05-30T14:06:33Z",
+      "proof": {
+        "@context": [
+          "https://w3id.org/security/suites/jws-2020/v1"
+        ],
+        "type": "JsonWebSignature2020",
+        "proofPurpose": "assertionMethod",
+        "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6ImVCWkViNEdSbkVGbXBVZi1WeV95S01Cb2RKb3NJYlR2dHB4djE1WFd0TjgifQ#0",
+        "created": "2025-05-30T14:06:34.606504006Z",
+        "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..xsxD4u7O1bEV0ReBW3HjU_cUQbwcTK3HE88nXqTT2Hv3wvdvZ32i6oOeSCAcHjSOSTsysJDdsyGqACB397AZDw"
+      },
+      "expirationDate": "2999-01-01T01:00:00Z"
+    }
+  ],
+  "proof": {
+    "@context": [
+      "https://w3id.org/security/suites/jws-2020/v1"
+    ],
+    "type": "JsonWebSignature2020",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ#0",
+    "created": "2025-05-30T14:06:35.567912076Z",
+    "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..whmOgKdw9hzz_DWQ2zCnOYpaJQHGm5dTKp2yFz-c0tNM5zDqvWCmwvlb5xUL6qYMpLrKd_lMFnvtNVW7Obw3CA"
+  },
+  "holder": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ"
+}
