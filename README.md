@@ -20,3 +20,11 @@ TUNNEL_USER=<your_username>
 1. Start caddy reverse proxy: `just dev`
 2. (Optional) Start tunnel: `just tunnel`
 3. Start services, e.g. `cd ./services/demo-shop; just dev`
+
+## Acknowledgments
+
+![NGI TRUSTCHAIN](./docs/figures/NGI_TRUSTCHAIN.webp)
+
+This project has received funding from the European Union's Horizon 2020
+research and innovation program within the framework of the TRUSTCHAIN Project
+funded under grant agreement 101093274.
