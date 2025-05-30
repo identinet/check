@@ -7,6 +7,7 @@ use std::env;
 use std::net::SocketAddr;
 
 mod verifications;
+mod verify;
 
 // Function to get configuration from environment variables with defaults
 fn get_config() -> (String, u16) {
