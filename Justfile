@@ -81,7 +81,7 @@ dev: githooks
                       response: {
                         add: {
                           # CORS: allow fetching from everywhere for development purposes
-                          Access-Control-Allow-Origin: [*]
+                          Access-Control-Allow-Origin: ["{http.request.header.Origin}"]
                         }
                       }
                     }
@@ -119,7 +119,7 @@ dev: githooks
                       response: {
                         add: {
                           # CORS: allow fetching from everywhere for development purposes
-                          Access-Control-Allow-Origin: [*]
+                          Access-Control-Allow-Origin: ["{http.request.header.Origin}"]
                         }
                       }
                     }
