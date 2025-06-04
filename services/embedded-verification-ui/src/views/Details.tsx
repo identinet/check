@@ -12,10 +12,10 @@ import { useConfigContext } from "~/components/ConfigContext";
 const Details: Component = (props) => {
   if (isServer) return;
   const [modalVisible, setVisible] = createSignal(false);
-  const valid = true;
   const [config] = useConfigContext();
   // TODO: use verification
   const [verificationDetails, { refetch }] = useVerificationContext();
+  const verified = verificationDetails()?.verified;
   const checkUrl = () => {
     if (config()) {
       const url = new URL(config().vsi);
@@ -36,15 +36,15 @@ const Details: Component = (props) => {
         alt="Verification Status"
         classList={{
           /* "from-blue-200": valid, */
-          "from-[#4548FF]": valid,
-          "via-[#5092FF]": valid,
+          "from-[#4548FF]": verified,
+          "via-[#5092FF]": verified,
           /* "to-blue-50": valid, */
-          "to-[#4CAFFF]": valid,
+          "to-[#4CAFFF]": verified,
           /* "border-blue-900": valid, */
-          "border-[#07348F]": valid,
-          "from-red-200": !valid,
-          "to-red-50": !valid,
-          "border-red-900": !valid,
+          "border-[#07348F]": verified,
+          "from-red-500": !verified,
+          "to-red-200": !verified,
+          "border-red-900": !verified,
         }}
         class="relative w-[32rem] h-[35rem] max-w-[80vw] bg-linear-10 border-l border-y rounded-l-4xl"
       >
@@ -52,7 +52,13 @@ const Details: Component = (props) => {
           {/* Shield background */}
           <Shield size={3.0} />
         </div>
-        <div class="absolute top-0 w-full h-full rounded-l-4xl bg-radial from-[#0548DD]/60 to-[#5800FC]/10">
+        <div
+          class="absolute top-0 w-full h-full rounded-l-4xl bg-radial"
+          classList={{
+            "from-[#0548DD]/60": verified,
+            "to-[#5800FC]/10": verified,
+          }}
+        >
           {/* Radial gradient that helps increase the readibility of the cards  */}
         </div>
 

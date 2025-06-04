@@ -4,23 +4,22 @@ import Check from "~/components/icons/Check";
 import { useVerificationContext } from "~/components/VerificationContext";
 
 const Minimized: Component = (props) => {
-  const valid = true;
-  // TODO: use verification
   const [verificationDetails, { refetch }] = useVerificationContext();
+  const verified = verificationDetails()?.verified;
   return (
     <div
       onclick={props.toggleView}
       alt="Verification Status"
       classList={{
         /* "from-[#00C0FF]": valid, */
-        "from-blue-200": valid,
+        "from-blue-200": verified,
         /* "to-[##5558FF]": valid, */
-        "to-blue-50": valid,
-        "border-[#1E499E]": valid,
+        "to-blue-50": verified,
+        "border-[#1E499E]": verified,
         /* "border-blue-900": valid, */
-        "from-red-200": !valid,
-        "to-red-50": !valid,
-        "border-red-900": !valid,
+        "from-red-400": !verified,
+        "to-red-200": !verified,
+        "border-red-900": !verified,
       }}
       class="size-[4rem] md:size-[4rem] bg-linear-10 to-80% flex items-center justify-center border-l border-y rounded-l-lg cursor-pointer"
     >

@@ -7,11 +7,10 @@ import { useVerificationContext } from "~/components/VerificationContext";
 import { useConfigContext } from "~/components/ConfigContext";
 
 const Standard: Component = (props) => {
-  const valid = true;
   const [modalVisible, setVisible] = createSignal(false);
   const [config] = useConfigContext();
-  // TODO: use verification
   const [verificationDetails, { refetch }] = useVerificationContext();
+  const verified = verificationDetails()?.verified;
   const aboutUrl = () => {
     if (config()) {
       const url = new URL(config().vsi);
@@ -25,15 +24,15 @@ const Standard: Component = (props) => {
         alt="Verification Status"
         classList={{
           /* "from-blue-200": valid, */
-          "from-[#4548FF]": valid,
-          "via-[#5092FF]": valid,
+          "from-[#4548FF]": verified,
+          "via-[#5092FF]": verified,
           /* "to-blue-50": valid, */
-          "to-[#4CAFFF]": valid,
+          "to-[#4CAFFF]": verified,
           /* "border-blue-900": valid, */
-          "border-[#07348F]": valid,
-          "from-red-200": !valid,
-          "to-red-50": !valid,
-          "border-red-900": !valid,
+          "border-[#07348F]": verified,
+          "from-red-500": !verified,
+          "to-red-200": !verified,
+          "border-red-900": !verified,
         }}
         class="relative w-[18rem] max-w-[80vw] h-[10rem] bg-linear-10 border-l border-y rounded-l-4xl"
       >
