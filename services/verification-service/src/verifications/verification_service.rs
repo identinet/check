@@ -1,5 +1,4 @@
 use super::dto::VcVerificationResult;
-use ssi::prelude::DIDResolver;
 use ssi::{
     claims::{
         chrono::Utc,
@@ -133,14 +132,17 @@ fn map_ssi_error_to_verification_result(error: ssi::claims::Invalid) -> VcVerifi
 /// The verifier will use the current date/time when validating dates.
 #[cfg(not(test))]
 fn create_verifier(
-) -> VerificationParameters<VerificationMethodDIDResolver<AnyDidMethod, AnyMethod>> {
-    let resolver = VerificationMethodDIDResolver::<_, AnyMethod>::new(AnyDidMethod::default());
+) -> VerificationParameters<VerificationMethodDIDResolver<ssi::dids::AnyDidMethod, AnyMethod>> {
+    let resolver =
+        VerificationMethodDIDResolver::<_, AnyMethod>::new(ssi::dids::AnyDidMethod::default());
 
     // Create a verifier using the verification method resolver
     let v = VerificationParameters::from_resolver(resolver);
     v.with_date_time(Utc::now())
 }
 
+#[cfg(test)]
+use ssi::prelude::DIDResolver;
 /// Creates a verifier for VCs and VPs that uses a static DID resolver which knows about the
 /// DIDs used in the credentials available in the tests/ directory.
 #[cfg(test)]
