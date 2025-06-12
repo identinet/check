@@ -1,9 +1,17 @@
-import { Component } from "solid-js";
+import { Component, JSX } from "solid-js";
 
-const Button: Component = (props) => {
+type Props = {
+  title?: string;
+  action?: () => void;
+  target?: string;
+  href?: string;
+  icon: string;
+  children?: JSX;
+} & JSX.HTMLAttributes<HTMLButtonElement>;
+
+const Button: Component<Props> = (props) => {
   return (
     <a
-      alt={props.alt || props.title || ""}
       title={props.title || ""}
       onclick={props.action}
       target={props.target || (props.href ? "_blank" : "")}

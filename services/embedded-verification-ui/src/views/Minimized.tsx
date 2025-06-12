@@ -1,30 +1,28 @@
-import { Component } from "solid-js";
+import { Component, JSX } from "solid-js";
 
-import Check from "~/components/icons/Check";
-import { useVerificationContext } from "~/components/VerificationContext";
+import Check from "~/components/icons/Check.tsx";
+import { useVerificationContext } from "~/components/VerificationContext.tsx";
 
-const Minimized: Component = (props) => {
-  const valid = true;
-  // TODO: use verification
-  const [verificationDetails, { refetch }] = useVerificationContext();
+type Props = {
+  toggleView: () => void;
+} & JSX.HTMLAttributes<HTMLButtonElement>;
+
+const Minimized: Component<Props> = (props) => {
+  const [verificationDetails] = useVerificationContext();
+  const verified = verificationDetails()?.verified;
   return (
     <div
       onclick={props.toggleView}
-      alt="Verification Status"
+      title={`Verification Status: ${verified ? "verified" : "failed"}`}
       classList={{
-        /* "from-[#00C0FF]": valid, */
-        "from-blue-200": valid,
-        /* "to-[##5558FF]": valid, */
-        "to-blue-50": valid,
-        "border-[#1E499E]": valid,
-        /* "border-blue-900": valid, */
-        "from-red-200": !valid,
-        "to-red-50": !valid,
-        "border-red-900": !valid,
+        [verified ? "from-[#4548FF]" : "from-red-500"]: true,
+        [verified ? "via-[#5092FF]" : ""]: true,
+        [verified ? "to-[#4CAFFF]" : "to-red-200"]: true,
+        [verified ? "border-[#07348F]" : "border-red-900"]: true,
       }}
       class="size-[4rem] md:size-[4rem] bg-linear-10 to-80% flex items-center justify-center border-l border-y rounded-l-lg cursor-pointer"
     >
-      <Check size="70%" />
+      <Check verified={verified} size={48} />
     </div>
   );
 };

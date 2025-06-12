@@ -5,7 +5,7 @@ import solidPlugin from "vite-plugin-solid";
 
 import UnoCSS from "unocss/vite";
 import presetWind4 from "@unocss/preset-wind4";
-import presetWebFonts from "@unocss/preset-web-fonts";
+// import presetWebFonts from "@unocss/preset-web-fonts";
 import { presetIcons } from "unocss";
 
 import process from "node:process";

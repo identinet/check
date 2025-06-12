@@ -29,4 +29,4 @@ dev-build: build
 # Serve local assets
 [group('development')]
 serve: build
-    SERVER_CACHE_CONTROL_HEADERS=false SERVER_PORT=$PORT SERVER_DIRECTORY_LISTING=true SERVER_CORS_ALLOW_ORIGINS=* SERVER_ROOT=dist/assets static-web-server
+    SERVER_CACHE_CONTROL_HEADERS=false SERVER_PORT=$PORT SERVER_DIRECTORY_LISTING=true SERVER_ROOT=dist/assets static-web-server

@@ -1,5 +1,5 @@
 import "virtual:uno.css";
-import { Component, createEffect, onMount } from "solid-js";
+import { Component } from "solid-js";
 import VerificationProvider from "~/components/VerificationContext";
 import { default as ConfigProvider, useConfigContext } from "~/components/ConfigContext";
 import VerificationStatus from "~/VerificationStatus";
