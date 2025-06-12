@@ -1,4 +1,4 @@
-import { Component, JSX } from "solid-js";
+import { Component, JSX, Show } from "solid-js";
 import { isServer } from "solid-js/web";
 
 import Modal from "~/components/Modal.tsx";
@@ -37,7 +37,7 @@ const Details: Component<Props> = (props) => {
   return (
     <>
       <div
-        title="Verification Status"
+        title={`Verification Status: ${verified ? "verified" : "failed"}`}
         classList={{
           [verified ? "from-[#4548FF]" : "from-red-500"]: true,
           [verified ? "via-[#5092FF]" : ""]: true,
@@ -47,8 +47,16 @@ const Details: Component<Props> = (props) => {
         class="relative w-[32rem] h-[35rem] max-w-[80vw] bg-linear-10 border-l border-y rounded-l-4xl"
       >
         <div class="w-full h-full flex items-center justify-center blur-xs">
-          {/* Shield background */}
-          <Shield size={3.0} />
+          <Show
+            when={verified}
+            fallback={
+              <div class="i-flowbite-close-circle-outline text-[16rem]">
+              </div>
+            }
+          >
+            {/* Shield background */}
+            <Shield size={3.0} />
+          </Show>
         </div>
         <div
           class="absolute top-0 w-full h-full rounded-l-4xl bg-radial"
@@ -75,7 +83,7 @@ const Details: Component<Props> = (props) => {
             </div>
             <div class="flex flex-nowrap flex-row gap-3 items-end justify-end flex-none">
               <Button
-                actionx={() => setVisible(!modalVisible())}
+                /* action={() => setVisible(!modalVisible())} */
                 href={aboutUrl()}
                 title="Learn about CHECK"
               >

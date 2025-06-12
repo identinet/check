@@ -1,4 +1,4 @@
-import { Component, createSignal, JSX } from "solid-js";
+import { Component, createSignal, JSX, Show } from "solid-js";
 
 import Modal from "~/components/Modal";
 import Button from "~/components/Button";
@@ -26,7 +26,7 @@ const Standard: Component<Props> = (props) => {
   return (
     <>
       <div
-        title="Verification Status"
+        title={`Verification Status: ${verified ? "verified" : "failed"}`}
         classList={{
           [verified ? "from-[#4548FF]" : "from-red-500"]: true,
           [verified ? "via-[#5092FF]" : ""]: true,
@@ -73,8 +73,16 @@ const Standard: Component<Props> = (props) => {
             </div>
           </div>
           <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
-            <Shield action={props.toggleView} size={1.2} />
-            <Modal show={modalVisible()} />
+            <Show
+              when={verified}
+              fallback={
+                <div class="i-flowbite-close-circle-outline text-[8rem] cursor-pointer" onclick={props.toggleView}>
+                </div>
+              }
+            >
+              <Shield action={props.toggleView} size={1.2} />
+              <Modal show={modalVisible()} />
+            </Show>
           </div>
         </div>
       </div>
