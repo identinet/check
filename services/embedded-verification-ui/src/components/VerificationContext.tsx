@@ -33,18 +33,16 @@ export const VerificationContext = createContext([
 
 export default function VerificationProvider(props) {
   const [config] = useConfigContext();
-  function fetcher(source, { value, refetching }) {
+  function fetcher(source, { value: _value, refetching: _refetching }) {
     if (source.vs) {
       const url = new URL(config().vs);
       url.pathname = "/v1/verification";
-      // FIXME: enable proper fetching
-      url.searchParams.set("q", new URL(document.URL).origin.toString());
+      url.searchParams.set("q", new URL(document.URL).origin);
       return fetch(url, { mode: "cors" }).then((res) => res.json()).then(
         (data) => {
           let verified = false;
-          if (data?.results instanceof Array) {
-            // FIXME: ensure that results are properly defined - waiting for verification of results
-            verified = true;
+          if (data?.verified instanceof Boolean) {
+            verified = data?.verified;
           }
           return {
             ...data,
@@ -56,8 +54,7 @@ export default function VerificationProvider(props) {
     return Promise.reject(new Error("Source not yet ready"));
   }
 
-  const [verificationDetails, { refetch: refetchVerificationDetails }] =
-    createResource(config, fetcher);
+  const [verificationDetails, { refetch: refetchVerificationDetails }] = createResource(config, fetcher);
 
   const verification = [
     verificationDetails,

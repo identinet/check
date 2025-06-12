@@ -1,6 +1,13 @@
-import { Component } from "solid-js";
+import { Component, JSX } from "solid-js";
 
-const Shield: Component = (props) => {
+type Props = {
+  action?: () => void;
+  size?: number;
+  width?: number;
+  height?: number;
+} & JSX.HTMLAttributes<HTMLButtonElement>;
+
+const Shield: Component<Props> = (props) => {
   return (
     <svg
       classList={{

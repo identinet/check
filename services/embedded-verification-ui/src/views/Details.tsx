@@ -1,50 +1,48 @@
-import { Component, createEffect } from "solid-js";
+import { Component, JSX } from "solid-js";
 import { isServer } from "solid-js/web";
 
-import Modal from "~/components/Modal";
-import Card from "~/components/Card";
-import Button from "~/components/Button";
-import Shield from "~/components/icons/Shield";
-import { useVerificationContext } from "~/components/VerificationContext";
+import Modal from "~/components/Modal.tsx";
+import Card from "~/components/Card.tsx";
+import Button from "~/components/Button.tsx";
+import Shield from "~/components/icons/Shield.tsx";
+import { useVerificationContext } from "~/components/VerificationContext.tsx";
 import { createSignal } from "solid-js";
-import { useConfigContext } from "~/components/ConfigContext";
+import { useConfigContext } from "~/components/ConfigContext.tsx";
 
-const Details: Component = (props) => {
+type Props = {
+  close: () => void;
+  toggleView: () => void;
+} & JSX.HTMLAttributes<HTMLButtonElement>;
+
+const Details: Component<Props> = (props) => {
   if (isServer) return;
-  const [modalVisible, setVisible] = createSignal(false);
+  const [modalVisible, _setVisible] = createSignal(false);
   const [config] = useConfigContext();
-  // TODO: use verification
-  const [verificationDetails, { refetch }] = useVerificationContext();
+  const [verificationDetails, { refetch: _refetch }] = useVerificationContext();
   const verified = verificationDetails()?.verified;
   const checkUrl = () => {
     if (config()) {
       const url = new URL(config().vsi);
-      url.searchParams.set("q", new URL(document.URL).origin.toString());
-      return url;
+      url.searchParams.set("q", new URL(document.URL).origin);
+      return url.toString();
     }
   };
   const aboutUrl = () => {
     if (config()) {
       const url = new URL(config().vsi);
       url.pathname = "/about";
-      return url;
+      return url.toString();
     }
   };
   return (
     <>
       <div
-        alt="Verification Status"
+        title="Verification Status"
         classList={{
-          /* "from-blue-200": valid, */
-          "from-[#4548FF]": verified,
-          "via-[#5092FF]": verified,
-          /* "to-blue-50": valid, */
-          "to-[#4CAFFF]": verified,
-          /* "border-blue-900": valid, */
-          "border-[#07348F]": verified,
-          "from-red-500": !verified,
-          "to-red-200": !verified,
-          "border-red-900": !verified,
+          [verified ? "from-[#4548FF]" : "from-red-500"]: true,
+          [verified ? "via-[#5092FF]" : ""]: true,
+          [verified ? "to-[#4CAFFF]" : "to-red-200"]: true,
+          [verified ? "border-[#07348F]" : "border-red-900"]: true,
         }}
         class="relative w-[32rem] h-[35rem] max-w-[80vw] bg-linear-10 border-l border-y rounded-l-4xl"
       >
@@ -117,7 +115,7 @@ const Details: Component = (props) => {
                   />
                 </div>
               </div>
-              <Modal fontLarge={true} show={modalVisible()} />
+              <Modal fontLarge show={modalVisible()} />
             </div>
           </div>
           <div class="">

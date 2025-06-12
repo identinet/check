@@ -1,6 +1,12 @@
-import { Component } from "solid-js";
+import { Component, JSX } from "solid-js";
 
-const Check: Component = (props) => {
+type Props = {
+  size?: string;
+  width?: number;
+  height?: number;
+} & JSX.HTMLAttributes<HTMLButtonElement>;
+
+const Check: Component<Props> = (props) => {
   return (
     <svg
       width={props.size || props.width || 22}

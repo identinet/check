@@ -1,4 +1,4 @@
-import { Component, createSignal } from "solid-js";
+import { Component, createSignal, JSX } from "solid-js";
 
 import Modal from "~/components/Modal";
 import Button from "~/components/Button";
@@ -6,10 +6,15 @@ import Shield from "~/components/icons/Shield";
 import { useVerificationContext } from "~/components/VerificationContext";
 import { useConfigContext } from "~/components/ConfigContext";
 
-const Standard: Component = (props) => {
+type Props = {
+  close: () => void;
+  toggleView: () => void;
+} & JSX.HTMLAttributes<HTMLButtonElement>;
+
+const Standard: Component<Props> = (props) => {
   const [modalVisible, setVisible] = createSignal(false);
   const [config] = useConfigContext();
-  const [verificationDetails, { refetch }] = useVerificationContext();
+  const [verificationDetails] = useVerificationContext();
   const verified = verificationDetails()?.verified;
   const aboutUrl = () => {
     if (config()) {
@@ -21,22 +26,22 @@ const Standard: Component = (props) => {
   return (
     <>
       <div
-        alt="Verification Status"
+        title="Verification Status"
         classList={{
-          /* "from-blue-200": valid, */
-          "from-[#4548FF]": verified,
-          "via-[#5092FF]": verified,
-          /* "to-blue-50": valid, */
-          "to-[#4CAFFF]": verified,
-          /* "border-blue-900": valid, */
-          "border-[#07348F]": verified,
-          "from-red-500": !verified,
-          "to-red-200": !verified,
-          "border-red-900": !verified,
+          [verified ? "from-[#4548FF]" : "from-red-500"]: true,
+          [verified ? "via-[#5092FF]" : ""]: true,
+          [verified ? "to-[#4CAFFF]" : "to-red-200"]: true,
+          [verified ? "border-[#07348F]" : "border-red-900"]: true,
         }}
         class="relative w-[18rem] max-w-[80vw] h-[10rem] bg-linear-10 border-l border-y rounded-l-4xl"
       >
-        <div class="w-full h-full rounded-l-4xl bg-radial from-[#0548DD]/60 to-[#5800FC]/10">
+        <div
+          class="w-full h-full rounded-l-4xl bg-radial"
+          classList={{
+            "from-[#0548DD]/60": verified,
+            "to-[#5800FC]/10": verified,
+          }}
+        >
           {/* Radial gradient that helps increase the readibility of the cards  */}
         </div>
 
