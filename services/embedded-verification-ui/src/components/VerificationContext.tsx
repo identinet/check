@@ -38,7 +38,7 @@ export default function VerificationProvider(props) {
       const url = new URL(config().vs);
       url.pathname = "/v1/verification";
       url.searchParams.set("q", new URL(document.URL).origin);
-      return fetch(url, { mode: "cors" }).then((res) => res.json()).then(
+      return fetch(url, { mode: "cors", credentials: "omit" }).then((res) => res.json()).then(
         (data) => {
           let verified = false;
           if (data?.verified instanceof Boolean) {
