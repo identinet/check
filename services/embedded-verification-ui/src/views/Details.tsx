@@ -100,7 +100,7 @@ const Details: Component<Props> = (props) => {
                 class="gap-4 flex flex-wrap items-center justify-center"
               >
                 <For
-                  each={verificationDetails().credentials.reduce(
+                  each={verificationDetails()?.credentials?.reduce(
                     (acc, vc) => {
                       if (acc.length > 4) return;
                       const [known, type] = hasKnownType(vc);
@@ -111,7 +111,7 @@ const Details: Component<Props> = (props) => {
                       return acc;
                     },
                     [],
-                  )}
+                  ) || []}
                   fallback={<div>Loading...</div>}
                 >
                   {(data, idx) => (
