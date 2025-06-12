@@ -1,5 +1,6 @@
 import { Component, JSX, Show } from "solid-js";
 import { isServer } from "solid-js/web";
+import { cedentialToRenderData, hasKnownType } from "~/lib/vc2data.js";
 
 import Modal from "~/components/Modal.tsx";
 import Card from "~/components/Card.tsx";
@@ -98,30 +99,29 @@ const Details: Component<Props> = (props) => {
                 onclick={props.toggleView}
                 class="gap-4 flex flex-wrap items-center justify-center"
               >
-                <Card
-                  title="Registered Organization:"
-                  value="2025-05-16"
-                  issuer="identinet GmbH"
-                />
-                <Card
-                  title="Company Location:"
-                  value="Shopping City, DE"
-                  issuer="Demo Shop"
-                />
-                <div class="max-sm:hidden">
-                  <Card
-                    title="Awards:"
-                    value="Outstanding Service 2025"
-                    issuer="identinet GmbH"
-                  />
-                </div>
-                <div class="max-sm:hidden">
-                  <Card
-                    title="Return Policy:"
-                    value="Mail & In Store - Full Refund"
-                    issuer="Demo Shop"
-                  />
-                </div>
+                <For
+                  each={verificationDetails().credentials.reduce(
+                    (acc, vc) => {
+                      if (acc.length > 4) return;
+                      const [known, type] = hasKnownType(vc);
+                      if (known) {
+                        const data = cedentialToRenderData[type](vc);
+                        acc.push(data);
+                      }
+                      return acc;
+                    },
+                    [],
+                  )}
+                  fallback={<div>Loading...</div>}
+                >
+                  {(data, idx) => (
+                    <div class={idx() > 1 ? "max-sm:hidden" : ""}>
+                      <Card
+                        data={data}
+                      />
+                    </div>
+                  )}
+                </For>
               </div>
               <Modal fontLarge show={modalVisible()} />
             </div>
