@@ -28,6 +28,7 @@ serde_json_path = "0.7"
 p256 = "0.13.2"
 config = "0.15.11"
 clap = "4.5.32"
+tower-http = { version = "0.6.6", features = ["validate-request", "auth"] }
 
 [dev-dependencies]
 tower = { version = "0.5.2", features = ["util"] }

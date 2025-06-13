@@ -3,6 +3,7 @@ import { defineConfig } from "@solidjs/start/config";
 import UnoCSS from "unocss/vite";
 import presetWind4 from "@unocss/preset-wind4";
 import { presetIcons } from "unocss";
+import process from "node:process";
 
 /**
  * TODO flowbite preset is outdated, we probably want to update the included preflight CSS results with the CSS provided

@@ -11,7 +11,7 @@ import Shield from "~/components/icons/Shield.tsx";
  * <Verify>{url}></Verify>
  * ```
  */
-export default function Thanks(props) {
+export default function Thanks(_props) {
   return (
     <>
       <div class="text-4xl font-bold text-center">Thank you for verifying!</div>

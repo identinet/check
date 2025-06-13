@@ -1,9 +1,8 @@
-import { json } from "@solidjs/router";
 import type { APIEvent } from "@solidjs/start/server";
 import { connections, store } from "~/lib/store.js";
 /* import { getJson, getValkeyStore } from "~/lib/store_redis.js"; */
 
-export async function GET(event: APIEvent) {
+export function GET(event: APIEvent) {
   console.debug("sse/ID", event.params);
 
   const id = event.params.id;
@@ -28,7 +27,7 @@ export async function GET(event: APIEvent) {
       const stream = new ReadableStream({
         start(controller) {
           connections[id] = controller;
-          const sendKeepAlive = async () => {
+          const sendKeepAlive = () => {
             /* const entry = await getJson(store, id); */
             const entry = store[id];
             if (entry && !entry?.closed) {
@@ -73,10 +72,10 @@ export async function GET(event: APIEvent) {
       /*   console.log("connection status", event.request); */
       /* }, 1000); */
       // Cleanup when the client disconnects
-      event.request.signal.addEventListener("close", async (ev) => {
+      event.request.signal.addEventListener("close", (ev) => {
         console.debug("event.request.signal.addEventListener close", id, ev);
       });
-      event.request.signal.addEventListener("abort", async (ev) => {
+      event.request.signal.addEventListener("abort", (ev) => {
         console.debug("event.request.signal.addEventListener abort", id, ev);
         /* await store.set(id, JSON.stringify({ closed: true })); */
         const entry = store[id];

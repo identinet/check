@@ -1,4 +1,3 @@
-import { createEffect } from "solid-js";
 import { createContext, createResource, onMount, useContext } from "solid-js";
 import { isServer } from "solid-js/web";
 
@@ -19,7 +18,7 @@ export const ConfigContext = createContext([
 
 export default function ConfigProvider(props) {
   /* "use server"; */
-  function fetchConfig(source, { value, refetching }) {
+  function fetchConfig(_source, { value: _value, refetching: _refetching }) {
     /* console.log("source", source); */
     /* console.log("value", value); */
     /* console.log("refetching", refetching); */
@@ -28,7 +27,7 @@ export default function ConfigProvider(props) {
     const url = new URL(document.URL);
     url.pathname = "api/config";
     url.search = "";
-    return fetch(url).then((res) =>
+    return fetch(url, { headers: { Accept: "application/json" } }).then((res) =>
       res.json().then((config) => {
         if (typeof config === "object") {
           return {

@@ -4,7 +4,7 @@ import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import ConfigProvider from "~/components/ConfigContext";
 
-import { onMount, Suspense } from "solid-js";
+import { Suspense } from "solid-js";
 import Nav from "~/components/Nav";
 
 /* import { initFlowbite } from "flowbite"; */

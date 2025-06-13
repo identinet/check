@@ -43,8 +43,8 @@ const VerificationStatus: Component = (_props) => {
               }
             >
               <Details
-                close={toggleViewMinimized}
-                toggleView={toggleViewStandard}
+                close={isMobile() ? toggleViewMinimized : toggleViewStandard}
+                toggleView={isMobile() ? toggleViewMinimized : toggleViewStandard}
               />
             </Show>
           </header>

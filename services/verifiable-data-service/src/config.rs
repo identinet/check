@@ -50,6 +50,13 @@ struct CliConfig {
         help = "Verification method, DID + key referefence, or set via environment variable VERIFICATION_METHOD (e.g. did:web:shop.example.com#key1)"
     )]
     verification_method: Option<String>,
+
+    #[arg(
+        long,
+        short = 't',
+        help = "Optional access token to protect access to the authorizoation request creation and data retrieval, or set via environment variable BEARER_TOKEN (e.g. 5exmFqoMMkT7Ol4wQCUuLju4jepmd5GHWFITNSn4). In a production environment, use an external Identity and Accuss Management system and API gateway."
+    )]
+    bearer_token: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -61,6 +68,7 @@ pub struct AppConfig {
     pub key_path: String,
     pub verification_method: String,
     pub callback_base_path: String,
+    pub bearer_token: Option<String>,
     // log_level: String, // TODO: add
 }
 
@@ -81,7 +89,8 @@ impl AppConfig {
             .set_override_option("callback_hostname", cli.callback_hostname)?
             .set_override_option("key_path", cli.key_path)?
             .set_override_option("verification_method", cli.verification_method)?
-            .set_override_option("callback_base_path", cli.callback_base_path)?;
+            .set_override_option("callback_base_path", cli.callback_base_path)?
+            .set_override_option("bearer_token", cli.bearer_token)?;
         let config: AppConfig = builder.build()?.try_deserialize()?;
         Self::validate(config)
     }
