@@ -1,11 +1,12 @@
 // Fail build if feature is requsted, see https://www.reddit.com/r/rust/comments/8oz7md/make_cargo_fail_on_warning/
 #![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 
-mod config; // Import the config module
+mod config;
 use config::AppConfig;
 use tokio::sync::Mutex;
 mod validate;
 use std::{collections::HashMap, fs, net::SocketAddr, sync::Arc};
+use tower_http::validate_request::ValidateRequestHeaderLayer;
 
 use axum::{
     extract::{Path, Query, State},
@@ -527,15 +528,21 @@ pub async fn create_app(config: AppConfig) -> Router {
         verifier,
         data_cache,
     };
+    let routes_with_required_auth = Router::new()
+        .route("/authrequests", post(authrequest_create))
+        .route("/authrequests/{requestId}", get(authrequest_get));
+    let routes_with_required_auth = match state.config.bearer_token.clone() {
+        Some(expected_token) => {
+            routes_with_required_auth.route_layer(ValidateRequestHeaderLayer::bearer(&expected_token))
+        }
+        None => routes_with_required_auth,
+    };
     Router::new()
         .route("/_status/healthz", get(health_check))
         .nest(
             "/v1",
             Router::new()
-                // TODO: add authorization to route
-                .route("/authrequests", post(authrequest_create))
-                // TODO: add authorization to route
-                .route("/authrequests/{requestId}", get(authrequest_get))
+                .merge(routes_with_required_auth)
                 .route("/authorize/{requestId}", get(authorize_get))
                 .route("/authorize/{requestId}", post(authorize_submit)),
         )
@@ -584,6 +591,7 @@ mod tests {
             key_path: "./_fixtures/key.jwk".into(),
             verification_method: "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImtYSVJicEtzTzZXZVJ1YndndWdSMWc2RGNhT3NBbmlrVXJ1WXU2QS1HVWMiLCJ5IjoiMG5WdUQ2TkhQeUFEOGF2OWdzM1h6NEoxT2c1ZEFNZDkzdTE1a0RwZklObyJ9#0".into(),
             callback_base_path: "callback".into(),
+            bearer_token: None,
         }).await;
 
         // Create test request
