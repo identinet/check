@@ -1,0 +1,33 @@
+#!/usr/bin/env -S just --justfile
+# Documentation: https://just.systems/man/en/
+# Documentation: https://www.nushell.sh/book/
+
+import '../justlib/nix.just'
+import '../justlib/default.just'
+
+# Print this help
+default:
+    @just -l
+
+# Start local development
+[group('development')]
+dev: install
+    npm run dev
+
+# Installs dependencies
+[group('development')]
+install: githooks
+    npm install
+
+# Build release version of application
+[group('development')]
+build: install
+    npm run build
+
+# Preview the build
+[group('development')]
+preview: build
+    npm run preview
+
+# Run tests - currently none
+test:
