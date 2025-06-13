@@ -1,6 +1,7 @@
 import type { APIEvent } from "@solidjs/start/server";
 /* import { getJson, getValkeyStore } from "~/lib/store_redis.js"; */
 import { connections, store } from "~/lib/store.js";
+import process from "node:process";
 
 /* function retry(delay: number) { */
 /*   return new Promise((resolve) => { */
@@ -34,13 +35,19 @@ export async function GET(event: APIEvent) {
       if (nonce == entry?.nonce) {
         console.debug("event: submitted");
 
+        const headers = new Headers();
+        headers.append("Accept", "application/json");
+        const token = process.env.VDS_BEARER_TOKEN;
+        if (token) {
+          headers.append("Authorization", `Bearer ${token}`);
+        }
         const data = await fetch(
           `https://${process.env.EXTERNAL_VDS_HOSTNAME}/v1/authrequests/${id}`,
-          { method: "GET" },
+          { method: "GET", headers },
         ).then((res) => res.json()).catch((err) =>
           console.error("An error occurred while fetching the results", id, nonce, err)
         );
-        console.log("data", data);
+        /* console.log("data", data); */
         try {
           const presentation_submission = data.presentation_submission;
           let presentation = {};

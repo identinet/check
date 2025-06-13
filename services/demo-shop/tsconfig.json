@@ -5,6 +5,9 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "lib": [
+      "DOM"
+    ],
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "allowJs": true,

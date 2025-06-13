@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onCleanup, Show, Suspense } from "solid-js";
+import { createEffect, createSignal, onCleanup, Show } from "solid-js";
 import { createAsync, query, useBeforeLeave, useNavigate } from "@solidjs/router";
 import isMobile from "~/lib/isMobile.js";
 import process from "node:process";
@@ -12,9 +12,9 @@ const createAuthorizationRequest = query((mobile) => {
   "use server";
   return fetch(
     `https://${process.env.EXTERNAL_HOSTNAME}/api/authrequests/create?mobile=${mobile}`,
-    { method: "POST" },
+    { method: "POST", headers: { Accept: "application/json" } },
   ).then((res) =>
-    res.json().then(async (authRequest) => {
+    res.json().then((authRequest) => {
       console.debug("createAuthorizationRequest response", authRequest);
       return authRequest;
     }).catch((err) => {
@@ -64,7 +64,7 @@ export default function Credentials() {
         /* } */
         /* printConnectionStatus(); */
       };
-      eventSource.onmessage = (event) => {
+      eventSource.onmessage = (_event) => {
         if (eventSourceStatus() != eventSourceStatusOptions.established) {
           console.debug("ignoring message, eventsource", eventSourceStatus());
           return;
@@ -88,7 +88,7 @@ export default function Credentials() {
           navigate(url);
         }, 5000);
       });
-      eventSource.addEventListener("ping", (event) => {
+      eventSource.addEventListener("ping", (_event) => {
         if (eventSourceStatus() != eventSourceStatusOptions.established) {
           console.debug(
             "ignoring ping event, eventsource",
@@ -98,7 +98,7 @@ export default function Credentials() {
         }
         console.debug("event ping" /* event */);
       });
-      eventSource.addEventListener("timeout", (event) => {
+      eventSource.addEventListener("timeout", (_event) => {
         if (eventSourceStatus() != eventSourceStatusOptions.established) {
           console.debug(
             "ignoring timeout event, eventsource",
@@ -131,11 +131,12 @@ export default function Credentials() {
       eventSource?.close();
       console.debug("connection closed", eventSource);
       if (authRequest()?.id) {
-        fetch(`/api/sse/${authRequest()?.id}/cancel`, { method: "POST" }).catch(
-          (
-            err,
-          ) => console.error("Error while canceling request", err),
-        );
+        fetch(`/api/sse/${authRequest()?.id}/cancel`, { method: "POST", headers: { Accept: "application/json" } })
+          .catch(
+            (
+              err,
+            ) => console.error("Error while canceling request", err),
+          );
       }
     } catch (err) {
       console.error("useBeforeLeave", err);
