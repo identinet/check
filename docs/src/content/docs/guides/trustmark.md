@@ -250,7 +250,7 @@ loaded automatically.
 
 <div style="width: clamp(40px, 40%, 80px); margin-right: auto; margin-left: auto;">
 
-![NGI TRUSTCHAIN](../../../assets/evi_minimized.png)
+![EVI Minimized View](../../../assets/evi_minimized.png)
 
 </div>
 
@@ -258,7 +258,7 @@ loaded automatically.
 
 <div style="width: clamp(200px, 60%, 300px); margin-right: auto; margin-left: auto;">
 
-![NGI TRUSTCHAIN](../../../assets/evi_standard.png)
+![EVI Standard View](../../../assets/evi_standard.png)
 
 </div>
 
@@ -266,7 +266,7 @@ loaded automatically.
 
 <div style="width: clamp(300px, 60%, 400px); margin-right: auto; margin-left: auto;">
 
-![NGI TRUSTCHAIN](../../../assets/evi_detailed.png)
+![EVI Detailed View](../../../assets/evi_detailed.png)
 
 </div>
 
