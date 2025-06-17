@@ -24,10 +24,12 @@ export default defineConfig({
       sidebar: [
         {
           label: "Guides",
-          items: [
-            // Each item here is one entry in the navigation menu.
-            { label: "Example Guide", slug: "guides/example" },
-          ],
+          // items: [
+          //   { label: "Obtain ID", slug: "guides/id" },
+          //   // Each item here is one entry in the navigation menu.
+          //   { label: "Share Credentials", slug: "guides/share" },
+          // ],
+          autogenerate: { directory: "guides" },
         },
         {
           label: "Reference",
