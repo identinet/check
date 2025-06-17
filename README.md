@@ -71,7 +71,7 @@ TUNNEL_USER=<your_username>
 
 ## Acknowledgments
 
-![NGI TRUSTCHAIN](./docs/figures/NGI_TRUSTCHAIN.webp)
+![NGI TRUSTCHAIN](./docs/src/assets/NGI_TRUSTCHAIN.webp)
 
 This project has received funding from the European Union's Horizon 2020
 research and innovation program within the framework of the TRUSTCHAIN Project

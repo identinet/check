@@ -26,7 +26,7 @@ servers:
 
 tags:
   - name: openid4vp-wallet
-    description: OpenID4VP Operations used by Wallets
+    description: OpenID4VP Operations used by Mobile Identity Wallets
   - name: openid4vp-verifier
     description: OpenID4VP Operations used by Verifiers
 
@@ -49,8 +49,11 @@ paths:
           schema:
             $ref: "#/components/schemas/Nonce"
       operationId: createRequest
-      summary: Creates a new OpenID4VP Authorization Request. See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-11.5.
-      description: Returns Authorization Request transaction ID and request URI for submitting the response. The authorization URI needs to be extended with the nonce generated on the side of the verifier.
+      summary: Create Authorization Request
+      description: |
+        Creates an OpenID4VP  Authorization Request and returns the Authorization Request's transaction ID and request
+        URI for submitting the response. The authorization URI needs to be extended with the nonce generated on the side
+        of the verifier.  See https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#section-11.5.
       # requestBody: # TODO: maybe allow the client to define the presentation definition
       responses:
         "201":
@@ -80,8 +83,9 @@ paths:
           schema:
             $ref: "#/components/schemas/RequestId"
       operationId: getResponse
-      summary: Retrieves the submitted OpenID4VP data.
-      description: Returns the submitted data and the verification result.
+      summary: Get submitted data
+      description: |
+        Returns the data submitted to the OpenID4VP Authorization Request and the verification result.
       responses:
         "200":
           description: Submitted data and verification result.
@@ -106,8 +110,9 @@ paths:
       tags:
         - openid4vp-wallet
       operationId: getRequest
-      summary: Retrieves the OpenID4VP Authorization Request.
-      description: Returns the OpenID4VP Authorization Request. Usually used by the wallet.
+      summary: Get Authorization Request
+      description: |
+        Returns the OpenID4VP Authorization Request. Usually used by the wallet.
       responses:
         "200":
           description: Returns Authorization Request, see https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
@@ -119,8 +124,10 @@ paths:
       tags:
         - openid4vp-wallet
       operationId: submitResponse
-      summary: Accepts data for this Authorization Request
-      description: Accepts data for this Authorization Request, see https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response
+      summary: Submit data to Authorization Request
+      description: |
+        Accepts data for this Authorization Request, see
+        https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-response
       requestBody:
         required: true
         content:

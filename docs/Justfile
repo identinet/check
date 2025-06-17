@@ -30,4 +30,5 @@ preview: build
     npm run preview
 
 # Run tests - currently none
+[group('development')]
 test:

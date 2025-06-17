@@ -24,21 +24,21 @@ servers:
   - url: https://api.check.identinet.io
     description: Demo deployment
 
-tags:
-  - name: verification
-    description: Operations related to verification
+# tags:
+#   - name: verification
+#     description: Operations related to verification
 
 paths:
   /v1/verification:
     get:
       operationId: getVerification
-      tags:
-        - verification
-      summary: Verifies DIDs or URLs based on associated Decentralized Identifier and Linked Verifiable Presentations.
+      # tags:
+      #   - verification
+      summary: Verify DID or URL
       description: |
-        Resolves the Decentralized Identifier for the given DNS Domain name or DID
-        and discovers and verifies Linked Verifiable Presentations and Credentials.
-        Information about the identifier, the linked presentations and credentials and the verification result are returned.
+        Resolves the Decentralized Identifier for the given DNS Domain name or DID and discovers and verifies Linked
+        Verifiable Presentations and Credentials. Information about the identifier, the linked presentations and
+        credentials and the verification result are returned.
 
         Related specifications:
         - DIF Well-Known DID Configuration <https://identity.foundation/.well-known/resources/did-configuration/>

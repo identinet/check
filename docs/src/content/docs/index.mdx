@@ -1,17 +1,17 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
+title: Welcome to CHECK
+description: Verifiable eCommerce with Digital Identity
 template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
+  tagline: Verifiable eCommerce with Digital Identity
   image:
-    file: ../../assets/houston.webp
+    file: ../../assets/logo-dark.svg
   actions:
-    - text: Example Guide
+    - text: CHECK Guide
       link: /guides/example/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+    - text: Read about identinet
+      link: https://identinet.io
       icon: external
       variant: minimal
 ---
@@ -21,16 +21,28 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 ## Next steps
 
 <CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
-	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
-	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
-	</Card>
+  <Card title="Obtain ID" icon="star">
+    Obtain your organization's W3C Decentralized Identifier (DID) from a Trust Service Provider.
+  </Card>
+  <Card title="Share Credentials" icon="puzzle">
+    Link the ID to your `example.com` web shop and share W3C Verifiable Credentials publicly.
+  </Card>
+  <Card title="Integrate Trust Mark" icon="approve-check">
+    Embed the CHECK EVI trust mark widget into your web shop frontend and enable customers to independently
+    verify your organization's identity via the CHECK Verification Service.
+  </Card>
+  <Card title="Verify Customers" icon="cloud-download">
+    Verify customer identities by requesting W3C Verifiable Credentials during checkout, enabling secure identity
+    verification workflows.
+  </Card>
 </CardGrid>
+
+## Acknowledgments
+
+<div style="width: clamp(200px, 40%, 400px)">
+  ![NGI TRUSTCHAIN](../../assets/NGI_TRUSTCHAIN.webp)
+</div>
+
+This project has received funding from the European Union's Horizon 2020
+research and innovation program within the framework of the TRUSTCHAIN Project
+funded under grant agreement 101093274.
