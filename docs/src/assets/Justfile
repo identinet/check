@@ -1,0 +1,64 @@
+#!/usr/bin/env just --justfile
+# Documentation: https://just.systems/man/en/
+#
+# To override the value of SOME_VERSION, run: just --set SOME_VERSION 1.2.4 TARGET_NAME
+# See https://hub.docker.com/r/minlag/mermaid-cli/tags
+
+MERMAID_IMAGE := "minlag/mermaid-cli"
+MERMAID_TAG := "11.4.3"
+
+# Print this help
+default:
+    @just -l
+
+# Format Justfile
+format:
+    @just --fmt --unstable
+
+# Build figures
+build-figures:
+    #!/usr/bin/env nu
+    ls * | par-each {|file|
+      let filename = ($file.name | path basename)
+      if $file.name =~ "\\.puml$" {
+        print -e $"Converting ($file.name)"
+        plantuml -DPLANTUML_LIMIT_SIZE=8192 -Xmx1024m -charset UTF-8 -nbthread auto -failfast2 $"-DDATE=(date now | format date "%Y-%m-%d")" -tsvg $file.name
+        $"($filename | str replace -r '\.[^.]+$' '').svg"
+      } else if $file.name =~ "\\.mmd$" {
+        print -e $"Converting ($file.name)"
+        # New versions: https://github.com/mermaid-js/mermaid-cli
+        docker run --rm -u $"(id -u):(id -g)" -v $"($env.PWD):/data" "{{ MERMAID_IMAGE }}:{{ MERMAID_TAG }}" -w 1600 -H 900 -i $filename -o $"($filename | str replace -r '\.[^.]+$' '').png"
+        $"($filename | str replace -r '\.[^.]+$' '').png"
+      } else if $file.name =~ "\\.drawio$" {
+        print -e $"Converting ($file.name)"
+        drawio -x -f png $file.name
+        drawio -x -f svg $file.name
+        $"($filename | str replace -r '\.[^.]+$' '').png"
+      }
+    }
+
+alias build := build-figures
+alias b := build-figures
+
+# Watch for diagram changes and rebuild immediately
+build-figures-watch:
+    #!/usr/bin/env nu
+    watch --glob '*' . {|op, path, new_path|
+      if $op == "Write" or $op == "Create" {
+        # print -e $"($op) ($path) ($path | describe) x ($new_path)"
+        let filename = ($path | path basename)
+        if $path =~ "\\.mmd$" {
+          print -e $"Converting ($path)"
+          docker run --rm -u $"(id -u):(id -g)" -v $"($env.PWD):/data" "{{ MERMAID_IMAGE }}:{{ MERMAID_TAG }}" -w 1600 -H 900 -i $filename -o $"($filename | str replace -r '\.[^.]+$' '').png"
+          $"($filename | str replace -r '\.[^.]+$' '').png"
+        } else if $path =~ "\\.puml$" {
+          print -e $"Converting ($path)"
+          plantuml -DPLANTUML_LIMIT_SIZE=8192 -Xmx1024m -charset UTF-8 -nbthread auto -failfast2 $"-DDATE=(date now | format date "%Y-%m-%d")" -tsvg $path
+          $"($filename | str replace -r '\.[^.]+$' '').svg"
+        } else if $path =~ "\\.drawio$" {
+          print -e $"Converting ($path)"
+          drawio -x -f png $path
+          $"($filename | str replace -r '\.[^.]+$' '').png"
+        }
+      }
+    }
