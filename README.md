@@ -73,6 +73,6 @@ TUNNEL_USER=<your_username>
 
 ![NGI TRUSTCHAIN](./docs/src/assets/NGI_TRUSTCHAIN.webp)
 
-This project has received funding from the European Union's Horizon 2020
-research and innovation program within the framework of the TRUSTCHAIN Project
-funded under grant agreement 101093274.
+This [project](https://identinet.io/projects/check) has received funding from
+the European Union's Horizon 2020 research and innovation program within the
+framework of the TRUSTCHAIN Project funded under grant agreement 101093274.
