@@ -1,4 +1,4 @@
-use super::dto::VcVerificationResult;
+use super::dto::VerificationResult;
 use ssi::{
     claims::{
         chrono::Utc,
@@ -18,9 +18,7 @@ use tokio::task::JoinSet;
 /// Returns a list of verification results. One result per VC. If there is an error during VP verification the result is
 /// expanded to match the number of VCs. E.g. if you have a VP with two VCs and the proof of the VP can't be verified
 /// successfully you'll receive `[VpProofError,VpProofError]`.
-pub async fn verify_presentations(
-    presentations: Vec<JsonPresentation>,
-) -> Vec<VcVerificationResult> {
+pub async fn verify_presentations(presentations: Vec<JsonPresentation>) -> Vec<VerificationResult> {
     // Prepare verification tasks for each presentation
     let tasks: JoinSet<_> = presentations
         .into_iter()
@@ -34,7 +32,11 @@ pub async fn verify_presentations(
             match verify_vp(&vp_json).await {
                 Ok(results) => results,
                 // On error, something was wrong with the VP. We expand that error for each VC.
-                Err(vp_error) => vp.verifiable_credentials.iter().map(|_| vp_error).collect(),
+                Err(vp_error) => vp
+                    .verifiable_credentials
+                    .iter()
+                    .map(|_| vp_error.clone())
+                    .collect(),
             }
         })
         .collect();
@@ -45,18 +47,20 @@ pub async fn verify_presentations(
 
 /// Verifies the given Verifiable Presentation and all included Verifiable
 /// Credentials.
-async fn verify_vp(vp_json: &String) -> Result<Vec<VcVerificationResult>, VcVerificationResult> {
+async fn verify_vp(vp_json: &String) -> Result<Vec<VerificationResult>, VerificationResult> {
     // Create DataIntegrity from JSON string
     let vp: AnyDataIntegrity<JsonPresentation> = match serde_json::from_str(&vp_json) {
         Ok(p) => p,
-        Err(_e) => return Err(VcVerificationResult::VpParseError),
+        Err(e) => return Err(VerificationResult::vp_parse_error(e)),
     };
 
     // Verify the presentation's proof
     let verifier = create_verifier();
     match vp.verify(&verifier).await {
-        Err(_proof_err) => return Err(VcVerificationResult::VpProofError),
-        Ok(Err(_verification_err)) => return Err(VcVerificationResult::VpVerificationError),
+        Err(proof_err) => return Err(VerificationResult::vp_proof_error(proof_err)),
+        Ok(Err(verification_err)) => {
+            return Err(VerificationResult::vp_verification_error(verification_err))
+        }
         Ok(Ok(())) => {
             // go on
         }
@@ -73,7 +77,10 @@ async fn verify_vp(vp_json: &String) -> Result<Vec<VcVerificationResult>, VcVeri
             // it should be safe to unwrap the result as we just deserialized the whole VP
             // => serializing the VC should work without errors
             let vc_json = serde_json::to_string(&vc).unwrap();
-            verify_vc(&vc_json).await
+            match verify_vc(&vc_json).await {
+                Ok(r) => r,
+                Err(r) => r,
+            }
         })
         .collect();
 
@@ -84,47 +91,19 @@ async fn verify_vp(vp_json: &String) -> Result<Vec<VcVerificationResult>, VcVeri
 /// Verifies the given VC and validates the contained claims.
 /// I.e. checks the cryptographic proof and verifies that the claims themselves
 /// are consistent and valid (e.g. expiration date has not passed, yet).
-async fn verify_vc(vc_json: &String) -> VcVerificationResult {
+pub async fn verify_vc(vc_json: &String) -> Result<VerificationResult, VerificationResult> {
     let vc = match any_credential_from_json_str(&vc_json) {
         Ok(c) => c,
-        Err(_e) => return VcVerificationResult::VcParseError,
+        Err(e) => return Err(VerificationResult::vc_parse_error(e)),
     };
 
     // Prepare our verifier
     // TODO can we avoid doing this with every verify_vc invocation?
     let verifier = create_verifier();
     match vc.verify(&verifier).await {
-        Ok(Ok(())) => VcVerificationResult::VcValid,
-        Ok(Err(e)) => map_ssi_error_to_verification_result(e),
-        Err(_e) => VcVerificationResult::VcVerificationError,
-    }
-}
-
-fn map_ssi_error_to_verification_result(error: ssi::claims::Invalid) -> VcVerificationResult {
-    match error {
-        ssi::claims::Invalid::Claims(claims_error) => match claims_error {
-            ssi::claims::InvalidClaims::MissingIssuanceDate => {
-                VcVerificationResult::VcValidationErrorMissingIssuance
-            }
-            ssi::claims::InvalidClaims::Premature {
-                now: _,
-                valid_from: _,
-            } => VcVerificationResult::VcValidationErrorPremature,
-            ssi::claims::InvalidClaims::Expired {
-                now: _,
-                valid_until: _,
-            } => VcVerificationResult::VcValidationErrorExpired,
-            ssi::claims::InvalidClaims::Other(_) => VcVerificationResult::VcValidationErrorOther,
-        },
-        ssi::claims::Invalid::Proof(proof_error) => match proof_error {
-            ssi::claims::InvalidProof::Missing => VcVerificationResult::VcProofErrorMissing,
-            ssi::claims::InvalidProof::Signature => VcVerificationResult::VcProofErrorSignature,
-            ssi::claims::InvalidProof::KeyMismatch => VcVerificationResult::VcProofErrorKeyMismatch,
-            ssi::claims::InvalidProof::AlgorithmMismatch => {
-                VcVerificationResult::VcProofErrorAlgorithmMismatch
-            }
-            ssi::claims::InvalidProof::Other(_) => VcVerificationResult::VcProofError,
-        },
+        Ok(Ok(())) => Ok(VerificationResult::vc_valid()),
+        Ok(Err(e)) => Err(VerificationResult::from(e)),
+        Err(e) => Err(VerificationResult::vc_proof_error(e)),
     }
 }
 
@@ -192,8 +171,8 @@ mod tests {
     async fn verify_vc_self_issued() {
         let vc_json = fs::read_to_string("tests/credentials/credential-self-issued.json").unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await,
-            VcVerificationResult::VcValid
+            verify_vc(&vc_json).await.unwrap(),
+            VerificationResult::VcValid(_)
         ));
     }
 
@@ -202,8 +181,8 @@ mod tests {
         let vc_json =
             fs::read_to_string("tests/credentials/credential-self-issued-tampered.json").unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await,
-            VcVerificationResult::VcProofErrorSignature
+            verify_vc(&vc_json).await.unwrap_err(),
+            VerificationResult::VcProofErrorSignature(_)
         ));
     }
 
@@ -214,16 +193,16 @@ mod tests {
         )
         .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await,
-            VcVerificationResult::VcValid
+            verify_vc(&vc_json).await.unwrap(),
+            VerificationResult::VcValid(_)
         ));
 
         let vc_json =
             fs::read_to_string("tests/credentials/credential-trust-party-issued-not-expired.json")
                 .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await,
-            VcVerificationResult::VcValid
+            verify_vc(&vc_json).await.unwrap(),
+            VerificationResult::VcValid(_)
         ));
     }
 
@@ -233,8 +212,8 @@ mod tests {
             fs::read_to_string("tests/credentials/credential-trust-party-issued-expired.json")
                 .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await,
-            VcVerificationResult::VcValidationErrorExpired
+            verify_vc(&vc_json).await.unwrap_err(),
+            VerificationResult::VcValidationErrorExpired(_)
         ));
     }
 
@@ -244,7 +223,7 @@ mod tests {
             fs::read_to_string("tests/presentations/presentation-single-vc.json").unwrap();
         let x = verify_vp(&vp_json).await.unwrap();
         assert_eq!(x.len(), 1);
-        assert!(matches!(x[0], VcVerificationResult::VcValid));
+        assert!(matches!(x[0], VerificationResult::VcValid(_)));
     }
 
     #[tokio::test]
@@ -253,9 +232,9 @@ mod tests {
             fs::read_to_string("tests/presentations/presentation-multiple-vc.json").unwrap();
         let x = verify_vp(&vp_json).await.unwrap();
         assert_eq!(x.len(), 3);
-        assert!(matches!(x[0], VcVerificationResult::VcValid));
-        assert!(matches!(x[1], VcVerificationResult::VcValid));
-        assert!(matches!(x[2], VcVerificationResult::VcValid));
+        assert!(matches!(x[0], VerificationResult::VcValid(_)));
+        assert!(matches!(x[1], VerificationResult::VcValid(_)));
+        assert!(matches!(x[2], VerificationResult::VcValid(_)));
     }
 
     #[tokio::test]
@@ -265,10 +244,10 @@ mod tests {
                 .unwrap();
         let x = verify_vp(&vp_json).await.unwrap();
         assert_eq!(x.len(), 2);
-        assert!(matches!(x[0], VcVerificationResult::VcValid));
+        assert!(matches!(x[0], VerificationResult::VcValid(_)));
         assert!(matches!(
             x[1],
-            VcVerificationResult::VcValidationErrorExpired
+            VerificationResult::VcValidationErrorExpired(_)
         ));
     }
 
@@ -278,7 +257,7 @@ mod tests {
             fs::read_to_string("tests/presentations/presentation-tampered-vc.json").unwrap();
         let x = verify_vp(&vp_json).await.unwrap();
         assert_eq!(x.len(), 1);
-        assert!(matches!(x[0], VcVerificationResult::VcProofErrorSignature));
+        assert!(matches!(x[0], VerificationResult::VcProofErrorSignature(_)));
     }
 
     /*
