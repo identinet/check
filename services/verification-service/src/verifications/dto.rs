@@ -34,6 +34,7 @@ impl VerificationError {
             documents: Vec::new(),
             credentials: Vec::new(),
             results: Vec::new(),
+            verified: false,
         };
         VerificationError::NotFoundJson(empty)
     }
@@ -64,6 +65,7 @@ pub struct VerificationResponseDto {
     pub documents: Vec<Document>,
     pub credentials: Vec<SpecializedJsonCredential>,
     pub results: Vec<VerificationResult>,
+    pub verified: bool,
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?

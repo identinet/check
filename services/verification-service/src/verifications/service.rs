@@ -11,7 +11,7 @@ use ssi::dids::{
 use tokio::task::JoinSet;
 use url::Url;
 
-use super::dto::VerificationResponseDto;
+use super::dto::{VerificationResponseDto, VerificationResult};
 use super::verification_service;
 
 type DidDocument = Output;
@@ -80,6 +80,7 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
         documents: did_documents.clone(),
         credentials: Vec::new(),
         results: Vec::new(),
+        verified: false,
     };
 
     for did_doc in &did_documents {
@@ -94,6 +95,11 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
             verification_service::verify_presentations(linked_presentations).await;
         dto.results.extend(verification_results);
     }
+
+    dto.verified = dto
+        .results
+        .iter()
+        .all(|result| matches!(result, VerificationResult::VcValid(_)));
 
     Ok(dto)
 }
