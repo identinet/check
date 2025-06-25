@@ -12,7 +12,7 @@ import { store } from "~/lib/store.js";
  * Function submits a navigation request to the connected browser window via the existing SSE connection between client
  * and server, the final step in the authorization flow.
  */
-export async function GET(event: APIEvent) {
+export function GET(event: APIEvent) {
   console.debug("sse/ID/data", event.params);
   const { id } = event.params;
 

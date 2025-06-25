@@ -15,20 +15,20 @@ import { generate } from "lean-qr";
  */
 export default function QRCode(props) {
   let oldText;
-  let canvas: any;
+  let canvas;
   let render = false;
   const [generatedQRCode] = createResource(
     () => (props.children),
-    (source, { value, refetching }) => {
+    (source, { value: _value, refetching: _refetching }) => {
       if (source && source != "") {
         const code = generate(source instanceof URL ? source.toString() : source);
         return code;
       }
     },
   );
-  const [_, { mutate, refetch }] = createResource(
+  const [_, { mutate: _mutate, refetch }] = createResource(
     generatedQRCode,
-    (render) => {
+    (_render) => {
       const code = generatedQRCode();
       if (code && canvas) {
         code.toCanvas(canvas);

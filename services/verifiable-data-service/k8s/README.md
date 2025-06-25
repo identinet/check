@@ -37,6 +37,10 @@ environment file `verifiable-data-service.env`:
 ```dotenv
 # External hostname
 EXTERNAL_HOSTNAME=demo-shop.vds.example.com
+# Optional authorization token for protecting the /authrequests endpoints
+# In a production setup leave this token empty place an API gateway infront of this service that performs the
+# verification of request
+BEARER_TOKEN=testest
 # Hostname of shop and callback base path
 CALLBACK_HOSTNAME=demo-shop.example.com
 CALLBACK_BASE_PATH=api/sse

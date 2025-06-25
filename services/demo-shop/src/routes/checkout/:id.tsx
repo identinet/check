@@ -1,11 +1,12 @@
-import { createAsync, query, useBeforeLeave, useNavigate, useParams } from "@solidjs/router";
+import { createAsync, query, useParams } from "@solidjs/router";
+import process from "node:process";
 
 const getData = query((id) => {
   "use server";
   console.debug("getData");
   return fetch(
     `https://${process.env.EXTERNAL_HOSTNAME}/api/sse/${id}/data`,
-    { method: "GET" },
+    { method: "GET", headers: { Accept: "application/json" } },
   ).then((res) =>
     res.json().then((credential) => {
       console.debug("getData response", credential);
