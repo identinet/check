@@ -54,7 +54,7 @@ struct CliConfig {
     #[arg(
         long,
         short = 't',
-        help = "Optional access token to protect access to the authorizoation request creation and data retrieval, or set via environment variable BEARER_TOKEN (e.g. 5exmFqoMMkT7Ol4wQCUuLju4jepmd5GHWFITNSn4). In a production environment, use an external Identity and Accuss Management system and API gateway."
+        help = "Optional access token to protect access to the authorizoation request creation and data retrieval, or set via environment variable BEARER_TOKEN (e.g. 5exmFqoMMkT7Ol4wQCUuLju4jepmd5GHWFITNSn4). In a production environment, use an external Identity and Access Management system and API gateway."
     )]
     bearer_token: Option<String>,
 }
