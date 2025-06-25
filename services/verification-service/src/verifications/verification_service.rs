@@ -7,6 +7,7 @@ use ssi::{
         VerificationParameters,
     },
     dids::VerificationMethodDIDResolver,
+    json_ld::syntax::Value,
     verification_methods::AnyMethod,
 };
 use tokio::task::JoinSet;
@@ -107,6 +108,70 @@ pub async fn verify_vc(vc_json: &String) -> Result<VerificationResult, Verificat
     }
 }
 
+/// Verifies the given DID configuration. First, the embedded DomainLinkage VC is verified. Then, the verification steps
+/// mentioned at https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification
+/// are executed:
+/// 1. credentialSubject.id MUST be a DID
+/// 2. credentialSubject.id MUST be equal to the issuer
+/// 3: credentialSubject.origin property MUST be present, and its value MUST match the origin the resource was requested
+/// from.
+pub async fn verify_did_config_vc(
+    did_config_json: &String,
+    url: &Url,
+) -> Result<VerificationResult, VerificationResult> {
+    match serde_json::from_slice::<super::service::DidConfig>(&did_config_json.as_bytes()) {
+        Ok(config) => {
+            let domain_linkage_vc_json = serde_json::to_string(&config.linked_dids[0]).unwrap();
+
+            match verify_vc(&domain_linkage_vc_json).await {
+                Ok(_) => {
+                    // The credentialSubject.id MUST be a DID,
+                    let id = config.linked_dids[0].credential_subjects[0]
+                        .get("id")
+                        .next()
+                        .and_then(|v| match v {
+                            Value::String(v) => ssi::dids::DIDBuf::new(v.as_bytes().to_vec()).ok(),
+                            _ => None,
+                        })
+                        .ok_or(VerificationResult::did_config_error(
+                            "credentialSubject.id must be a DID".to_string(),
+                        ))?;
+
+                    // and the value MUST be equal to the Issuer of the Domain Linkage Credential.
+                    if id.as_uri() != config.linked_dids[0].issuer.id() {
+                        return Err(VerificationResult::did_config_error(
+                            "credentialSubject.id must be equal to issuer".to_string(),
+                        ));
+                    }
+
+                    // The credentialSubject.origin property MUST be present,
+                    // and its value MUST match the origin the resource was requested from.
+                    config.linked_dids[0].credential_subjects[0]
+                        .get("origin")
+                        .next()
+                        .and_then(|v| match v {
+                            Value::String(origin) => {
+                                if url.origin().ascii_serialization() != origin.to_string() {
+                                    None
+                                } else {
+                                    Some(origin)
+                                }
+                            }
+                            _ => None,
+                        })
+                        .ok_or(VerificationResult::did_config_error(
+                            "credentialSubject.origin must match the origin the resource was requested from".to_string(),
+                        ))?;
+
+                    Ok(VerificationResult::vc_valid())
+                }
+                Err(e) => Err(e),
+            }
+        }
+        Err(e) => Err(VerificationResult::did_config_error(e.to_string())),
+    }
+}
+
 /// Creates a verifier for VCs and VPs that uses AnyDidMethod to resolve DIDs.
 /// The verifier will use the current date/time when validating dates.
 #[cfg(not(test))]
@@ -122,6 +187,7 @@ fn create_verifier(
 
 #[cfg(test)]
 use ssi::prelude::DIDResolver;
+use url::Url;
 /// Creates a verifier for VCs and VPs that uses a static DID resolver which knows about the
 /// DIDs used in the credentials available in the tests/ directory.
 #[cfg(test)]
@@ -271,4 +337,74 @@ mod tests {
         assert!(matches!(x[0], VcVerificationResult::VcProofErrorSignature));
     }
     */
+    #[tokio::test]
+    async fn verify_did_config() {
+        let did_config_json =
+            fs::read_to_string("tests/did-configurations/did-config-holder.json").unwrap();
+
+        let url = Url::parse("https://example.com").unwrap();
+        let x = verify_did_config_vc(&did_config_json, &url).await.unwrap();
+        assert!(matches!(x, VerificationResult::VcValid(_)));
+    }
+
+    #[tokio::test]
+    async fn verify_did_config_id_not_a_did() {
+        let did_config_json =
+            fs::read_to_string("tests/did-configurations/did-config-holder-bad-subject-id.json")
+                .unwrap();
+
+        let url = Url::parse("https://example.com").unwrap();
+        let x = verify_did_config_vc(&did_config_json, &url)
+            .await
+            .unwrap_err();
+        assert!(matches!(x, VerificationResult::DidConfigError(_)));
+
+        match x {
+            VerificationResult::DidConfigError(p) => {
+                assert_eq!(p.details, "credentialSubject.id must be a DID")
+            }
+            _ => panic!("unexpected"),
+        };
+    }
+
+    #[tokio::test]
+    async fn verify_did_config_id_not_issuer() {
+        let did_config_json = fs::read_to_string(
+            "tests/did-configurations/did-config-holder-subject-is-not-issuer.json",
+        )
+        .unwrap();
+
+        let url = Url::parse("https://example.com").unwrap();
+        let x = verify_did_config_vc(&did_config_json, &url)
+            .await
+            .unwrap_err();
+        assert!(matches!(x, VerificationResult::DidConfigError(_)));
+
+        match x {
+            VerificationResult::DidConfigError(p) => {
+                assert_eq!(p.details, "credentialSubject.id must be equal to issuer")
+            }
+            _ => panic!("unexpected"),
+        };
+    }
+
+    #[tokio::test]
+    async fn verify_did_config_origin_not_url() {
+        let did_config_json =
+            fs::read_to_string("tests/did-configurations/did-config-holder-fake-origin.json")
+                .unwrap();
+
+        let url = Url::parse("https://example.com").unwrap();
+        let x = verify_did_config_vc(&did_config_json, &url)
+            .await
+            .unwrap_err();
+        assert!(matches!(x, VerificationResult::DidConfigError(_)));
+
+        match x {
+            VerificationResult::DidConfigError(p) => {
+                assert_eq!(p.details, "credentialSubject.origin must match the origin the resource was requested from")
+            }
+            _ => panic!("unexpected"),
+        };
+    }
 }

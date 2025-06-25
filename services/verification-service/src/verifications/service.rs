@@ -1,13 +1,14 @@
 use reqwest;
 use serde::Deserialize;
 use serde_json::from_str;
-use ssi::claims::vc::v1::JsonPresentation;
+use ssi::claims::vc::v1::{JsonCredential, JsonPresentation};
 use ssi::dids::DIDResolver;
 use ssi::dids::{
     document::{service::Endpoint, Service},
     resolution::Output,
     AnyDidMethod, DIDBuf, Document,
 };
+use ssi::json_ld::syntax::Value;
 use tokio::task::JoinSet;
 use url::Url;
 
@@ -29,20 +30,15 @@ pub enum Error {
     /// Unable to resolve DID document
     #[error("DID could not be resolved")]
     ResolutionError(#[from] ssi::dids::resolution::Error),
+
+    /// Unable to verify DID configuration
+    #[error("DID Configuration invalid: {0}")]
+    DidConfigInvalid(String),
 }
 
 #[derive(Debug, Deserialize)]
-struct DidConfigSubject {
-    id: String,
-}
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct LinkedDid {
-    credential_subject: DidConfigSubject,
-}
-#[derive(Debug, Deserialize)]
-struct DidConfig {
-    linked_dids: Vec<LinkedDid>,
+pub struct DidConfig {
+    pub linked_dids: Vec<JsonCredential>,
 }
 
 /// Verifies the given URL
@@ -57,7 +53,6 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
     let results = tasks.join_all().await;
 
     // Use `partition` to split the results into Ok and Err vectors
-    // TODO rework once the final validation result is specified
     let (oks, errs): (Vec<_>, Vec<_>) = results.into_iter().partition(|r| r.is_ok());
 
     // If there is no successful result return the first error
@@ -109,11 +104,21 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
 /// DID. If this fails we fall back to did:web representation of the given URL.
 async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
     // test if there's a well-known DID config for given url
-    let config = match lookup_did_config(url).await {
+    let config_json = match lookup_did_config(url).await {
         Ok(config) => config,
         // lookup failed, fall back to did web
         Err(_) => return url_to_didweb(url),
     };
+
+    // verify DID config VC
+    let config = match verification_service::verify_did_config_vc(&config_json, url).await {
+        Ok(_) => serde_json::from_slice::<super::service::DidConfig>(&config_json.as_bytes())
+            .map_err(|_| Error::Unexpected("".to_string())), // not expected as verify_did_config_vc would have failed already if DID config could not be parsed
+        Err(e) => Err(match e {
+            VerificationResult::DidConfigError(p) => Error::DidConfigInvalid(p.details),
+            _ => Error::DidConfigInvalid(serde_json::to_string(&e).unwrap()),
+        }),
+    }?;
 
     // extract did from config
     match config_to_dids(&config) {
@@ -125,12 +130,11 @@ async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
 
 /// Downloads the DID well-known config from the given URL
 /// https://identity.foundation/specs/did-configuration/
-async fn lookup_did_config(url: &Url) -> Result<DidConfig, ()> {
+async fn lookup_did_config(url: &Url) -> Result<String, ()> {
     let well_known_uri = url_to_well_known_config_uri(&url)?;
     // TODO handle JWT proof format
-    // TODO handle JSON parse errors
     let response = reqwest::get(well_known_uri).await.map_err(|_| ())?;
-    let config = response.json::<DidConfig>().await.map_err(|_| ())?;
+    let config = response.text().await.map_err(|_| ())?;
     Ok(config)
 }
 
@@ -141,7 +145,12 @@ fn config_to_dids(config: &DidConfig) -> Vec<DIDBuf> {
         .linked_dids
         .iter()
         .filter_map(|linked_did| {
-            DIDBuf::new(linked_did.credential_subject.id.clone().into_bytes()).ok()
+            let id = &linked_did.credential_subjects[0].get("id").next();
+            if let Some(Value::String(id)) = id {
+                DIDBuf::new(id.as_bytes().to_vec()).ok()
+            } else {
+                None
+            }
         })
         .collect::<Vec<_>>()
 }
