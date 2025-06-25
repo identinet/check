@@ -1,4 +1,5 @@
 import { createContext, createResource, useContext } from "solid-js";
+import { useConfigContext } from "~/components/ConfigContext";
 
 export const INITIAL_VERIFICATION_DETAILS = {};
 export const INITIAL_FETCHED: Date | null = null;
@@ -31,15 +32,26 @@ export const VerificationContext = createContext([
 ]);
 
 export default function VerificationProvider(props) {
-  function fetcher(source, { value, refetching }) {
-    // TODO: pull status from Verification Service
-    return Promise.resolve({ verified: true }).then((res) => {
-      return { verificationDetails: res, fetched: new Date() };
-    });
+  const [config] = useConfigContext();
+  function fetcher(source, { value: _value, refetching: _refetching }) {
+    if (source.vs) {
+      const url = new URL(config().vs);
+      url.pathname = "/v1/verification";
+      url.searchParams.set("q", new URL(document.URL).origin);
+      return fetch(url, { mode: "cors", credentials: "omit" }).then((res) => res.json()).then(
+        (data) => {
+          let verified = data?.verified === true;
+          return {
+            ...data,
+            verified,
+          };
+        },
+      );
+    }
+    return Promise.reject(new Error("Source not yet ready"));
   }
 
-  const [verificationDetails, { refetch: refetchVerificationDetails }] =
-    createResource(fetcher);
+  const [verificationDetails, { refetch: refetchVerificationDetails }] = createResource(config, fetcher);
 
   const verification = [
     verificationDetails,

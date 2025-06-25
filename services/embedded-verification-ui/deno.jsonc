@@ -1,5 +1,9 @@
 // Documentation: https://docs.deno.com/runtime/manual/getting_started/configuration_file
 {
+  // workaround to make ./tsconfig.json's paths work in deno
+  "imports": {
+    "~/": "./src/"
+  },
   "fmt": {
     "useTabs": false,
     "lineWidth": 120,

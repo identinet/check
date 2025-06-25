@@ -1,4 +1,4 @@
-import { createContext, createResource, onMount, useContext } from "solid-js";
+import { createContext, createResource, useContext } from "solid-js";
 import { isServer } from "solid-js/web";
 
 /**
@@ -25,7 +25,7 @@ export const ConfigContext = createContext([
 ]);
 
 export default function ConfigProvider(props) {
-  function fetchConfig(source, { value, refetching }) {
+  function fetchConfig(_source, { value: _value, refetching: _refetching }) {
     /* console.log("source", source); */
     /* console.log("value", value); */
     /* console.log("refetching", refetching); */

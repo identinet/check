@@ -77,6 +77,15 @@ dev: githooks
                   match: ($service | getHosts | each {|hostname| {host: [$hostname]}})
                   handle: [
                     {
+                      handler: "headers"
+                      response: {
+                        add: {
+                          # CORS: allow fetching from everywhere for development purposes
+                          Access-Control-Allow-Origin: ["{http.request.header.Origin}"]
+                        }
+                      }
+                    }
+                    {
                       handler: "encode"
                       encodings: { gzip: {level: 3} zstd: {level: "default"} }
                     }
@@ -105,6 +114,15 @@ dev: githooks
                 {
                   match: ($service | getHosts --no-tunnel | each {|hostname| {host: [$hostname]}})
                   handle: [
+                    {
+                      handler: "headers"
+                      response: {
+                        add: {
+                          # CORS: allow fetching from everywhere for development purposes
+                          Access-Control-Allow-Origin: ["{http.request.header.Origin}"]
+                        }
+                      }
+                    }
                     {
                       handler: "encode"
                       encodings: { gzip: {level: 3} zstd: {level: "default"} }

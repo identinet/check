@@ -1,4 +1,4 @@
-import { Component, createSignal } from "solid-js";
+import { Component, createSignal, JSX, Show } from "solid-js";
 
 import Modal from "~/components/Modal";
 import Button from "~/components/Button";
@@ -6,12 +6,16 @@ import Shield from "~/components/icons/Shield";
 import { useVerificationContext } from "~/components/VerificationContext";
 import { useConfigContext } from "~/components/ConfigContext";
 
-const Standard: Component = (props) => {
-  const valid = true;
+type Props = {
+  close: () => void;
+  toggleView: () => void;
+} & JSX.HTMLAttributes<HTMLButtonElement>;
+
+const Standard: Component<Props> = (props) => {
   const [modalVisible, setVisible] = createSignal(false);
   const [config] = useConfigContext();
-  // TODO: use verification
-  const [verificationDetails, { refetch }] = useVerificationContext();
+  const [verificationDetails] = useVerificationContext();
+  const verified = verificationDetails()?.verified;
   const aboutUrl = () => {
     if (config()) {
       const url = new URL(config().vsi);
@@ -22,22 +26,22 @@ const Standard: Component = (props) => {
   return (
     <>
       <div
-        alt="Verification Status"
+        title={`Verification Status: ${verified ? "verified" : "failed"}`}
         classList={{
-          /* "from-blue-200": valid, */
-          "from-[#4548FF]": valid,
-          "via-[#5092FF]": valid,
-          /* "to-blue-50": valid, */
-          "to-[#4CAFFF]": valid,
-          /* "border-blue-900": valid, */
-          "border-[#07348F]": valid,
-          "from-red-200": !valid,
-          "to-red-50": !valid,
-          "border-red-900": !valid,
+          [verified ? "from-[#4548FF]" : "from-red-500"]: true,
+          [verified ? "via-[#5092FF]" : ""]: true,
+          [verified ? "to-[#4CAFFF]" : "to-red-200"]: true,
+          [verified ? "border-[#07348F]" : "border-red-900"]: true,
         }}
         class="relative w-[18rem] max-w-[80vw] h-[10rem] bg-linear-10 border-l border-y rounded-l-4xl"
       >
-        <div class="w-full h-full rounded-l-4xl bg-radial from-[#0548DD]/60 to-[#5800FC]/10">
+        <div
+          class="w-full h-full rounded-l-4xl bg-radial"
+          classList={{
+            "from-[#0548DD]/60": verified,
+            "to-[#5800FC]/10": verified,
+          }}
+        >
           {/* Radial gradient that helps increase the readibility of the cards  */}
         </div>
 
@@ -69,8 +73,16 @@ const Standard: Component = (props) => {
             </div>
           </div>
           <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
-            <Shield action={props.toggleView} size={1.2} />
-            <Modal show={modalVisible()} />
+            <Show
+              when={verified}
+              fallback={
+                <div class="i-flowbite-close-circle-outline text-[8rem] cursor-pointer" onclick={props.toggleView}>
+                </div>
+              }
+            >
+              <Shield action={props.toggleView} size={1.2} />
+              <Modal show={modalVisible()} />
+            </Show>
           </div>
         </div>
       </div>

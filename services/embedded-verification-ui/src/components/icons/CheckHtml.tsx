@@ -1,6 +1,10 @@
-import { Component } from "solid-js";
+import { Component, JSX } from "solid-js";
 
-const CheckHtml: Component = (props) => {
+type Props = {
+  valid: boolean;
+} & JSX.HTMLAttributes<HTMLButtonElement>;
+
+const CheckHtml: Component<Props> = (props) => {
   return (
     <div
       class="size-[70%] rounded-full bg-linear-10 to-90% overflow-hidden"

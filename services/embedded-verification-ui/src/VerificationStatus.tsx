@@ -18,7 +18,7 @@ const VerificationStatus: Component = (_props) => {
   const toggleViewDetails = () => setView(views.details);
   createEffect(() =>
     setInterval(() => {
-      // INFO: automatic refetch operation after a certain time has passed
+      // INFO: automatic refetch of verification status operation after a certain time has passed
       refetch();
     }, 60000)
   );
@@ -43,8 +43,8 @@ const VerificationStatus: Component = (_props) => {
               }
             >
               <Details
-                close={toggleViewMinimized}
-                toggleView={toggleViewStandard}
+                close={isMobile() ? toggleViewMinimized : toggleViewStandard}
+                toggleView={isMobile() ? toggleViewMinimized : toggleViewStandard}
               />
             </Show>
           </header>

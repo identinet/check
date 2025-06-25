@@ -17,8 +17,17 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        unstable = nixpkgs-unstable.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            (self: super: {
+              unstable = import nixpkgs-unstable {
+                inherit system;
+                # config.allowUnfree = true;
+              };
+            })
+          ];
+        };
         default_pkg = pkgs.callPackage ./default.nix {
           inherit pkgs;
           nodejs = pkgs.nodejs_22;
