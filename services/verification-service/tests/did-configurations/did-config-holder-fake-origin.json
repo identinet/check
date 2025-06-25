@@ -1,32 +1,32 @@
 {
   "@context": "https://identity.foundation/.well-known/did-configuration/v1",
   "linked_dids": [
-{
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1",
-    "https://identity.foundation/.well-known/did-configuration/v1"
-  ],
-  "id": "urn:uuid:a0258751-f70c-4f0f-a7d2-c39ae78bc20b",
-  "type": [
-    "VerifiableCredential",
-    "DomainLinkageCredential"
-  ],
-  "credentialSubject": {
-    "id": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ",
-    "origin": "https://fake.com"
-  },
-  "issuer": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ",
-  "issuanceDate": "2025-06-24T13:57:20Z",
-  "proof": {
-    "@context": [
-      "https://w3id.org/security/suites/jws-2020/v1"
-    ],
-    "type": "JsonWebSignature2020",
-    "proofPurpose": "assertionMethod",
-    "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ#0",
-    "created": "2025-06-25T15:12:07.495726440Z",
-    "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..ckJd-ralwMAmFnKGCuxExPP0iqNk3PPxLjVHXiILQ_heSvBF2FZ7xYmGlY8_nO0Sfgcd54naSdeQIqRp179YDA"
-  }
-}
+    {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://identity.foundation/.well-known/did-configuration/v1"
+      ],
+      "id": "urn:uuid:b1bb90db-319c-44f4-8967-c509ee93d570",
+      "type": [
+        "VerifiableCredential",
+        "DomainLinkageCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ",
+        "origin": "https://fake.com"
+      },
+      "issuer": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ",
+      "issuanceDate": "2025-06-25T19:18:17Z",
+      "proof": {
+        "@context": [
+          "https://w3id.org/security/suites/jws-2020/v1"
+        ],
+        "type": "JsonWebSignature2020",
+        "proofPurpose": "assertionMethod",
+        "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ#0",
+        "created": "2025-06-25T19:19:38.873294665Z",
+        "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..1gY2JIyX9SdU4PZI17Y7m1t_kzxLrXWKiyHPqa0jq9vnLTjFenaO9AssfjA0jROtUibjmw2_Sl1HE72saFX6BQ"
+      }
+    }
   ]
 }
