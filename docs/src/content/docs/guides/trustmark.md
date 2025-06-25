@@ -243,7 +243,7 @@ add_action('wp_footer', 'add_check_trust_mark');
 
 #### Step 3: Validation
 
-Validate the ingration by visiting the web shop. The CHECK EVI widget will be
+Validate the integration by visiting the web shop. The CHECK EVI widget will be
 loaded automatically.
 
 ##### Minimized View
