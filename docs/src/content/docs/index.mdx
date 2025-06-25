@@ -7,7 +7,7 @@ hero:
   image:
     file: ../../assets/logo-dark.svg
   actions:
-    - text: CHECK Guide
+    - text: CHECK Guides
       link: /guides/id
       icon: right-arrow
     - text: Read about identinet
@@ -18,22 +18,22 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
+## Steps to use CHECK
 
 <CardGrid stagger>
   <Card title="Obtain ID" icon="star">
-    Obtain your organization's W3C Decentralized Identifier (DID) from a Trust Service Provider.
+    [Obtain](./guides/id) your organization's W3C Decentralized Identifier (DID) from a Trust Service Provider.
   </Card>
   <Card title="Share Credentials" icon="puzzle">
-    Link the ID to your `example-shop.com` web shop and share W3C Verifiable Credentials publicly.
+    [Link](./guides/share) the ID to your web shop and [share](./guides/share) W3C Verifiable Credentials publicly.
   </Card>
   <Card title="Integrate Trust Mark" icon="approve-check">
-    Embed the CHECK EVI trust mark widget into your web shop frontend and enable customers to independently
-    verify your organization's identity via the CHECK Verification Service.
+    [Embed](./guides/trustmark) the CHECK EVI trust mark widget into your web shop frontend and enable customers to
+    independently verify your organization's identity via the CHECK Verification Service.
   </Card>
   <Card title="Verify Customers" icon="cloud-download">
-    Verify customer identities by requesting W3C Verifiable Credentials during checkout, enabling secure identity
-    verification workflows.
+    [Verify](./guides/verification) customer identities by requesting W3C Verifiable Credentials during checkout,
+    enabling secure identity verification workflows.
   </Card>
 </CardGrid>
 
