@@ -37,7 +37,7 @@ transactions, they also play an active role in the bidirectional trust model by
 providing their own credentials for verification when required, particularly for
 high-value transactions or when establishing new commercial relationships.
 
-**Retailer** encompass web shops seeking to establish credibility with potential
+**Retailer** encompasses web shops seeking to establish credibility with potential
 customers. They integrate the CHECK verification system into their e-commerce
 platform, provide business credentials for verification, and implement the
 customer verification components within their transaction flow. Their active
