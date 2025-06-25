@@ -1,5 +1,5 @@
 ---
-title: Share Crendentials
+title: Share Credentials
 description: Guide to sharing Verifiable Credentials
 # sidebar:
 #   order: 0
