@@ -124,8 +124,8 @@ fn is_valid_url(url: &str) -> bool {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct VerificationResultPayload {
-    message: String,
-    details: String,
+    pub message: String,
+    pub details: String,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -145,6 +145,7 @@ pub enum VerificationResult {
     VcValidationErrorPremature(VerificationResultPayload),
     VcValidationErrorExpired(VerificationResultPayload),
     VcValidationErrorMissingIssuance(VerificationResultPayload),
+    DidConfigError(VerificationResultPayload),
 }
 
 impl VerificationResult {
@@ -187,6 +188,13 @@ impl VerificationResult {
         VerificationResult::VcProofError(VerificationResultPayload {
             message: "Proof error in Verifiable Credential.".to_string(),
             details: e.to_string(),
+        })
+    }
+
+    pub fn did_config_error(reason: String) -> Self {
+        VerificationResult::DidConfigError(VerificationResultPayload {
+            message: "Verification of DID Configuration failed.".to_string(),
+            details: reason.to_string(),
         })
     }
 }

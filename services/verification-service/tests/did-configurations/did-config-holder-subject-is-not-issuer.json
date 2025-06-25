@@ -1,0 +1,32 @@
+{
+  "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+  "linked_dids": [
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://identity.foundation/.well-known/did-configuration/v1"
+  ],
+  "id": "urn:uuid:a0258751-f70c-4f0f-a7d2-c39ae78bc20b",
+  "type": [
+    "VerifiableCredential",
+    "DomainLinkageCredential"
+  ],
+  "credentialSubject": {
+    "id": "did:example:foo",
+    "origin": "https://example.com"
+  },
+  "issuer": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ",
+  "issuanceDate": "2025-06-24T13:57:20Z",
+  "proof": {
+    "@context": [
+      "https://w3id.org/security/suites/jws-2020/v1"
+    ],
+    "type": "JsonWebSignature2020",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ#0",
+    "created": "2025-06-25T15:05:00.242555560Z",
+    "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..adZ9BnrRVfmW8MKcEMibSedeAuVirP2vSz7tL1IJZdP8aOIGk4AGBlwTKlomRfx_GYwV1xhln4mxmhVEsp1eCQ"
+  }
+}
+  ]
+}

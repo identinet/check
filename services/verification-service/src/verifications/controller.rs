@@ -23,6 +23,7 @@ pub async fn verify_domain(
                 }
                 _ => VerificationError::bad_request_from(error.to_string()),
             },
+            Error::DidConfigInvalid(details) => VerificationError::bad_request_from(details),
             _ => VerificationError::bad_request_from("Should not happen".to_string()),
         })?;
 
