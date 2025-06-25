@@ -37,7 +37,7 @@ didkit_docker() {
     docker run -i --rm -v ./:/tmp/:z -w /tmp identinet/didkit-cli:0.3.2-10 $args
 }
 
-dirs="credentials dids keys presentations"
+dirs="credentials dids keys presentations did-configurations"
 for dir in $dirs; do
     if [ ! -d "$dir" ]; then
         mkdir "$dir"
@@ -282,6 +282,128 @@ EOF
 issue_and_encode_vp presentations/presentation-multiple-vc-expired keys/key-holder.jwk $verification_method_holder
 
 
+# Create DID Configurations
+echo '### DID configuration ###'
+vc_id="urn:uuid:"`uuidgen`
+cat > credentials/credential-self-issued-domain-linkage <<EOF
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://identity.foundation/.well-known/did-configuration/v1"
+    ],
+    "id": "$vc_id",
+    "type": ["VerifiableCredential", "DomainLinkageCredential"],
+    "issuer": "$holder_did",
+    "issuanceDate": "$vc_issuance_date",
+    "credentialSubject": {
+        "id": "$holder_did",
+        "origin": "https://example.com"
+    }
+}
+EOF
+# issue_and_encode_vc credentials/credential-self-issued-domain-linkage keys/key-holder.jwk $verification_method_holder
+# NOTE does not work with didkit docker
+# manually sign the VC like
+# didkit credential issue -k ../check/services/verification-service/tests/keys/key-holder.jwk -v $verification_method -p assertionMethod -f ldp -t JsonWebSignature2020 < ../check/services/verification-service/tests/credentials/credential-self-issued-domain-linkage-fake-origin > ../check/services/verification-service/tests/credentials/credential-self-issued-domain-linkage-fake-origin.json
+
+domain_linkage_vc=`cat credentials/credential-self-issued-domain-linkage.json`
+cat > did-configurations/did-config-holder <<EOF
+{
+    "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+    "linked_dids": [$domain_linkage_vc]
+}
+EOF
+print_json did-configurations/did-config-holder | tee did-configurations/did-config-holder.json
+
+
+vc_id="urn:uuid:"`uuidgen`
+cat > credentials/credential-self-issued-domain-linkage-bad-subject-id <<EOF
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://identity.foundation/.well-known/did-configuration/v1"
+    ],
+    "id": "$vc_id",
+    "type": ["VerifiableCredential", "DomainLinkageCredential"],
+    "issuer": "$holder_did",
+    "issuanceDate": "$vc_issuance_date",
+    "credentialSubject": {
+        "id": "https://example.com",
+        "origin": "https://example.com"
+    }
+}
+EOF
+# issue_and_encode_vc credentials/credential-self-issued-domain-linkage keys/key-holder.jwk $verification_method_holder
+
+domain_linkage_vc=`cat credentials/credential-self-issued-domain-linkage-bad-subject-id.json`
+cat > did-configurations/did-config-holder-bad-subject-id <<EOF
+{
+    "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+    "linked_dids": [$domain_linkage_vc]
+}
+EOF
+print_json did-configurations/did-config-holder-bad-subject-id | tee did-configurations/did-config-holder-bad-subject-id.json
+
+
+vc_id="urn:uuid:"`uuidgen`
+cat > credentials/credential-self-issued-domain-linkage-fake-origin <<EOF
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://identity.foundation/.well-known/did-configuration/v1"
+    ],
+    "id": "$vc_id",
+    "type": ["VerifiableCredential", "DomainLinkageCredential"],
+    "issuer": "$holder_did",
+    "issuanceDate": "$vc_issuance_date",
+    "credentialSubject": {
+        "id": "$holder_did",
+        "origin": "https://fake.com"
+    }
+}
+EOF
+# issue_and_encode_vc credentials/credential-self-issued-domain-linkage keys/key-holder.jwk $verification_method_holder
+
+domain_linkage_vc=`cat credentials/credential-self-issued-domain-linkage-fake-origin.json`
+cat > did-configurations/did-config-holder-fake-origin <<EOF
+{
+    "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+    "linked_dids": [$domain_linkage_vc]
+}
+EOF
+print_json did-configurations/did-config-holder-fake-origin | tee did-configurations/did-config-holder-fake-origin.json
+
+
+vc_id="urn:uuid:"`uuidgen`
+cat > credentials/credential-self-issued-domain-linkage-subject-is-not-issuer <<EOF
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://identity.foundation/.well-known/did-configuration/v1"
+    ],
+    "id": "$vc_id",
+    "type": ["VerifiableCredential", "DomainLinkageCredential"],
+    "issuer": "$holder_did",
+    "issuanceDate": "$vc_issuance_date",
+    "credentialSubject": {
+        "id": "did:example:foo",
+        "origin": "https://example.com"
+    }
+}
+EOF
+# issue_and_encode_vc credentials/credential-self-issued-domain-linkage keys/key-holder.jwk $verification_method_holder
+
+domain_linkage_vc=`cat credentials/credential-self-issued-domain-linkage-subject-is-not-issuer.json`
+cat > did-configurations/did-config-holder-subject-is-not-issuer <<EOF
+{
+    "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+    "linked_dids": [$domain_linkage_vc]
+}
+EOF
+print_json did-configurations/did-config-holder-subject-is-not-issuer | tee did-configurations/did-config-holder-subject-is-not-issuer.json
+
+
 # clean up.
 find credentials/ -type f -not -name *.json -delete
 find presentations/ -type f -not -name *.json -delete
+find did-configurations/ -type f -not -name *.json -delete
