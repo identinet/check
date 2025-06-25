@@ -26,7 +26,7 @@ const toIssuer = (id) => {
   return id;
 };
 
-export const cedentialToRenderData = {
+export const credentialToRenderData = {
   "schema:Organization": (vc) => {
     const data = {
       title: "",
@@ -70,20 +70,26 @@ export const cedentialToRenderData = {
     data.title = "Return Policy";
     data.issuer = toIssuer(vc?.issuer);
 
-    const returnmethod = vc?.credentialSubject["schema:returnMethod"]?.reduce((acc, t) => {
-      const v = { "ReturnByMail": "Mail", "ReturnInStore": "In store" }[t];
-      if (v) {
-        acc.push(v);
-      }
-      return acc;
-    }, []).join("& ");
-    const refundtype = vc?.credentialSubject["schema:refundType"]?.reduce((acc, t) => {
-      const v = { "FullRefund": "Full Refund" }[t];
-      if (v) {
-        acc.push(v);
-      }
-      return acc;
-    }, []).join("& ");
+    const returnmethod = vc?.credentialSubject["schema:returnMethod"]?.reduce(
+      (acc, t) => {
+        const v = { "ReturnByMail": "Mail", "ReturnInStore": "In store" }[t];
+        if (v) {
+          acc.push(v);
+        }
+        return acc;
+      },
+      [],
+    ).join("& ");
+    const refundtype = vc?.credentialSubject["schema:refundType"]?.reduce(
+      (acc, t) => {
+        const v = { "FullRefund": "Full Refund" }[t];
+        if (v) {
+          acc.push(v);
+        }
+        return acc;
+      },
+      [],
+    ).join("& ");
     if (returnmethod && refundtype) {
       data.value = `${returnmethod} - ${refundtype}`;
     }
@@ -106,7 +112,7 @@ export const cedentialToRenderData = {
   },
 };
 
-const knownTypes = Object.keys(cedentialToRenderData);
+const knownTypes = Object.keys(credentialToRenderData);
 
 /**
  * Tests if a credendial has a known type that can be rendered.

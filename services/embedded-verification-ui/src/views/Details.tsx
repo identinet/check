@@ -1,6 +1,6 @@
 import { Component, JSX, Show } from "solid-js";
 import { isServer } from "solid-js/web";
-import { cedentialToRenderData, hasKnownType } from "~/lib/vc2data.js";
+import { credentialToRenderData, hasKnownType } from "~/lib/vc2data.js";
 
 import Modal from "~/components/Modal.tsx";
 import Card from "~/components/Card.tsx";
@@ -105,7 +105,7 @@ const Details: Component<Props> = (props) => {
                       if (acc.length > 4) return;
                       const [known, type] = hasKnownType(vc);
                       if (known) {
-                        const data = cedentialToRenderData[type](vc);
+                        const data = credentialToRenderData[type](vc);
                         acc.push(data);
                       }
                       return acc;
