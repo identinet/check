@@ -52,7 +52,7 @@ export default function Verify(props) {
         </div>
         <div class="text-md">
           <ul class="list-disc leading-6">
-            <li>First and lastname</li>
+            <li>First and last name</li>
             <li>Shipping address</li>
             <li>Email address</li>
           </ul>
