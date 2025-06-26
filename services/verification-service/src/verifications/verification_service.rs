@@ -64,20 +64,6 @@ async fn verify_vp(
         Err(e) => return Err(VerificationResult::vp_parse_error(e)),
     };
 
-    let expected_holder = did.clone().into_uri();
-    vp.holder
-        .as_ref()
-        .and_then(|holder| {
-            if *holder == expected_holder {
-                Some(holder)
-            } else {
-                None
-            }
-        })
-        .ok_or(VerificationResult::vp_verification_error(
-            "holder of presentation must match DID".to_string(),
-        ))?;
-
     // Verify the presentation's proof
     let verifier = create_verifier();
     match vp.verify(&verifier).await {
@@ -91,6 +77,20 @@ async fn verify_vp(
             // go on
         }
     }
+
+    let expected_holder = did.clone().into_uri();
+    vp.holder
+        .as_ref()
+        .and_then(|holder| {
+            if *holder == expected_holder {
+                Some(holder)
+            } else {
+                None
+            }
+        })
+        .ok_or(VerificationResult::vp_verification_error(
+            "holder of presentation must match DID".to_string(),
+        ))?;
 
     let tasks: JoinSet<_> = vp
         .claims
