@@ -56,7 +56,7 @@ pub async fn verify_presentations(
 /// Credentials.
 async fn verify_vp(
     vp_json: &String,
-    did: &DIDBuf,
+    expected_holder: &DIDBuf,
 ) -> Result<Vec<VerificationResult>, VerificationResult> {
     // Create DataIntegrity from JSON string
     let vp: AnyDataIntegrity<JsonPresentation> = match serde_json::from_str(&vp_json) {
@@ -78,11 +78,10 @@ async fn verify_vp(
         }
     }
 
-    let expected_holder = did.clone().into_uri();
     vp.holder
         .as_ref()
         .and_then(|holder| {
-            if *holder == expected_holder {
+            if *holder.as_uri() == expected_holder.as_uri() {
                 Some(holder)
             } else {
                 None
@@ -96,16 +95,19 @@ async fn verify_vp(
         .claims
         .verifiable_credentials
         .into_iter()
-        .map(|vc| async move {
-            // TODO find more performant way to transfrom SpecializedJsonCredential to AnyDataIntegrity
-            // without serialization roundtrips
-            //
-            // it should be safe to unwrap the result as we just deserialized the whole VP
-            // => serializing the VC should work without errors
-            let vc_json = serde_json::to_string(&vc).unwrap();
-            match verify_vc(&vc_json).await {
-                Ok(r) => r,
-                Err(r) => r,
+        .map(|vc| {
+            let holder_clone = expected_holder.clone();
+            async move {
+                // TODO find more performant way to transfrom SpecializedJsonCredential to AnyDataIntegrity
+                // without serialization roundtrips
+                //
+                // it should be safe to unwrap the result as we just deserialized the whole VP
+                // => serializing the VC should work without errors
+                let vc_json = serde_json::to_string(&vc).unwrap();
+                match verify_vc(&vc_json, &holder_clone).await {
+                    Ok(r) => r,
+                    Err(r) => r,
+                }
             }
         })
         .collect();
@@ -117,7 +119,10 @@ async fn verify_vp(
 /// Verifies the given VC and validates the contained claims.
 /// I.e. checks the cryptographic proof and verifies that the claims themselves
 /// are consistent and valid (e.g. expiration date has not passed, yet).
-pub async fn verify_vc(vc_json: &String) -> Result<VerificationResult, VerificationResult> {
+pub async fn verify_vc(
+    vc_json: &String,
+    expected_subject: &DIDBuf,
+) -> Result<VerificationResult, VerificationResult> {
     let vc = match any_credential_from_json_str(&vc_json) {
         Ok(c) => c,
         Err(e) => return Err(VerificationResult::vc_parse_error(e)),
@@ -127,7 +132,39 @@ pub async fn verify_vc(vc_json: &String) -> Result<VerificationResult, Verificat
     // TODO can we avoid doing this with every verify_vc invocation?
     let verifier = create_verifier();
     match vc.verify(&verifier).await {
-        Ok(Ok(())) => Ok(VerificationResult::vc_valid()),
+        Ok(Ok(())) => {
+            // The credentialSubject.id MUST be a DID,
+            let id = &vc.credential_subjects[0]
+                .get("id")
+                .next()
+                .and_then(|v| match v {
+                    Value::String(v) => ssi::dids::DIDBuf::new(v.as_bytes().to_vec()).ok(),
+                    _ => None,
+                })
+                .ok_or(VerificationResult::VcValidationErrorOther(
+                    super::dto::VerificationResultPayload {
+                        message: "Validation failed.".to_string(),
+                        details: "Subject must be a DID".to_string(),
+                    },
+                ))?;
+
+            // and the value MUST be equal to the Issuer of the Domain Linkage Credential.
+            if id != expected_subject {
+                Err(VerificationResult::VcValidationErrorSubjectMismatch(
+                    super::dto::VerificationResultPayload {
+                        message: "Validation failed due to unexpected subject.".to_string(),
+                        details: format!(
+                            "Expected '{}' but found '{}'",
+                            expected_subject.as_uri(),
+                            id.as_uri()
+                        )
+                        .to_string(),
+                    },
+                ))
+            } else {
+                Ok(VerificationResult::vc_valid())
+            }
+        }
         Ok(Err(e)) => Err(VerificationResult::from(e)),
         Err(e) => Err(VerificationResult::vc_proof_error(e)),
     }
@@ -148,27 +185,13 @@ pub async fn verify_did_config_vc(
         Ok(config) => {
             let domain_linkage_vc_json = serde_json::to_string(&config.linked_dids[0]).unwrap();
 
-            match verify_vc(&domain_linkage_vc_json).await {
+            let issuer = config.linked_dids[0].issuer.id().as_bytes().to_vec();
+            let issuer_did = DIDBuf::new(issuer).map_err(|_| {
+                VerificationResult::did_config_error("issuer is not a DID".to_string())
+            })?;
+
+            match verify_vc(&domain_linkage_vc_json, &issuer_did).await {
                 Ok(_) => {
-                    // The credentialSubject.id MUST be a DID,
-                    let id = config.linked_dids[0].credential_subjects[0]
-                        .get("id")
-                        .next()
-                        .and_then(|v| match v {
-                            Value::String(v) => ssi::dids::DIDBuf::new(v.as_bytes().to_vec()).ok(),
-                            _ => None,
-                        })
-                        .ok_or(VerificationResult::did_config_error(
-                            "credentialSubject.id must be a DID".to_string(),
-                        ))?;
-
-                    // and the value MUST be equal to the Issuer of the Domain Linkage Credential.
-                    if id.as_uri() != config.linked_dids[0].issuer.id() {
-                        return Err(VerificationResult::did_config_error(
-                            "credentialSubject.id must be equal to issuer".to_string(),
-                        ));
-                    }
-
                     // The credentialSubject.origin property MUST be present,
                     // and its value MUST match the origin the resource was requested from.
                     config.linked_dids[0].credential_subjects[0]
@@ -190,7 +213,17 @@ pub async fn verify_did_config_vc(
 
                     Ok(VerificationResult::vc_valid())
                 }
-                Err(e) => Err(e),
+                Err(e) => match e {
+                    VerificationResult::VcValidationErrorOther(p) => {
+                        Err(VerificationResult::did_config_error(p.details))
+                    }
+                    VerificationResult::VcValidationErrorSubjectMismatch(_) => {
+                        Err(VerificationResult::did_config_error(
+                            "Subject must be equal to issuer".to_string(),
+                        ))
+                    }
+                    _ => Err(e),
+                },
             }
         }
         Err(e) => Err(VerificationResult::did_config_error(e.to_string())),
@@ -269,8 +302,18 @@ mod tests {
     async fn verify_vc_self_issued() {
         let vc_json = fs::read_to_string("tests/credentials/credential-self-issued.json").unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await.unwrap(),
+            verify_vc(&vc_json, &holder_did()).await.unwrap(),
             VerificationResult::VcValid(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn verify_vc_self_issued_bad_subject() {
+        let vc_json = fs::read_to_string("tests/credentials/credential-self-issued.json").unwrap();
+        let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
+        assert!(matches!(
+            verify_vc(&vc_json, &did).await.unwrap_err(),
+            VerificationResult::VcValidationErrorSubjectMismatch(_)
         ));
     }
 
@@ -279,7 +322,7 @@ mod tests {
         let vc_json =
             fs::read_to_string("tests/credentials/credential-self-issued-tampered.json").unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await.unwrap_err(),
+            verify_vc(&vc_json, &holder_did()).await.unwrap_err(),
             VerificationResult::VcProofErrorSignature(_)
         ));
     }
@@ -291,7 +334,7 @@ mod tests {
         )
         .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await.unwrap(),
+            verify_vc(&vc_json, &holder_did()).await.unwrap(),
             VerificationResult::VcValid(_)
         ));
 
@@ -299,7 +342,7 @@ mod tests {
             fs::read_to_string("tests/credentials/credential-trust-party-issued-not-expired.json")
                 .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await.unwrap(),
+            verify_vc(&vc_json, &holder_did()).await.unwrap(),
             VerificationResult::VcValid(_)
         ));
     }
@@ -310,7 +353,7 @@ mod tests {
             fs::read_to_string("tests/credentials/credential-trust-party-issued-expired.json")
                 .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json).await.unwrap_err(),
+            verify_vc(&vc_json, &holder_did()).await.unwrap_err(),
             VerificationResult::VcValidationErrorExpired(_)
         ));
     }
@@ -391,7 +434,7 @@ mod tests {
 
         match x {
             VerificationResult::DidConfigError(p) => {
-                assert_eq!(p.details, "credentialSubject.id must be a DID")
+                assert_eq!(p.details, "Subject must be a DID")
             }
             _ => panic!("unexpected"),
         };
@@ -412,7 +455,7 @@ mod tests {
 
         match x {
             VerificationResult::DidConfigError(p) => {
-                assert_eq!(p.details, "credentialSubject.id must be equal to issuer")
+                assert_eq!(p.details, "Subject must be equal to issuer")
             }
             _ => panic!("unexpected"),
         };

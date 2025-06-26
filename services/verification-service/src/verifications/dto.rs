@@ -145,6 +145,7 @@ pub enum VerificationResult {
     VcValidationErrorPremature(VerificationResultPayload),
     VcValidationErrorExpired(VerificationResultPayload),
     VcValidationErrorMissingIssuance(VerificationResultPayload),
+    VcValidationErrorSubjectMismatch(VerificationResultPayload),
     DidConfigError(VerificationResultPayload),
 }
 
