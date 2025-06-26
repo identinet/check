@@ -170,10 +170,10 @@ impl VerificationResult {
         })
     }
 
-    pub fn vp_verification_error(e: ssi::claims::Invalid) -> Self {
+    pub fn vp_verification_error(e: String) -> Self {
         VerificationResult::VpVerificationError(VerificationResultPayload {
             message: "Verification of Verifiable Presentation failed.".to_string(),
-            details: e.to_string(),
+            details: e,
         })
     }
 

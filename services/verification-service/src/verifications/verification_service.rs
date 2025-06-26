@@ -6,7 +6,7 @@ use ssi::{
         vc::v1::{data_integrity::any_credential_from_json_str, JsonPresentation},
         VerificationParameters,
     },
-    dids::VerificationMethodDIDResolver,
+    dids::{DIDBuf, VerificationMethodDIDResolver},
     json_ld::syntax::Value,
     verification_methods::AnyMethod,
 };
@@ -19,25 +19,31 @@ use tokio::task::JoinSet;
 /// Returns a list of verification results. One result per VC. If there is an error during VP verification the result is
 /// expanded to match the number of VCs. E.g. if you have a VP with two VCs and the proof of the VP can't be verified
 /// successfully you'll receive `[VpProofError,VpProofError]`.
-pub async fn verify_presentations(presentations: Vec<JsonPresentation>) -> Vec<VerificationResult> {
+pub async fn verify_presentations(
+    presentations: Vec<JsonPresentation>,
+    did: &DIDBuf,
+) -> Vec<VerificationResult> {
     // Prepare verification tasks for each presentation
     let tasks: JoinSet<_> = presentations
         .into_iter()
-        .map(|vp| async move {
-            // TODO find more performant way to transfrom JsonPresentation to AnyDataIntegrity
-            // without serialization roundtrips
-            //
-            // it should be safe to unwrap the result as we just deserialized the whole VP
-            // => serializing the VP should work without errors
-            let vp_json = serde_json::to_string(&vp).unwrap();
-            match verify_vp(&vp_json).await {
-                Ok(results) => results,
-                // On error, something was wrong with the VP. We expand that error for each VC.
-                Err(vp_error) => vp
-                    .verifiable_credentials
-                    .iter()
-                    .map(|_| vp_error.clone())
-                    .collect(),
+        .map(|vp| {
+            let did_clone = did.clone();
+            async move {
+                // TODO find more performant way to transfrom JsonPresentation to AnyDataIntegrity
+                // without serialization roundtrips
+                //
+                // it should be safe to unwrap the result as we just deserialized the whole VP
+                // => serializing the VP should work without errors
+                let vp_json = serde_json::to_string(&vp).unwrap();
+                match verify_vp(&vp_json, &did_clone).await {
+                    Ok(results) => results,
+                    // On error, something was wrong with the VP. We expand that error for each VC.
+                    Err(vp_error) => vp
+                        .verifiable_credentials
+                        .iter()
+                        .map(|_| vp_error.clone())
+                        .collect(),
+                }
             }
         })
         .collect();
@@ -48,19 +54,38 @@ pub async fn verify_presentations(presentations: Vec<JsonPresentation>) -> Vec<V
 
 /// Verifies the given Verifiable Presentation and all included Verifiable
 /// Credentials.
-async fn verify_vp(vp_json: &String) -> Result<Vec<VerificationResult>, VerificationResult> {
+async fn verify_vp(
+    vp_json: &String,
+    did: &DIDBuf,
+) -> Result<Vec<VerificationResult>, VerificationResult> {
     // Create DataIntegrity from JSON string
     let vp: AnyDataIntegrity<JsonPresentation> = match serde_json::from_str(&vp_json) {
         Ok(p) => p,
         Err(e) => return Err(VerificationResult::vp_parse_error(e)),
     };
 
+    let expected_holder = did.clone().into_uri();
+    vp.holder
+        .as_ref()
+        .and_then(|holder| {
+            if *holder == expected_holder {
+                Some(holder)
+            } else {
+                None
+            }
+        })
+        .ok_or(VerificationResult::vp_verification_error(
+            "holder of presentation must match DID".to_string(),
+        ))?;
+
     // Verify the presentation's proof
     let verifier = create_verifier();
     match vp.verify(&verifier).await {
         Err(proof_err) => return Err(VerificationResult::vp_proof_error(proof_err)),
         Ok(Err(verification_err)) => {
-            return Err(VerificationResult::vp_verification_error(verification_err))
+            return Err(VerificationResult::vp_verification_error(
+                verification_err.to_string(),
+            ))
         }
         Ok(Ok(())) => {
             // go on
@@ -233,6 +258,13 @@ mod tests {
     use super::*;
     use std::fs;
 
+    fn holder_did() -> DIDBuf {
+        include_str!("../../tests/dids/did-holder")
+            .trim()
+            .parse()
+            .unwrap()
+    }
+
     #[tokio::test]
     async fn verify_vc_self_issued() {
         let vc_json = fs::read_to_string("tests/credentials/credential-self-issued.json").unwrap();
@@ -287,7 +319,7 @@ mod tests {
     async fn verify_vp_single_vc() {
         let vp_json =
             fs::read_to_string("tests/presentations/presentation-single-vc.json").unwrap();
-        let x = verify_vp(&vp_json).await.unwrap();
+        let x = verify_vp(&vp_json, &holder_did()).await.unwrap();
         assert_eq!(x.len(), 1);
         assert!(matches!(x[0], VerificationResult::VcValid(_)));
     }
@@ -296,7 +328,7 @@ mod tests {
     async fn verify_vp_multiple_vc() {
         let vp_json =
             fs::read_to_string("tests/presentations/presentation-multiple-vc.json").unwrap();
-        let x = verify_vp(&vp_json).await.unwrap();
+        let x = verify_vp(&vp_json, &holder_did()).await.unwrap();
         assert_eq!(x.len(), 3);
         assert!(matches!(x[0], VerificationResult::VcValid(_)));
         assert!(matches!(x[1], VerificationResult::VcValid(_)));
@@ -308,7 +340,7 @@ mod tests {
         let vp_json =
             fs::read_to_string("tests/presentations/presentation-multiple-vc-expired.json")
                 .unwrap();
-        let x = verify_vp(&vp_json).await.unwrap();
+        let x = verify_vp(&vp_json, &holder_did()).await.unwrap();
         assert_eq!(x.len(), 2);
         assert!(matches!(x[0], VerificationResult::VcValid(_)));
         assert!(matches!(
@@ -321,22 +353,20 @@ mod tests {
     async fn verify_vp_tampered_vc() {
         let vp_json =
             fs::read_to_string("tests/presentations/presentation-tampered-vc.json").unwrap();
-        let x = verify_vp(&vp_json).await.unwrap();
+        let x = verify_vp(&vp_json, &holder_did()).await.unwrap();
         assert_eq!(x.len(), 1);
         assert!(matches!(x[0], VerificationResult::VcProofErrorSignature(_)));
     }
 
-    /*
-    TODO holder validation TG-190
     #[tokio::test]
-    async fn verify_vp_tampered_holder() {
+    async fn verify_vp_bad_holder() {
         let vp_json =
-            fs::read_to_string("tests/presentations/presentation-tampered-holder.json").unwrap();
-        let x = verify_vp(&vp_json).await.unwrap();
-        assert_eq!(x.len(), 1);
-        assert!(matches!(x[0], VcVerificationResult::VcProofErrorSignature));
+            fs::read_to_string("tests/presentations/presentation-tampered-vc.json").unwrap();
+        let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
+        let x = verify_vp(&vp_json, &did).await.unwrap_err();
+        assert!(matches!(x, VerificationResult::VpVerificationError(_)));
     }
-    */
+
     #[tokio::test]
     async fn verify_did_config() {
         let did_config_json =

@@ -87,7 +87,7 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
 
         // verify VPs and nested VCs
         let verification_results =
-            verification_service::verify_presentations(linked_presentations).await;
+            verification_service::verify_presentations(linked_presentations, &did_doc.id).await;
         dto.results.extend(verification_results);
     }
 
