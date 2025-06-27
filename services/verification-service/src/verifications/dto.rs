@@ -34,6 +34,7 @@ impl VerificationError {
             documents: Vec::new(),
             credentials: Vec::new(),
             results: Vec::new(),
+            verified: false,
         };
         VerificationError::NotFoundJson(empty)
     }
@@ -59,12 +60,12 @@ impl IntoResponse for VerificationError {
     }
 }
 
-// TODO deserialize is only required during controller tests - can we conditionally derive?
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize)]
 pub struct VerificationResponseDto {
     pub documents: Vec<Document>,
     pub credentials: Vec<SpecializedJsonCredential>,
-    pub results: Vec<String>,
+    pub results: Vec<VerificationResult>,
+    pub verified: bool,
 }
 
 // TODO deserialize is only required during controller tests - can we conditionally derive?
@@ -119,6 +120,154 @@ fn is_valid_url(url: &str) -> bool {
     Url::parse(url)
         .map(|url| url.scheme() == "https")
         .unwrap_or(false)
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct VerificationResultPayload {
+    pub message: String,
+    pub details: String,
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(tag = "result")]
+pub enum VerificationResult {
+    VcValid(VerificationResultPayload),
+    VpParseError(VerificationResultPayload),
+    VpProofError(VerificationResultPayload),
+    VpVerificationError(VerificationResultPayload),
+    VcParseError(VerificationResultPayload),
+    VcProofError(VerificationResultPayload),
+    VcProofErrorMissing(VerificationResultPayload),
+    VcProofErrorSignature(VerificationResultPayload),
+    VcProofErrorKeyMismatch(VerificationResultPayload),
+    VcProofErrorAlgorithmMismatch(VerificationResultPayload),
+    VcValidationErrorOther(VerificationResultPayload),
+    VcValidationErrorPremature(VerificationResultPayload),
+    VcValidationErrorExpired(VerificationResultPayload),
+    VcValidationErrorMissingIssuance(VerificationResultPayload),
+    VcValidationErrorSubjectMismatch(VerificationResultPayload),
+    DidConfigError(VerificationResultPayload),
+}
+
+impl VerificationResult {
+    pub fn vc_valid() -> Self {
+        VerificationResult::VcValid(VerificationResultPayload {
+            message: "Verifiable Credential is valid.".to_string(),
+            details: "".to_string(),
+        })
+    }
+
+    pub fn vp_parse_error(e: serde_json::Error) -> Self {
+        VerificationResult::VpParseError(VerificationResultPayload {
+            message: "Failed to parse Verifiable Presentation.".to_string(),
+            details: e.to_string(),
+        })
+    }
+
+    pub fn vp_proof_error(e: ssi::claims::ProofValidationError) -> Self {
+        VerificationResult::VpProofError(VerificationResultPayload {
+            message: "Proof error in Verifiable Presentation.".to_string(),
+            details: e.to_string(),
+        })
+    }
+
+    pub fn vp_verification_error(e: String) -> Self {
+        VerificationResult::VpVerificationError(VerificationResultPayload {
+            message: "Verification of Verifiable Presentation failed.".to_string(),
+            details: e,
+        })
+    }
+
+    pub fn vc_parse_error(e: ssi::claims::data_integrity::DecodeError) -> Self {
+        VerificationResult::VcParseError(VerificationResultPayload {
+            message: "Failed to parse Verifiable Credential.".to_string(),
+            details: e.to_string(),
+        })
+    }
+
+    pub fn vc_proof_error(e: ssi::claims::ProofValidationError) -> Self {
+        VerificationResult::VcProofError(VerificationResultPayload {
+            message: "Proof error in Verifiable Credential.".to_string(),
+            details: e.to_string(),
+        })
+    }
+
+    pub fn did_config_error(reason: String) -> Self {
+        VerificationResult::DidConfigError(VerificationResultPayload {
+            message: "Verification of DID Configuration failed.".to_string(),
+            details: reason.to_string(),
+        })
+    }
+}
+
+impl From<ssi::claims::Invalid> for VerificationResult {
+    fn from(error: ssi::claims::Invalid) -> Self {
+        match error {
+            ssi::claims::Invalid::Claims(claims_error) => match claims_error {
+                ssi::claims::InvalidClaims::MissingIssuanceDate => {
+                    VerificationResult::VcValidationErrorMissingIssuance(
+                        VerificationResultPayload {
+                            message: "Issuance date is missing in Verifiable Credential."
+                                .to_string(),
+                            details: claims_error.to_string(),
+                        },
+                    )
+                }
+                ssi::claims::InvalidClaims::Premature { now: _, valid_from } => {
+                    VerificationResult::VcValidationErrorPremature(VerificationResultPayload {
+                        message: "Verifiable Credential is not valid yet (premature).".to_string(),
+                        details: valid_from.to_rfc3339(),
+                    })
+                }
+                ssi::claims::InvalidClaims::Expired {
+                    now: _,
+                    valid_until,
+                } => VerificationResult::VcValidationErrorExpired(VerificationResultPayload {
+                    message: "Verifiable Credential has expired.".to_string(),
+                    details: valid_until.to_rfc3339(),
+                }),
+                ssi::claims::InvalidClaims::Other(e) => {
+                    VerificationResult::VcValidationErrorOther(VerificationResultPayload {
+                        message: "Validation failed for unknown reasons.".to_string(),
+                        details: e,
+                    })
+                }
+            },
+            ssi::claims::Invalid::Proof(proof_error) => match proof_error {
+                ssi::claims::InvalidProof::Missing => {
+                    VerificationResult::VcProofErrorMissing(VerificationResultPayload {
+                        message: "Missing proof in Verifiable Credential.".to_string(),
+                        details: proof_error.to_string(),
+                    })
+                }
+
+                ssi::claims::InvalidProof::Signature => {
+                    VerificationResult::VcProofErrorSignature(VerificationResultPayload {
+                        message: "Invalid signature in Verifiable Credential proof.".to_string(),
+                        details: proof_error.to_string(),
+                    })
+                }
+                ssi::claims::InvalidProof::KeyMismatch => {
+                    VerificationResult::VcProofErrorKeyMismatch(VerificationResultPayload {
+                        message: "Key mismatch in Verifiable Credential proof.".to_string(),
+                        details: proof_error.to_string(),
+                    })
+                }
+                ssi::claims::InvalidProof::AlgorithmMismatch => {
+                    VerificationResult::VcProofErrorAlgorithmMismatch(VerificationResultPayload {
+                        message: "Algorithm mismatch in Verifiable Credential proof.".to_string(),
+                        details: proof_error.to_string(),
+                    })
+                }
+                ssi::claims::InvalidProof::Other(_) => {
+                    VerificationResult::VcProofError(VerificationResultPayload {
+                        message: "Proof error in Verifiable Credential.".to_string(),
+                        details: proof_error.to_string(),
+                    })
+                }
+            },
+        }
+    }
 }
 
 #[cfg(test)]
