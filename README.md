@@ -32,11 +32,32 @@ Check provides the following 4 core services:
 - ✨🔁 [Demo Shop](https://demo-shop.check.identinet.io): A demo web shop with a
   verifiable identity.
 - ✨🔁 [Evil Demo Shop](https://evil-demo-shop.check.identinet.io): An evil demo
-  web shop that tries to claim the identity of Demo Shop by referencing its
-  identity.
-- ✨🔁 [Evil2 Demo Shop](https://evil-demo-shop.check.identinet.io): A second
-  evil demo web shop that tries to claim the identity of Demo Shop by copying
-  its the credentials.
+  web shop tries to claim the identity of Demo Shop by referencing its identity.
+  - Technical explanation: Shop has it's own
+    [DID](https://evil-demo-shop.check.identinet.io/.well-known/did.json) but
+    the
+    [Well-Known DID Configuration](https://evil-demo-shop.check.identinet.io/.well-known/did-configuration.json)
+    has been copied straight from the Demo Shop.
+- ✨🔁 [Evil2 Demo Shop](https://evil2-demo-shop.check.identinet.io): A second
+  evil demo web shop tries to claim the identity of Demo Shop by copying its the
+  credentials.
+  - Technical explanation: Shop has it's own
+    [DID](https://evil2-demo-shop.check.identinet.io/.well-known/did.json) and
+    the
+    [Well-Known DID Configuration](https://evil2-demo-shop.check.identinet.io/.well-known/did-configuration.json)
+    has been self-issued by that DID. Also the
+    [Linked Verifiable Presentation](https://evil2-demo-shop.check.identinet.io/.well-known/presentation.json)
+    has been self-issued by that DID, however the included credentials have been
+    copied from the Demo Shop.
+- ✨🔁 [Evil3 Demo Shop](https://evil3-demo-shop.check.identinet.io): A third
+  evil demo web shop tries to claim the identity of Demo Shop by referencing its
+  identity in a similar but different way than the first Evil Demo Shop.
+  - Technical explanation: Shop has it's own
+    [DID](https://evil3-demo-shop.check.identinet.io/.well-known/did.json) and
+    the
+    [Well-Known DID Configuration](https://evil3-demo-shop.check.identinet.io/.well-known/did-configuration.json)
+    has been self-issued. However, the `credentialSubject.id` points to the Demo
+    Shop's DID.
 
 ### Backend services _without_ user interfaces
 
@@ -47,6 +68,8 @@ Check provides the following 4 core services:
   [Verifiable Data Service - Evil Demo Shop](https://evil-demo-shop.vds.check.identinet.io)
 - 🔁
   [Verifiable Data Service - Evil2 Demo Shop](https://evil2-demo-shop.vds.check.identinet.io)
+- 🔁
+  [Verifiable Data Service - Evil3 Demo Shop](https://evil3-demo-shop.vds.check.identinet.io)
 
 ## Development
 
@@ -55,7 +78,7 @@ Check provides the following 4 core services:
 1. Allow direnv to install dependencies automatically: `direnv allow .`
 2. Request a cloudflare tunnel configuration so services like the Verifiable
    Data Service can be developed locally while being accessible from the
-   internet.
+   Internet.
 3. Store configuration in the current directory at `.cloudflared/tunnel.json`.
 4. Set the tunnel user in file `.env.local`:
 
