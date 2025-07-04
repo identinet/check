@@ -95,7 +95,8 @@ async fn verify_vp(
         .claims
         .verifiable_credentials
         .into_iter()
-        .map(|vc| {
+        .enumerate()
+        .map(|(i, vc)| {
             let holder_clone = expected_holder.clone();
             async move {
                 // TODO find more performant way to transfrom SpecializedJsonCredential to AnyDataIntegrity
@@ -105,15 +106,20 @@ async fn verify_vp(
                 // => serializing the VC should work without errors
                 let vc_json = serde_json::to_string(&vc).unwrap();
                 match verify_vc(&vc_json, &holder_clone).await {
-                    Ok(r) => r,
-                    Err(r) => r,
+                    Ok(r) => (i, r),
+                    Err(r) => (i, r),
                 }
             }
         })
         .collect();
 
-    let results = tasks.join_all().await;
-    Ok(results)
+    let mut task_results = tasks.join_all().await;
+    task_results.sort_by_key(|item| item.0);
+
+    let sorted_results: Vec<VerificationResult> =
+        task_results.into_iter().map(|(_, vc)| vc).collect();
+
+    Ok(sorted_results)
 }
 
 /// Verifies the given VC and validates the contained claims.
