@@ -176,7 +176,7 @@ export default function VerificationResult({ pending, result, error }) {
             {(credential, idx) => (
               <div class="flex h-fit">
                 <CredentialCard
-                  verified={results[idx()]}
+                  verificationResult={results[idx()]}
                   credential={credential}
                 />
               </div>
