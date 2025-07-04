@@ -49,11 +49,13 @@ export function ErrorCard({ icon, message }) {
   );
 }
 
-export function CredentialCard({ credential, verified }) {
+export function CredentialCard({ credential, verificationResult }) {
   const [collapsed, setCollapsed] = createSignal(true);
   const toggleCardView = () => setCollapsed((collapsed) => !collapsed);
 
-  const resultElement = ({ title, details, classes, icon, desc }) => {
+  const resultElement = (
+    { title, details, classes, icon, desc, error, errorDetails },
+  ) => {
     return (
       <div
         class={`flex-1 max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm height-100% ${classes}`}
@@ -62,6 +64,17 @@ export function CredentialCard({ credential, verified }) {
           <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">
             {icon && <div class={`${icon} me-2 w-4 h-4 shrink-0`} />}
             {desc && <span>{desc}</span>}
+          </div>
+        )}
+        {(error || errorDetails) && (
+          <div class="mb-4 text-sm tracking-tight text-gray-900">
+            {error && (
+              <span class="font-bold">
+                {error}
+                <br />
+              </span>
+            )}
+            {errorDetails && <span class="text-xs">{errorDetails}</span>}
           </div>
         )}
         <h5 class="mb-4 text-left text-xl font-bold tracking-tight text-gray-900">
@@ -101,13 +114,15 @@ export function CredentialCard({ credential, verified }) {
     );
   };
 
-  if (!verified) {
+  if (!verificationResult.verified) {
     return resultElement({
       icon: "i-flowbite-close-circle-solid",
       desc: "Invalid",
       classes: classesInvalid,
       title: titleFromCredentialType(credential),
       details: credentialDetails(credential),
+      error: verificationResult.message,
+      errorDetails: verificationResult.details,
     });
   }
 
