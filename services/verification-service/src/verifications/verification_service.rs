@@ -145,6 +145,7 @@ pub async fn verify_vc(
                     super::dto::VerificationResultPayload {
                         message: "Validation failed.".to_string(),
                         details: "Subject must be a DID".to_string(),
+                        verified: false,
                     },
                 ))?;
 
@@ -159,6 +160,7 @@ pub async fn verify_vc(
                             id.as_uri()
                         )
                         .to_string(),
+                        verified: false,
                     },
                 ))
             } else {

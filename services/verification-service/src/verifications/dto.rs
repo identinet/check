@@ -126,6 +126,7 @@ fn is_valid_url(url: &str) -> bool {
 pub struct VerificationResultPayload {
     pub message: String,
     pub details: String,
+    pub verified: bool,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -154,6 +155,7 @@ impl VerificationResult {
         VerificationResult::VcValid(VerificationResultPayload {
             message: "Verifiable Credential is valid.".to_string(),
             details: "".to_string(),
+            verified: true,
         })
     }
 
@@ -161,6 +163,7 @@ impl VerificationResult {
         VerificationResult::VpParseError(VerificationResultPayload {
             message: "Failed to parse Verifiable Presentation.".to_string(),
             details: e.to_string(),
+            verified: false,
         })
     }
 
@@ -168,6 +171,7 @@ impl VerificationResult {
         VerificationResult::VpProofError(VerificationResultPayload {
             message: "Proof error in Verifiable Presentation.".to_string(),
             details: e.to_string(),
+            verified: false,
         })
     }
 
@@ -175,6 +179,7 @@ impl VerificationResult {
         VerificationResult::VpVerificationError(VerificationResultPayload {
             message: "Verification of Verifiable Presentation failed.".to_string(),
             details: e,
+            verified: false,
         })
     }
 
@@ -182,6 +187,7 @@ impl VerificationResult {
         VerificationResult::VcParseError(VerificationResultPayload {
             message: "Failed to parse Verifiable Credential.".to_string(),
             details: e.to_string(),
+            verified: false,
         })
     }
 
@@ -189,6 +195,7 @@ impl VerificationResult {
         VerificationResult::VcProofError(VerificationResultPayload {
             message: "Proof error in Verifiable Credential.".to_string(),
             details: e.to_string(),
+            verified: false,
         })
     }
 
@@ -196,6 +203,7 @@ impl VerificationResult {
         VerificationResult::DidConfigError(VerificationResultPayload {
             message: "Verification of DID Configuration failed.".to_string(),
             details: reason.to_string(),
+            verified: false,
         })
     }
 }
@@ -210,6 +218,7 @@ impl From<ssi::claims::Invalid> for VerificationResult {
                             message: "Issuance date is missing in Verifiable Credential."
                                 .to_string(),
                             details: claims_error.to_string(),
+                            verified: false,
                         },
                     )
                 }
@@ -217,6 +226,7 @@ impl From<ssi::claims::Invalid> for VerificationResult {
                     VerificationResult::VcValidationErrorPremature(VerificationResultPayload {
                         message: "Verifiable Credential is not valid yet (premature).".to_string(),
                         details: valid_from.to_rfc3339(),
+                        verified: false,
                     })
                 }
                 ssi::claims::InvalidClaims::Expired {
@@ -225,11 +235,13 @@ impl From<ssi::claims::Invalid> for VerificationResult {
                 } => VerificationResult::VcValidationErrorExpired(VerificationResultPayload {
                     message: "Verifiable Credential has expired.".to_string(),
                     details: valid_until.to_rfc3339(),
+                    verified: false,
                 }),
                 ssi::claims::InvalidClaims::Other(e) => {
                     VerificationResult::VcValidationErrorOther(VerificationResultPayload {
                         message: "Validation failed for unknown reasons.".to_string(),
                         details: e,
+                        verified: false,
                     })
                 }
             },
@@ -238,6 +250,7 @@ impl From<ssi::claims::Invalid> for VerificationResult {
                     VerificationResult::VcProofErrorMissing(VerificationResultPayload {
                         message: "Missing proof in Verifiable Credential.".to_string(),
                         details: proof_error.to_string(),
+                        verified: false,
                     })
                 }
 
@@ -245,24 +258,28 @@ impl From<ssi::claims::Invalid> for VerificationResult {
                     VerificationResult::VcProofErrorSignature(VerificationResultPayload {
                         message: "Invalid signature in Verifiable Credential proof.".to_string(),
                         details: proof_error.to_string(),
+                        verified: false,
                     })
                 }
                 ssi::claims::InvalidProof::KeyMismatch => {
                     VerificationResult::VcProofErrorKeyMismatch(VerificationResultPayload {
                         message: "Key mismatch in Verifiable Credential proof.".to_string(),
                         details: proof_error.to_string(),
+                        verified: false,
                     })
                 }
                 ssi::claims::InvalidProof::AlgorithmMismatch => {
                     VerificationResult::VcProofErrorAlgorithmMismatch(VerificationResultPayload {
                         message: "Algorithm mismatch in Verifiable Credential proof.".to_string(),
                         details: proof_error.to_string(),
+                        verified: false,
                     })
                 }
                 ssi::claims::InvalidProof::Other(_) => {
                     VerificationResult::VcProofError(VerificationResultPayload {
                         message: "Proof error in Verifiable Credential.".to_string(),
                         details: proof_error.to_string(),
+                        verified: false,
                     })
                 }
             },
