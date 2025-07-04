@@ -23,6 +23,7 @@ impl IntoResponse for VerificationResponse {
 pub enum VerificationError {
     BadRequestJson(VerificationErrorResponseDto),
     NotFoundJson(VerificationResponseDto),
+    VerificationImpossible(VerificationErrorResponseDto),
 }
 
 impl VerificationError {
@@ -38,14 +39,25 @@ impl VerificationError {
         };
         VerificationError::NotFoundJson(empty)
     }
+    pub fn verification_impossible_from(message: String) -> Self {
+        let empty = VerificationErrorResponseDto {
+            error: message,
+            verified: false,
+        };
+        VerificationError::VerificationImpossible(empty)
+    }
     pub fn bad_request(message: &str) -> Self {
         let error = VerificationErrorResponseDto {
             error: message.to_string(),
+            verified: false,
         };
         VerificationError::BadRequestJson(error)
     }
     pub fn bad_request_from(message: String) -> Self {
-        let error = VerificationErrorResponseDto { error: message };
+        let error = VerificationErrorResponseDto {
+            error: message,
+            verified: false,
+        };
         VerificationError::BadRequestJson(error)
     }
 }
@@ -54,8 +66,8 @@ impl IntoResponse for VerificationError {
     fn into_response(self) -> Response {
         match self {
             Self::BadRequestJson(data) => (StatusCode::BAD_REQUEST, Json(data)).into_response(),
-
             Self::NotFoundJson(data) => (StatusCode::NOT_FOUND, Json(data)).into_response(),
+            Self::VerificationImpossible(data) => (StatusCode::OK, Json(data)).into_response(),
         }
     }
 }
@@ -72,6 +84,7 @@ pub struct VerificationResponseDto {
 #[derive(Serialize, Deserialize)]
 pub struct VerificationErrorResponseDto {
     pub error: String,
+    pub verified: bool,
 }
 
 // TODO Debug is only required during tests - can we conditionally derive?
@@ -310,6 +323,9 @@ mod tests {
                 // _ => Ok(()),
                 Self::BadRequestJson(arg0) => f.debug_struct(&arg0.error).finish(),
                 Self::NotFoundJson(_) => f.debug_struct("VerificationError::NotFound").finish(),
+                Self::VerificationImpossible(_) => f
+                    .debug_struct("VerificationError::VerificationImpossible")
+                    .finish(),
             }
         }
     }
@@ -350,6 +366,7 @@ mod tests {
                 .map_err(|err| match err {
                     VerificationError::BadRequestJson(json) => json.error,
                     VerificationError::NotFoundJson(_) => "xyz".to_string(),
+                    VerificationError::VerificationImpossible(_) => "abc".to_string(),
                 })
                 .unwrap_err(),
             value
