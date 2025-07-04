@@ -96,12 +96,10 @@ const verifyUrlAction = action(async (formData: FormData) => {
   if (!response.ok) throw new Error(response.statusText);
 
   const result = await response.json();
-  return {
-    ...result,
-    results: [
-      ...result.credentials.map(() => true),
-    ],
-  };
+
+  if (result.error) throw new Error(result.error);
+
+  return result;
 }, "verifyUrl");
 
 const ErrorMessage = (props) => (

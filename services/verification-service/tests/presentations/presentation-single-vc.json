@@ -1,0 +1,42 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1"
+  ],
+  "id": "urn:uuid:c105f76a-2e58-46df-88f7-7c93d6967908",
+  "type": [
+    "VerifiablePresentation"
+  ],
+  "verifiableCredential": {
+    "@context": "https://www.w3.org/2018/credentials/v1",
+    "id": "urn:uuid:33f90a33-d5bd-403d-9489-179de461cc74",
+    "type": [
+      "VerifiableCredential"
+    ],
+    "credentialSubject": {
+      "id": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ"
+    },
+    "issuer": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ",
+    "issuanceDate": "2025-05-30T14:06:33Z",
+    "proof": {
+      "@context": [
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "type": "JsonWebSignature2020",
+      "proofPurpose": "assertionMethod",
+      "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ#0",
+      "created": "2025-05-30T14:06:33.904495993Z",
+      "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..yGuciieLtnXcm2iAuDAhvuM2P3Dnj76JCemYtx_oWztyfEsCQgYXLjARNCaRTBSXbqwIgVokax5vBdo0ss_eBQ"
+    }
+  },
+  "proof": {
+    "@context": [
+      "https://w3id.org/security/suites/jws-2020/v1"
+    ],
+    "type": "JsonWebSignature2020",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ#0",
+    "created": "2025-05-30T14:06:35.063730111Z",
+    "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..NdmQzhA5ol4wRClRfS1K0Yy8A4EwSeSckrJHLtCv0rl2PvearjtZuCIaZ7ECw6a2fyfFpA59cvUbWdOtHs6hAQ"
+  },
+  "holder": "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IjVrSmwzQ2pIUnBma09vMW05SUI0ZkVQSTZTdTJfZG5DR05xSDZYdjBmQk0ifQ"
+}

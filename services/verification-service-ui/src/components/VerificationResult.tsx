@@ -104,7 +104,7 @@ export default function VerificationResult({ pending, result, error }) {
       <div class="max-w-md mx-auto mt-8">
         <ErrorCard
           icon="i-flowbite-fire-outline"
-          message={`There was an error when checking the site: ${error}`}
+          message={`There was an error when checking the site: ${error.message}`}
         />
       </div>
     );
@@ -176,7 +176,7 @@ export default function VerificationResult({ pending, result, error }) {
             {(credential, idx) => (
               <div class="flex h-fit">
                 <CredentialCard
-                  verified={results[idx()]}
+                  verificationResult={results[idx()]}
                   credential={credential}
                 />
               </div>
