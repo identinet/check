@@ -56,7 +56,7 @@ export function CredentialCard({ credential, verified }) {
   const resultElement = ({ title, details, classes, icon, desc }) => {
     return (
       <div
-        class={`max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm height-100% ${classes}`}
+        class={`flex-1 max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm height-100% ${classes}`}
       >
         {(icon || desc) && (
           <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">
