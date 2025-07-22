@@ -1,150 +1,150 @@
-import { Component, createSignal, For, JSX } from "solid-js";
-
-const classesInvalid =
-  "bg-gradient-from-invalid-100 bg-gradient-via-invalid-100 bg-gradient-to-invalid-500 border-invalid-900";
-const classesValid =
-  "bg-gradient-from-valid-100 bg-gradient-via-valid-100 bg-gradient-to-valid-500 border-valid-900";
-const classesGray =
-  "bg-gradient-from-gray-100 bg-gradient-via-gray-100 bg-gradient-to-gray-300 border-gray-500";
-//const classesRisky =
-//  "bg-gradient-from-risky-100 bg-gradient-via-risky-100 bg-gradient-to-risky-500 border-risky-900";
+import { Component, createSignal, For, JSX, Show } from "solid-js";
 
 type Props = {
   icon: string;
   message: string;
 } & JSX.HTMLAttributes<HTMLDivElement>;
 
-export const NotFoundCard: Component<Props> = ({ icon, message }) => {
+export const NotFoundCard: Component<Props> = (props) => {
   return (
     <div
-      class={`p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classesGray}`}
+      class={`p-6 bg-gradient-linear border-2 rounded-md shadow-sm bg-gradient-from-gray-100 bg-gradient-via-gray-100 bg-gradient-to-gray-300 border-gray-500`}
     >
-      {icon && (
+      {props.icon && (
         <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">
-          <div class={`${icon} me-2 w-8 h-8 shrink-0`} />
+          <div class={`${props.icon} me-2 w-8 h-8 shrink-0`} />
         </div>
       )}
-      {message &&
+      {props.message &&
         (
           <div class="mb-3">
-            {message}
+            {props.message}
           </div>
         )}
     </div>
   );
 };
 
-export function ErrorCard({ icon, message }): Component<Props> {
-  return (
-    <div
-      class={`p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classesInvalid}`}
-    >
-      {icon && (
-        <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">
-          <div class={`${icon} me-2 w-8 h-8 shrink-0`} />
-        </div>
-      )}
-      {message &&
-        (
-          <div class="mb-3">
-            {message}
-          </div>
-        )}
-    </div>
-  );
-}
-
 type PropsCard = {
   credential: object;
   verificationResult: object;
 } & JSX.HTMLAttributes<HTMLDivElement>;
 
-export function CredentialCard(
-  { credential, verificationResult },
-): Component<PropsCard> {
+export function CredentialCard(props): Component<PropsCard> {
   const [collapsed, setCollapsed] = createSignal(true);
   const toggleCardView = () => setCollapsed((collapsed) => !collapsed);
-
-  const resultElement = (
-    { title, details, classes, icon, desc, error, errorDetails },
-  ) => {
-    return (
+  const resultElement = ({ error, errorDetails }) => (
+    <>
       <div
-        class={`flex-1 max-w-sm p-6 bg-gradient-linear border-2 rounded-md shadow-sm h-full ${classes}`}
+        class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+        classList={{
+          "border-red-400": !props.verificationResult.verified,
+        }}
       >
-        {(icon || desc) && (
-          <div class="mb-4 flex items-center justify-center text-xl font-bold tracking-tight text-gray-900">
-            {icon && <div class={`${icon} me-2 w-4 h-4 shrink-0`} />}
-            {desc && <span>{desc}</span>}
+        <div class="items-start justify-between border-b border-gray-100 pb-4 dark:border-gray-700 md:flex">
+          <div class="mb-4 justify-between sm:flex sm:items-center md:mb-0 md:block lg:mb-4 lg:flex xl:mb-0 xl:block">
+            <div class="items-center gap-4 flex">
+              <div
+                class="i-flowbite-file-check-solid size-14"
+                classList={{
+                  "text-gray-400": props.verificationResult.verified,
+                  "dark:text-gray-700": props.verificationResult.verified,
+                  "text-red-400": !props.verificationResult.verified,
+                  "dark:text-red-700": !props.verificationResult.verified,
+                }}
+              />
+              <div class="mt-4 sm:mt-0">
+                <div class="mb-2 items-center sm:flex sm:space-x-2">
+                  <a
+                    href="#"
+                    class="mb-2 block font-semibold text-gray-900 hover:underline dark:text-white sm:mb-0 sm:flex"
+                  >
+                    {titleFromCredentialType(props.credential)}
+                  </a>
+                  <span
+                    class="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-medium"
+                    classList={{
+                      "bg-green-100": props.verificationResult.verified,
+                      "text-green-800": props.verificationResult.verified,
+                      "dark:text-green-800": props.verificationResult.verified,
+                      "bg-red-100": !props.verificationResult.verified,
+                      "text-red-800": !props.verificationResult.verified,
+                      "dark:text-red-800": !props.verificationResult.verified,
+                    }}
+                  >
+                    <div
+                      class="me-1 size-3"
+                      classList={{
+                        "i-flowbite-badge-check-solid":
+                          props.verificationResult.verified,
+                        "i-flowbite-close-circle-solid": !props
+                          .verificationResult
+                          .verified,
+                      }}
+                    />
+                    {props.verificationResult.verified
+                      ? "Verified"
+                      : "Verification failed"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-        {(error || errorDetails) && (
-          <div class="mb-4 text-sm tracking-tight text-gray-900">
-            {error && (
-              <span class="font-bold">
-                {error}
-                <br />
-              </span>
-            )}
-            {errorDetails && <span class="text-xs">{errorDetails}</span>}
-          </div>
-        )}
-        <h5 class="mb-4 text-left text-xl font-bold tracking-tight text-gray-900">
-          {title}
-        </h5>
-        {details && (
-          <div class="mb-3">
-            {details}
-          </div>
-        )}
-        <button
-          onClick={toggleCardView}
-          class="text-xs text-gray-900 underline"
-          type="button"
+          <button
+            data-drawer-target="extend-warranty-drawer"
+            data-drawer-show="extend-warranty-drawer"
+            data-drawer-placement="right"
+            type="button"
+            onClick={toggleCardView}
+            class="w-full rounded-lg bg-primary-300 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none dark:bg-primary-600 dark:hover:bg-primary-300 md:w-auto"
+          >
+            {collapsed() ? "Show details" : "Hide details"}
+          </button>
+        </div>
+        <Show
+          when={!error}
+          fallback={
+            <div class="p-2">
+              <div class="font-bold">{error}</div>
+              {!collapsed() && errorDetails && (
+                <div class="text-sm">{errorDetails}</div>
+              )}
+            </div>
+          }
         >
-          {collapsed() && "View full credential"}
-          {!collapsed() && "Close"}
-        </button>
+          <div class="md:columns-2 p-2">
+            {credentialDetails(props.credential)}
+          </div>
+        </Show>
       </div>
-    );
-  };
+    </>
+  );
 
   const credentialDetails = (credential) => {
     return (
-      <dl class="text-sm text-left rtl:text-right w-full">
-        <div class="preview grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 mb-4">
-          {renderClaim(["Issuer", credential.issuer])}
-          {renderClaim(["Issued", credential.issuanceDate])}
-        </div>
-        <div
-          class={`full grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 ${
-            collapsed() ? "hidden" : ""
-          }`}
-        >
+      <>
+        {renderClaim([
+          "Issuer",
+          credential.issuer,
+          `/?q=${encodeURIComponent(credential.issuer)}`,
+        ])}
+        {renderClaim(["Issuance date", credential.issuanceDate])}
+        <Show when={!collapsed()}>
           {renderClaim([null, credential.credentialSubject])}
-        </div>
-      </dl>
+        </Show>
+      </>
     );
   };
 
-  if (!verificationResult.verified) {
+  if (!props.verificationResult.verified) {
     return resultElement({
-      icon: "i-flowbite-close-circle-solid",
-      desc: "Invalid",
-      classes: classesInvalid,
-      title: titleFromCredentialType(credential),
-      details: credentialDetails(credential),
-      error: verificationResult.message,
-      errorDetails: verificationResult.details,
+      error: props.verificationResult.message,
+      errorDetails: props.verificationResult.details,
     });
   }
 
   // VERIFED
-  return resultElement({
-    title: titleFromCredentialType(credential),
-    details: credentialDetails(credential),
-    classes: classesValid,
-  });
+  return resultElement({});
 }
 
 const isObject = (item) => {
@@ -197,23 +197,29 @@ const formatClaimValue = (value) => {
   }).format(date);
 };
 
-const renderClaim = ([key, value]) => {
+const renderClaim = ([key, value, url]) => {
   if (!isObject(value)) {
     return (
-      <>
-        <dt class="font-semibold overflow-hidden text-ellipsis">
+      <dl class="p-2 flex items-center text-gray-500 dark:text-gray-400">
+        <dt class="me-2 font-medium text-gray-900 dark:text-white">
           {formatClaimKey(key)}
         </dt>
-        <dd class="break-words">{formatClaimValue(value)}</dd>
-      </>
+        <dd>
+          <Show when={url} fallback={formatClaimValue(value)}>
+            <a
+              href={url}
+              class="underline"
+            >
+              {formatClaimValue(value)}
+            </a>
+          </Show>
+        </dd>
+      </dl>
     );
   }
-
   return (
     <For each={Object.entries(value)}>
-      {([key, value]) => {
-        return renderClaim([key, value]);
-      }}
+      {([key, value]) => renderClaim([key, value])}
     </For>
   );
 };

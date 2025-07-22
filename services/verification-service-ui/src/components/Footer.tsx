@@ -9,7 +9,7 @@ export default function Footer(): Component<
   const active = (path: string) => isActive(path) ? "" : "text-primary-500";
 
   return (
-    <footer class="m-4 mt-auto">
+    <footer>
       <div class="w-full mx-auto max-w-screen-xl p-4 flex justify-center">
         <ul class="flex flex-wrap items-center mt-3 text-sm font-medium text-gray-500 sm:mt-0">
           <li>

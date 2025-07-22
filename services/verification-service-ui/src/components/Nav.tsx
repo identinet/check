@@ -6,8 +6,8 @@ export default function Nav() {
   const isActive = (path: string) => path == location.pathname;
   const active = (path: string) =>
     isActive(path)
-      ? "bg-primary-500 text-white"
-      : "bg-transparent hover:bg-primary-300 hover:text-white";
+      ? "bg-primary-300 rounded hover:bg-primary-700 text-white"
+      : "bg-transparent rounded hover:bg-primary-700 hover:text-white";
 
   const hideOnMain = () =>
     isActive("/") && location.search.indexOf("q=") < 0 ? "hidden" : "";

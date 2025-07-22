@@ -1,21 +1,21 @@
 import icon from "~/assets/logo-shield.svg";
 import { useSearchParams } from "@solidjs/router";
-import VerificationSearch from "~/components/VerificationSearch";
+import VerificationSearch from "~/components/VerificationSearch.tsx";
 
-export default function Home() {
+export default function Index() {
   const [searchParams] = useSearchParams();
 
   return (
     <main
-      class="text-center mx-auto text-gray-700 p-4"
+      class="container grow mx-auto text-gray-700 p-4"
       classList={{
-        [searchParams.q === undefined ? "mt-15vh" : "mt-8"]: true,
+        "mt-15vh": !searchParams.q,
       }}
     >
       <div
         class="flex-col justify-center items-center mb-12"
         classList={{
-          [searchParams.q === undefined ? "flex" : "hidden"]: true,
+          [!searchParams.q ? "flex" : "hidden"]: true,
         }}
       >
         <img
@@ -27,7 +27,7 @@ export default function Home() {
           Check
         </h2>
         <p class="text-lg md-text-xl">
-          Helping retailers and clients transact with confidence
+          Securing E-commerce with Verifiable Data about Merchants
         </p>
       </div>
       <VerificationSearch />
