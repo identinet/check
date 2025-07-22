@@ -151,21 +151,24 @@ export default function VerificationResult(
   return (
     <>
       <div class="wfit mx-auto mt-8 text-sm font-medium text-center text-gray-900 border-b border-gray-200">
-        <ul class="flex flex-wrap -mb-px">
+        <ul class="flex flex-wrap">
           <For each={allCategories()}>
             {(category, _idx) => {
               // do not display categories with no credentials
               if (category.vcs.length == 0) return;
-
-              const classes = category.active
-                ? "border-valid-900 active"
-                : "border-transparent hover:text-gray-600 hover:border-gray-300";
               return (
                 <li class="me-2">
                   <a
                     href="#"
                     onclick={() => selectCategory(category.id)}
-                    class={`inline-block px-4 py-2 border-b-2 rounded-t-lg ${classes}`}
+                    class="inline-block px-4 py-2 border-b-2 rounded-t-lg"
+                    classList={{
+                      "border-valid-900": category.active,
+                      "active": category.active,
+                      "border-transparent": !category.active,
+                      "hover:text-gray-600": !category.active,
+                      "hover:border-gray-300": !category.active,
+                    }}
                     aria-current="page"
                   >
                     {category.name}
@@ -176,19 +179,17 @@ export default function VerificationResult(
           </For>
         </ul>
       </div>
-      <div class="flex justify-center mt-8">
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <For each={currentCategory().vcs}>
-            {(credential, idx) => (
-              <div class="flex h-fit">
-                <CredentialCard
-                  verificationResult={results[idx()]}
-                  credential={credential}
-                />
-              </div>
-            )}
-          </For>
-        </div>
+      <div class="flex justify-center mt-8 gap-4 flex-wrap">
+        <For each={currentCategory().vcs}>
+          {(credential, idx) => (
+            <div class="h-fit w-96">
+              <CredentialCard
+                verificationResult={results[idx()]}
+                credential={credential}
+              />
+            </div>
+          )}
+        </For>
       </div>
     </>
   );
