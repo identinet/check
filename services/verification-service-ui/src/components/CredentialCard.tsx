@@ -1,4 +1,4 @@
-import { createSignal, For } from "solid-js";
+import { Component, createSignal, For, JSX } from "solid-js";
 
 const classesInvalid =
   "bg-gradient-from-invalid-100 bg-gradient-via-invalid-100 bg-gradient-to-invalid-500 border-invalid-900";
@@ -9,7 +9,12 @@ const classesGray =
 //const classesRisky =
 //  "bg-gradient-from-risky-100 bg-gradient-via-risky-100 bg-gradient-to-risky-500 border-risky-900";
 
-export function NotFoundCard({ icon, message }) {
+type Props = {
+  icon: string;
+  message: string;
+} & JSX.HTMLAttributes<HTMLDivElement>;
+
+export const NotFoundCard: Component<Props> = ({ icon, message }) => {
   return (
     <div
       class={`p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classesGray}`}
@@ -27,9 +32,9 @@ export function NotFoundCard({ icon, message }) {
         )}
     </div>
   );
-}
+};
 
-export function ErrorCard({ icon, message }) {
+export function ErrorCard({ icon, message }): Component<Props> {
   return (
     <div
       class={`p-6 bg-gradient-linear border-2 rounded-md shadow-sm ${classesInvalid}`}
@@ -49,7 +54,14 @@ export function ErrorCard({ icon, message }) {
   );
 }
 
-export function CredentialCard({ credential, verificationResult }) {
+type PropsCard = {
+  credential: object;
+  verificationResult: object;
+} & JSX.HTMLAttributes<HTMLDivElement>;
+
+export function CredentialCard(
+  { credential, verificationResult },
+): Component<PropsCard> {
   const [collapsed, setCollapsed] = createSignal(true);
   const toggleCardView = () => setCollapsed((collapsed) => !collapsed);
 
@@ -88,6 +100,7 @@ export function CredentialCard({ credential, verificationResult }) {
         <button
           onClick={toggleCardView}
           class="text-xs text-gray-900 underline"
+          type="button"
         >
           {collapsed() && "View full credential"}
           {!collapsed() && "Close"}

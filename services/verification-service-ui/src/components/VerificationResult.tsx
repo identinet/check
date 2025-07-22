@@ -1,4 +1,4 @@
-import { createSignal, For } from "solid-js";
+import { Component, createSignal, For, JSX } from "solid-js";
 import { CredentialCard, ErrorCard, NotFoundCard } from "./CredentialCard";
 
 const categoryTemplates = [
@@ -42,7 +42,7 @@ const categoryTemplates = [
   { id: "misc", name: "Miscellaneous", active: false }, // following code expects "misc" to be at last index
 ];
 
-const assignCredentialsToCategories = (credentials) => {
+const assignCredentialsToCategories = (credentials: Array<object>) => {
   const categories = [];
 
   for (let j = 0; j < categoryTemplates.length; j++) {
@@ -65,7 +65,7 @@ const assignCredentialsToCategories = (credentials) => {
       if (
         category.id == "awards" &&
         intersection?.includes("schema:Service") &&
-        !credential.credentialSubject.hasOwnProperty("award")
+        !credential.credentialSuBject?.hasOwnProperty("award")
       ) {
         // TODO: resetting the whole intersection array might be a bit brutal
         // better only remove the "schema:Service" item
@@ -90,7 +90,15 @@ const assignCredentialsToCategories = (credentials) => {
   return categories;
 };
 
-export default function VerificationResult({ pending, result, error }) {
+type Props = {
+  pending: boolean;
+  result: object;
+  error: Error;
+} & JSX.HTMLAttributes<HTMLDivElement>;
+
+export default function VerificationResult(
+  { pending, result, error },
+): Component<Props> {
   if (pending) {
     return (
       <div class="max-w-md mx-auto mt-8">
@@ -147,7 +155,7 @@ export default function VerificationResult({ pending, result, error }) {
       <div class="wfit mx-auto mt-8 text-sm font-medium text-center text-gray-900 border-b border-gray-200">
         <ul class="flex flex-wrap -mb-px">
           <For each={allCategories()}>
-            {(category, idx) => {
+            {(category, _idx) => {
               // do not display categories with no credentials
               if (category.vcs.length == 0) return;
 

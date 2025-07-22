@@ -1,6 +1,9 @@
 import { useLocation } from "@solidjs/router";
+import { Component, JSX } from "solid-js";
 
-export default function Footer() {
+export default function Footer(): Component<
+  JSX.HTMLAttributes<HTMLDivElement>
+> {
   const location = useLocation();
   const isActive = (path: string) => path == location.pathname;
   const active = (path: string) => isActive(path) ? "" : "text-primary-500";
@@ -17,8 +20,7 @@ export default function Footer() {
           <li>
             <a
               href="/about"
-              class="hover:underline"
-              class={`hover:underline ${active("/about")}`}
+              classList={{ "hover:underline": true, [active("/about")]: true }}
             >
               About
             </a>

@@ -1,12 +1,9 @@
 import icon from "~/assets/logo-shield.svg";
-import { useLocation, useSearchParams } from "@solidjs/router";
+import { useSearchParams } from "@solidjs/router";
 import VerificationSearch from "~/components/VerificationSearch";
 
 export default function Home() {
   const [searchParams] = useSearchParams();
-  const location = useLocation();
-  const showOnlyOnMain = () =>
-    location.search.indexOf("q=") < 0 ? "flex" : "hidden";
 
   return (
     <main

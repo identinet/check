@@ -4,6 +4,7 @@ import UnoCSS from "unocss/vite";
 import presetWind3 from "@unocss/preset-wind3";
 import presetWebFonts from "@unocss/preset-web-fonts";
 import { presetIcons } from "unocss";
+import process from "node:process";
 
 /**
  * TODO flowbite preset is outdated, we probably want to update the included preflight CSS results with the CSS provided
