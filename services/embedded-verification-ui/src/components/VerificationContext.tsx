@@ -40,7 +40,7 @@ export default function VerificationProvider(props) {
       url.searchParams.set("q", new URL(document.URL).origin);
       return fetch(url, { mode: "cors", credentials: "omit" }).then((res) => res.json()).then(
         (data) => {
-          let verified = data?.verified === true;
+          const verified = data?.verified === true;
           return {
             ...data,
             verified,
