@@ -2,7 +2,7 @@ import { Component, JSX } from "solid-js";
 
 type Props = {
   valid: boolean;
-} & JSX.HTMLAttributes<HTMLButtonElement>;
+} & JSX.HTMLAttributes<HTMLDivElement>;
 
 const CheckHtml: Component<Props> = (props) => {
   return (

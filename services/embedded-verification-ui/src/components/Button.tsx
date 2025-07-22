@@ -7,7 +7,7 @@ type Props = {
   href?: string;
   icon: string;
   children?: JSX;
-} & JSX.HTMLAttributes<HTMLButtonElement>;
+} & JSX.HTMLAttributes<HTMLDivElement>;
 
 const Button: Component<Props> = (props) => {
   return (

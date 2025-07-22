@@ -5,7 +5,7 @@ type Props = {
   size?: number;
   width?: number;
   height?: number;
-} & JSX.HTMLAttributes<HTMLButtonElement>;
+} & JSX.HTMLAttributes<HTMLDivElement>;
 
 const Check: Component<Props> = (props) => {
   return (

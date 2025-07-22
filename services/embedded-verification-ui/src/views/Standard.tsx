@@ -9,7 +9,7 @@ import { useConfigContext } from "~/components/ConfigContext";
 type Props = {
   close: () => void;
   toggleView: () => void;
-} & JSX.HTMLAttributes<HTMLButtonElement>;
+} & JSX.HTMLAttributes<HTMLDivElement>;
 
 const Standard: Component<Props> = (props) => {
   const [modalVisible, setVisible] = createSignal(false);
@@ -76,7 +76,10 @@ const Standard: Component<Props> = (props) => {
             <Show
               when={verified}
               fallback={
-                <div class="i-flowbite-close-circle-outline text-[8rem] cursor-pointer" onclick={props.toggleView}>
+                <div
+                  class="i-flowbite-close-circle-outline text-[8rem] cursor-pointer"
+                  onclick={props.toggleView}
+                >
                 </div>
               }
             >

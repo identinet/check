@@ -3,7 +3,7 @@ import { Component, JSX } from "solid-js";
 type Props = {
   data: object;
   classList?: object;
-} & JSX.HTMLAttributes<HTMLButtonElement>;
+} & JSX.HTMLAttributes<HTMLDivElement>;
 
 const Card: Component<Props> = (props) => {
   return (

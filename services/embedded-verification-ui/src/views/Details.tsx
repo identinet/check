@@ -13,7 +13,7 @@ import { useConfigContext } from "~/components/ConfigContext.tsx";
 type Props = {
   close: () => void;
   toggleView: () => void;
-} & JSX.HTMLAttributes<HTMLButtonElement>;
+} & JSX.HTMLAttributes<HTMLDivElement>;
 
 const Details: Component<Props> = (props) => {
   if (isServer) return;
