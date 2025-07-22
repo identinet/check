@@ -28,14 +28,14 @@ const categoryTemplates = [
     active: false,
   },
   {
-    id: "awards",
+    id: "awards", // if the attribute award is present
     name: "Awards",
     types: [
       "schema:CreativeWork",
       "schema:Organization",
       "schema:Person",
       "schema:Product",
-      "schema:Service", // if the attribute award is present
+      "schema:Service",
     ],
     active: false,
   },
@@ -57,18 +57,16 @@ const assignCredentialsToCategories = (credentials: Array<object>) => {
     for (let j = 0; j < categoryTemplates.length; j++) {
       const category = categories[j];
 
-      let intersection = categoryTemplates[j].types?.filter((typ) =>
-        credential.type.includes(typ)
+      let intersection = categoryTemplates[j].types?.filter((t) =>
+        credential.type.includes(t)
       );
 
-      // only add schema:Service credentials to awards category if "award" attribute is present
+      // only add credentials to awards category if "award" attribute is present
       if (
         category.id == "awards" &&
-        intersection?.includes("schema:Service") &&
-        !credential.credentialSuBject?.hasOwnProperty("award")
+        !("award" in (credential.credentialSubject || {}) ||
+          "schema:award" in (credential.credentialSubject || {}))
       ) {
-        // TODO: resetting the whole intersection array might be a bit brutal
-        // better only remove the "schema:Service" item
         intersection = [];
       }
 
