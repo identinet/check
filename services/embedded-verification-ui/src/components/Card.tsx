@@ -8,7 +8,7 @@ type Props = {
 const Card: Component<Props> = (props) => {
   return (
     <div
-      class="p-1 w-[11rem] h-[8.3rem] border-2 border-white rounded-xl bg-white/30 flex flex-col text-xs backdrop-blur-sm overflow-hidden"
+      class="p-2 size-[10rem] border-2 border-white rounded-xl bg-white/30 flex flex-col text-xs backdrop-blur-sm overflow-hidden"
       classList={props.classList || {}}
     >
       <div class="">{props.data.title}</div>

@@ -45,7 +45,7 @@ const Details: Component<Props> = (props) => {
           [verified ? "to-[#4CAFFF]" : "to-red-200"]: true,
           [verified ? "border-[#07348F]" : "border-red-900"]: true,
         }}
-        class="relative size-[24rem] max-w-[80vw] bg-linear-10 border-l border-y rounded-l-4xl"
+        class="relative w-[23rem] h-[28rem] max-w-[80vw] bg-linear-10 border-l border-y rounded-l-4xl"
       >
         <div class="absolute top-0 w-full h-full flex items-center justify-center blur-xs">
           <Show
