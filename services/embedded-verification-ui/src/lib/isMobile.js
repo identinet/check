@@ -5,7 +5,9 @@
  * @type {() => boolean}
  */
 export default function isMobile() {
-  return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(
-    navigator.userAgent,
-  );
+  // always use mobile version of EVI
+  return true;
+  // return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(
+  //   navigator.userAgent,
+  // );
 }

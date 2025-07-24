@@ -79,7 +79,7 @@ export const credentialToRenderData = {
         return acc;
       },
       [],
-    ).join("& ");
+    ).join(" & ");
     const refundtype = vc?.credentialSubject["schema:refundType"]?.reduce(
       (acc, t) => {
         const v = { "FullRefund": "Full Refund" }[t];
@@ -89,7 +89,7 @@ export const credentialToRenderData = {
         return acc;
       },
       [],
-    ).join("& ");
+    ).join(" & ");
     if (returnmethod && refundtype) {
       data.value = `${returnmethod} - ${refundtype}`;
     }

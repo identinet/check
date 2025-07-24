@@ -1,10 +1,10 @@
 import { Component, createSignal, JSX, Show } from "solid-js";
 
-import Modal from "~/components/Modal";
-import Button from "~/components/Button";
-import Shield from "~/components/icons/Shield";
-import { useVerificationContext } from "~/components/VerificationContext";
-import { useConfigContext } from "~/components/ConfigContext";
+import Modal from "~/components/Modal.tsx";
+import Button from "~/components/Button.tsx";
+import Shield from "~/components/icons/Shield.tsx";
+import { useVerificationContext } from "~/components/VerificationContext.tsx";
+import { useConfigContext } from "~/components/ConfigContext.tsx";
 
 type Props = {
   close: () => void;

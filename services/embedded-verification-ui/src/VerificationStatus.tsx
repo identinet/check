@@ -5,7 +5,7 @@ import Standard from "~/views/Standard.tsx";
 import Details from "~/views/Details.tsx";
 import isMobile from "~/lib/isMobile.js";
 
-import { useVerificationContext } from "~/components/VerificationContext";
+import { useVerificationContext } from "~/components/VerificationContext.tsx";
 
 import styles from "./App.module.css?no-inline";
 
@@ -33,7 +33,7 @@ const VerificationStatus: Component = (_props) => {
               fallback={
                 <Show
                   when={view() === views.standard}
-                  fallback={<Minimized toggleView={toggleViewStandard} />}
+                  fallback={<Minimized toggleView={isMobile() ? toggleViewDetails : toggleViewStandard} />}
                 >
                   <Standard
                     close={toggleViewMinimized}

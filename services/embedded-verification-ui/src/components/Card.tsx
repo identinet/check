@@ -8,13 +8,13 @@ type Props = {
 const Card: Component<Props> = (props) => {
   return (
     <div
-      class="p-3 w-[14rem] h-[13rem] max-h-3xs max-w-3xs gap-1 border-3 border-white rounded-xl bg-white/30 flex flex-col text-lg backdrop-blur-sm"
+      class="p-1 w-[11rem] h-[8.3rem] border-2 border-white rounded-xl bg-white/30 flex flex-col text-xs backdrop-blur-sm overflow-hidden"
       classList={props.classList || {}}
     >
-      <div>{props.data.title}</div>
-      <div class="text-3xl text-semibold grow">{props.data.value}</div>
-      <div>Credential Issuer:</div>
-      <div class="text-1xl">{props.data.issuer}</div>
+      <div class="">{props.data.title}</div>
+      <div class="text-lg grow">{props.data.value}</div>
+      <div class="">Credential Issuer:</div>
+      <div class="text-lg">{props.data.issuer}</div>
     </div>
   );
 };

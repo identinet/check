@@ -45,9 +45,9 @@ const Details: Component<Props> = (props) => {
           [verified ? "to-[#4CAFFF]" : "to-red-200"]: true,
           [verified ? "border-[#07348F]" : "border-red-900"]: true,
         }}
-        class="relative w-[32rem] h-[35rem] max-w-[80vw] bg-linear-10 border-l border-y rounded-l-4xl"
+        class="relative size-[24rem] max-w-[80vw] bg-linear-10 border-l border-y rounded-l-4xl"
       >
-        <div class="w-full h-full flex items-center justify-center blur-xs">
+        <div class="absolute top-0 w-full h-full flex items-center justify-center blur-xs">
           <Show
             when={verified}
             fallback={
@@ -69,35 +69,31 @@ const Details: Component<Props> = (props) => {
           {/* Radial gradient that helps increase the readibility of the cards  */}
         </div>
 
-        <div class="absolute top-0 p-3 w-full h-full gap-2 grid grid-rows-[3rem_minmax(3rem,1fr)_1rem] items-center justify-center">
-          <div class="gap-3 flex w-full items-start justify-center h-full overflow-hidden">
+        <div class="absolute top-0 p-2 w-full h-full grid grid-rows-[3rem_minmax(3rem,1fr)_1rem] items-center">
+          <div class="flex flex-row w-full overflow-hidden gap-3">
             {/* Navbar */}
-            <div class="flex flex-nowrap flex-row gap-3 items-start justify-start flex-none">
-              <Button
-                title="Close"
-                action={props.close}
-                icon="i-flowbite-close-outline"
-              />
+            <Button
+              title="Close"
+              action={props.close}
+              icon="i-flowbite-close-outline"
+            />
+            <div class="grow text-2xl text-center tracking-normal font-bold">
+              <span class="max-sm:hidden">About the</span> Merchant
             </div>
-            <div class="grow font-bold text-3xl text-center tracking-normal font-extrabold">
-              <span class="max-sm:hidden">About the</span> Retailer
-            </div>
-            <div class="flex flex-nowrap flex-row gap-3 items-end justify-end flex-none">
-              <Button
-                /* action={() => setVisible(!modalVisible())} */
-                href={aboutUrl()}
-                title="Learn about CHECK"
-              >
-                ?
-              </Button>
-            </div>
+            <Button
+              /* action={() => setVisible(!modalVisible())} */
+              href={aboutUrl()}
+              title="Learn about CHECK"
+            >
+              ?
+            </Button>
           </div>
-          <div class="relative ">
+          <div class="relative grow">
             <div class="gap-4 flex flex-wrap flex-col items-center justify-center cursor-pointer overflow-hidden">
               {/* Cards */}
               <div
                 onclick={props.toggleView}
-                class="gap-4 flex flex-wrap items-center justify-center"
+                class="gap-3 flex flex-wrap items-center justify-center"
               >
                 <For
                   each={verificationDetails()?.credentials?.reduce(
@@ -112,7 +108,7 @@ const Details: Component<Props> = (props) => {
                     },
                     [],
                   ) || []}
-                  fallback={<div>Loading...</div>}
+                  fallback={<div class="text-gray-500">Loading...</div>}
                 >
                   {(data, idx) => (
                     <div class={idx() > 1 ? "max-sm:hidden" : ""}>
@@ -126,7 +122,7 @@ const Details: Component<Props> = (props) => {
               <Modal fontLarge show={modalVisible()} />
             </div>
           </div>
-          <div class="">
+          <div class="pb-2">
             {/* Footer */}
             <a
               href={checkUrl()}
