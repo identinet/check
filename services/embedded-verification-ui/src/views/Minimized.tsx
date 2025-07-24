@@ -15,12 +15,12 @@ const Minimized: Component<Props> = (props) => {
       onclick={props.toggleView}
       title={`Verification Status: ${verified ? "verified" : "failed"}`}
       classList={{
-        [verified ? "from-[#4548FF]" : "from-red-500"]: true,
-        [verified ? "via-[#5092FF]" : ""]: true,
-        [verified ? "to-[#4CAFFF]" : "to-red-200"]: true,
-        [verified ? "border-[#07348F]" : "border-red-900"]: true,
+        [verified ? "from-[#9ed4ff]" : "from-red-400"]: true,
+        [verified ? "via-[#EAF6FF]" : "to-red-50"]: true,
+        [verified ? "to-[#EAF6FF]" : "to-red-50"]: true,
+        [verified ? "border-[#1E499E]" : "border-red-900"]: true,
       }}
-      class="size-[4rem] md:size-[4rem] bg-linear-10 to-80% flex items-center justify-center border-l border-y rounded-l-lg cursor-pointer"
+      class="size-[4rem] md:size-[4rem] bg-linear-20 flex items-center justify-center border-l border-y rounded-l-lg cursor-pointer"
     >
       <Check verified={verified} size={48} />
     </div>

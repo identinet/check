@@ -43,7 +43,7 @@ const Details: Component<Props> = (props) => {
           [verified ? "from-[#4548FF]" : "from-red-500"]: true,
           [verified ? "via-[#5092FF]" : ""]: true,
           [verified ? "to-[#4CAFFF]" : "to-red-200"]: true,
-          [verified ? "border-[#07348F]" : "border-red-900"]: true,
+          [verified ? "border-[#1E499E]" : "border-red-900"]: true,
         }}
         class="relative w-[23rem] h-[28rem] max-w-[80vw] bg-linear-10 border-l border-y rounded-l-4xl"
       >
