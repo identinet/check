@@ -14,15 +14,9 @@ export default function Index() {
     >
       <div
         class="flex-col justify-center items-center mb-12"
-        classList={{
-          [!searchParams.q ? "flex" : "hidden"]: true,
-        }}
+        classList={{ [!searchParams.q ? "flex" : "hidden"]: true }}
       >
-        <img
-          src={icon}
-          class="w-20 h-20"
-          alt="check logo shield"
-        />
+        <img src={icon} class="w-20 h-20" alt="check logo shield" />
         <h2 class="uppercase text-4xl md-text-5xl font-bold mt-12 mb-2">
           Check
         </h2>
