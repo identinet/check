@@ -43,7 +43,12 @@ pub struct DidConfig {
 
 /// Verifies the given URL
 pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> {
-    let dids = lookup_dids(url).await?;
+    let dids = match url.scheme() {
+        "did" => DIDBuf::from_string(url.to_string())
+            .map(|did| vec![did])
+            .unwrap(),
+        _ => lookup_dids(url).await?,
+    };
 
     let tasks: JoinSet<_> = dids
         .into_iter()
@@ -132,7 +137,7 @@ async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
 /// https://identity.foundation/specs/did-configuration/
 async fn lookup_did_config(url: &Url) -> Result<String, ()> {
     let well_known_uri = url_to_well_known_config_uri(&url)?;
-    // TODO handle JWT proof format
+    // TODO: handle JWT proof format
     let response = reqwest::get(well_known_uri).await.map_err(|_| ())?;
     let config = response.text().await.map_err(|_| ())?;
     Ok(config)

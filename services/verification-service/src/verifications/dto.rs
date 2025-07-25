@@ -131,7 +131,7 @@ where
 
 fn is_valid_url(url: &str) -> bool {
     Url::parse(url)
-        .map(|url| url.scheme() == "https")
+        .map(|url| url.scheme() == "https" || url.scheme() == "did")
         .unwrap_or(false)
 }
 
