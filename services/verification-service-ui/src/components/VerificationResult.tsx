@@ -288,41 +288,6 @@ export default function VerificationResult(props): Component<Props> {
           </aside>
           {/* <!-- Right content --> */}
           <div class="w-full">
-            <div class="mb-4 items-center justify-between flex md:space-x-4">
-              <div class="hidden lg:block w-fit mx-auto text-sm font-medium text-center text-gray-900">
-                <ul class="flex flex-wrap gap-2">
-                  <For each={allCategories()}>
-                    {(category, _idx) => {
-                      // do not display categories with no credentials
-                      if (category.vcs.length == 0) return;
-                      return (
-                        <li
-                          class="p-2 cursor-pointer border-b-2"
-                          onclick={() => selectCategory(category.id)}
-                          classList={{
-                            "border-valid-900": category.active,
-                            "active": category.active,
-                            "border-transparent": !category.active,
-                            "hover:text-gray-600": !category.active,
-                            "hover:border-gray-300": !category.active,
-                          }}
-                        >
-                          {category.icon.cloneNode(true)}
-                          <a
-                            href="#"
-                            onclick={() => selectCategory(category.id)}
-                            class="inline-block ml-1 rounded-t-lg max-sm:hidden"
-                            aria-current="page"
-                          >
-                            {category.name}
-                          </a>
-                        </li>
-                      );
-                    }}
-                  </For>
-                </ul>
-              </div>
-            </div>
             {/* <!-- Credentials --> */}
             <For each={currentCategory().vcs}>
               {(credential, idx) => (

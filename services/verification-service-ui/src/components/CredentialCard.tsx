@@ -45,8 +45,11 @@ export function CredentialCard(props): Component<PropsCard> {
           <div class="mb-4 justify-between sm:flex sm:items-center md:mb-0 md:block lg:mb-4 lg:flex xl:mb-0 xl:block">
             <div class="items-center gap-4 flex">
               <div
-                class="i-flowbite-file-check-solid size-14"
+                class="size-14"
                 classList={{
+                  "i-flowbite-file-check-solid ":
+                    props.verificationResult.verified,
+                  "i-flowbite-file-solid ": !props.verificationResult.verified,
                   "text-gray-400": props.verificationResult.verified,
                   "dark:text-gray-700": props.verificationResult.verified,
                   "text-red-400": !props.verificationResult.verified,
