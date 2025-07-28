@@ -56,7 +56,7 @@ export function CredentialCard(props): Component<PropsCard> {
                   "dark:text-red-700": !props.verificationResult.verified,
                 }}
               />
-              <div class="mt-4 sm:mt-0">
+              <div class="">
                 <div class="mb-2 items-center sm:flex sm:space-x-2">
                   <a
                     href="#"

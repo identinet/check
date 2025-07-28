@@ -111,8 +111,7 @@ export default function VerificationResult(props): Component<Props> {
   if (credentials.length == 0) {
     return (
       <>
-        <div>{/* dummy element to keep the grid happy */}</div>
-        <div class="max-w-md max-lg:mx-auto mt-8">
+        <div class="[grid-area:_results]">
           <NotFoundCard
             icon="i-flowbite-ban-outline"
             message="Unfortunately, there is no entry for this shop."
@@ -142,13 +141,11 @@ export default function VerificationResult(props): Component<Props> {
 
   return (
     <>
-      {/* <div class="mx-auto max-w-screen-xl px-4 2xl:px-0 mt-8"> */}
-      {/* <div class="gap-8 lg:flex"> */}
       {/* <!-- Sidenav --> */}
       <aside
         id="sidebar"
         name="sidebar"
-        class="self-start lg:w-80 shrink-0 overflow-y-auto border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 rounded-lg"
+        class="[grid-area:_aside] self-start lg:w-80 shrink-0 overflow-y-auto border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 rounded-lg"
       >
         <div class="mb-3 flex w-full items-center justify-between rounded-lg bg-white p-2 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:bg-gray-800 dark:focus:ring-gray-700">
           <div class="flex w-full items-center justify-between">
@@ -291,10 +288,7 @@ export default function VerificationResult(props): Component<Props> {
         </ul>
       </aside>
       {/* <!-- Right content --> */}
-      <div
-        name="results"
-        class="w-full"
-      >
+      <div class="w-full [grid-area:_results]">
         {/* <!-- Credentials --> */}
         <For each={currentCategory().vcs}>
           {(credential, idx) => (
@@ -305,8 +299,6 @@ export default function VerificationResult(props): Component<Props> {
           )}
         </For>
       </div>
-      {/*   </div> */}
-      {/* </div> */}
     </>
   );
 }

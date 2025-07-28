@@ -170,16 +170,13 @@ export default function VerificationSearch() {
         class="grid gap-4"
         classList={{
           "columns-1": !(Boolean(submission.result) || submission.pending),
-          "lg:grid-cols-[20rem_minmax(0,1fr)]": Boolean(submission.result) ||
+          'lg:grid-cols-[20rem_minmax(0,1fr)] lg:[grid-template-areas:_"._search"_"aside_results"] [grid-template-areas:_"search"_"aside"_"results"]':
+            Boolean(submission.result) ||
             submission.pending,
         }}
       >
-        <div class="max-lg:hidden">
-          {/* dummy element to keep the grid happy */}
-        </div>
         <div
-          name="search"
-          class="flex flex-col"
+          class="[grid-area:_search] flex flex-col"
           classList={{
             "items-start": Boolean(submission.result) || submission.pending,
           }}
@@ -277,11 +274,15 @@ export default function VerificationSearch() {
         </div>
 
         <Suspense
-          fallback={<div class="max-w-md mx-auto mt-8">Loading...</div>}
+          fallback={
+            <div class="[grid-area:_results]">
+              Loading...
+            </div>
+          }
         >
           <ErrorBoundary
             fallback={(error) => (
-              <div class="max-w-md mx-auto mt-8">
+              <div class="[grid-area:_results]">
                 <ErrorCard
                   icon="i-flowbite-fire-outline"
                   message={`There was an error when checking the site: ${error.message}`}
