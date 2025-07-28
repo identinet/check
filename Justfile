@@ -16,7 +16,7 @@ dev: githooks
     mkdir $certs_directory
     # load configuration from files
     let services = glob "services/*/caddy.json" | each {open $in}
-    $services | filter {$in | get -i hostname | is-not-empty} | $in.hostname | each {|hostname|
+    $services | where {$in | get -i hostname | is-not-empty} | $in.hostname | each {|hostname|
       if not ($"($certs_directory)/($hostname).pem" | path exists) {
         mkcert -cert-file $"($certs_directory)/($hostname).pem" -key-file $"($certs_directory)/($hostname).pem" $hostname
       }
