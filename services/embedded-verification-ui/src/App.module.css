@@ -26,7 +26,6 @@
 .verificationDetails {
   cursor: pointer;
   min-height: 20vmax;
-  /* min-width: 20vmax; */
 }
 
 .verificationDetailsIcon {

@@ -39,10 +39,9 @@ spec:
             runAsGroup: 65534
           resources:
             requests:
-              cpu: 100m
+              cpu: 10m
               memory: 50Mi
             limits:
-              cpu: 100m
               memory: 100Mi
           livenessProbe:
             tcpSocket:
