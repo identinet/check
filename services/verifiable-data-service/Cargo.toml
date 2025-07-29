@@ -8,18 +8,22 @@ keywords = ["ssi", "http"]
 name = "verifiable-data-service"
 repository = "https://github.com/identinet/check"
 version = "0.0.1"
+readme = "README.md"
+license = "Apache-2.0"
 
 [features]
 fail-on-warnings = []
 
 [dependencies]
-axum = "0.8.1"
+verification-service = { path = "../verification-service" }
+# verification-service = { git = "https://github.com/identinet/check.git", branch = "main" }
+axum = "0.8.4"
 openid4vp = { version = "0.1.0" }
 openid4vp-frontend = { version = "0.1.0" }
 serde = { version = "1", features = ["derive"] }
-ssi = "0.10.2"
-ssi-data-integrity-suites = "0.1.1"
-tokio = { version = "1.43.0", features = ["full"] }
+ssi = "0.12.0"
+ssi-data-integrity-suites = "0.2.0"
+tokio = { version = "1.47.0", features = ["full"] }
 tower = "0.5.2"
 url = "2"
 uuid = { version = "1", features = ["v4"] }
@@ -29,14 +33,14 @@ p256 = "0.13.2"
 config = "0.15.11"
 clap = "4.5.32"
 tower-http = { version = "0.6.6", features = ["validate-request", "auth"] }
-
 [dev-dependencies]
 tower = { version = "0.5.2", features = ["util"] }
 http-body-util = "0.1.0"
 
 [patch.crates-io]
-
-ssi = { git = "https://github.com/identinet/ssi.git", branch = "main" }
-ssi-data-integrity-suites = { git = "https://github.com/identinet/ssi.git", branch = "main" }
-openid4vp = { git = "https://github.com/identinet/openid4vp.git", rev = "3b09382449e0c1cbec958fde2ea59f23d4f6aa5e" }
-openid4vp-frontend = { git = "https://github.com/identinet/openid4vp.git", rev = "3b09382449e0c1cbec958fde2ea59f23d4f6aa5e" }
+# ssi = { git = "https://github.com/identinet/ssi.git", branch = "main" }
+# ssi-data-integrity-suites = { git = "https://github.com/identinet/ssi.git", branch = "main" }
+# openid4vp = { git = "https://github.com/identinet/openid4vp.git", rev = "3b09382449e0c1cbec958fde2ea59f23d4f6aa5e" }
+# openid4vp-frontend = { git = "https://github.com/identinet/openid4vp.git", rev = "3b09382449e0c1cbec958fde2ea59f23d4f6aa5e" }
+openid4vp = { git = "https://github.com/spruceid/openid4vp.git", branch = "main" }
+openid4vp-frontend = { git = "https://github.com/spruceid/openid4vp.git", branch = "main" }

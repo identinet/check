@@ -1,3 +1,5 @@
+#![allow(clippy::single_call_fn, reason = "Required for configuration")]
+
 use clap::Parser;
 use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;

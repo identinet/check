@@ -63,14 +63,15 @@ alias l := lint
 [group('linter')]
 lint:
     # Clippy configuration: https://doc.rust-lang.org/clippy/
-    cargo clippy -- -D warnings -W clippy:pedantic -W clippy::restriction -W clippy::nursery -W clippy::cargo
+    cargo clippy -- -D warnings -W clippy::pedantic -W clippy::restriction -W clippy::nursery -W clippy::cargo
 
 alias lf := lint-fix
 
 # Lint code and fix issues
 [group('linter')]
 lint-fix:
-    cargo clippy --fix --allow-staged -W clippy:pedantic -W clippy::restriction -W clippy::nursery -W clippy::cargo
+    # Clippy configuration: https://doc.rust-lang.org/clippy/
+    cargo clippy --fix -- -W clippy::pedantic -W clippy::restriction -W clippy::nursery -W clippy::cargo
 
 # Generate and open documentation
 [group('documentation')]
