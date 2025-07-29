@@ -266,6 +266,7 @@ export default function VerificationResult(props): Component<Props> {
                   class="group flex cursor-pointer items-center rounded-lg p-2 text-base font-medium text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                   href="#"
                   onclick={() => selectCategory(category.id)}
+                  onkeydown={() => selectCategory(category.id)}
                   classList={{
                     "active": category.active,
                     "bg-gray-100": category.active,
