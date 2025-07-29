@@ -139,7 +139,7 @@ export default function VerificationResult(props): Component<Props> {
       <aside
         id="sidebar"
         name="sidebar"
-        class="[grid-area:_aside] self-start lg:w-80 shrink-0 overflow-y-auto border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 rounded-lg"
+        class="[grid-area:_aside] self-stretch lg:w-80 shrink-0 overflow-y-auto border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 rounded-lg"
       >
         <div class="mb-3 flex w-full items-center justify-between rounded-lg bg-white p-2 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:bg-gray-800 dark:focus:ring-gray-700">
           <div class="flex w-full items-center justify-between">

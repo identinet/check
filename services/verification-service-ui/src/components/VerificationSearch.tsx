@@ -172,15 +172,16 @@ export default function VerificationSearch() {
       <section
         class="flex flex-col lg:grid gap-4"
         classList={{
-          "columns-1": !(Boolean(submission.result) || submission.pending),
           'grid-cols-[20rem_minmax(0,1fr)] lg:[grid-template-areas:_"._search"_"aside_results"]':
             Boolean(submission.result) ||
             submission.pending,
         }}
       >
         <div
-          class="[grid-area:_search] flex flex-col"
+          class=" flex flex-col"
           classList={{
+            "[grid-area:_search]": Boolean(submission.result) ||
+              submission.pending,
             "items-start": Boolean(submission.result) || submission.pending,
           }}
         >
