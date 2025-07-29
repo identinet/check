@@ -167,10 +167,10 @@ export default function VerificationSearch() {
     <>
       {/* <section class="flex items-center flex-col"> */}
       <section
-        class="grid gap-4"
+        class="flex flex-col lg:grid gap-4"
         classList={{
           "columns-1": !(Boolean(submission.result) || submission.pending),
-          'lg:grid-cols-[20rem_minmax(0,1fr)] lg:[grid-template-areas:_"._search"_"aside_results"] [grid-template-areas:_"search"_"aside"_"results"]':
+          'grid-cols-[20rem_minmax(0,1fr)] lg:[grid-template-areas:_"._search"_"aside_results"]':
             Boolean(submission.result) ||
             submission.pending,
         }}
