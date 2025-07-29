@@ -13,6 +13,7 @@ const Minimized: Component<Props> = (props) => {
   return (
     <div
       onclick={props.toggleView}
+      onkeydown={props.toggleView}
       title={`Verification Status: ${verified ? "verified" : "failed"}`}
       classList={{
         [verified ? "from-[#9ed4ff]" : "from-red-400"]: true,

@@ -79,6 +79,7 @@ const Standard: Component<Props> = (props) => {
                 <div
                   class="i-flowbite-close-circle-outline text-[8rem] cursor-pointer"
                   onclick={props.toggleView}
+                  onkeydown={props.toggleView}
                 >
                 </div>
               }

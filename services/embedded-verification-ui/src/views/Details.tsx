@@ -93,6 +93,7 @@ const Details: Component<Props> = (props) => {
               {/* Cards */}
               <div
                 onclick={props.toggleView}
+                onkeydown={props.toggleView}
                 class="gap-3 flex flex-wrap items-center justify-center"
               >
                 <For
