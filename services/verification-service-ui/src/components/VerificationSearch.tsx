@@ -83,8 +83,8 @@ const verifyUrlAction = action(async (formData: FormData) => {
     if (demoResult) return demoResult;
 
     // TODO rework, for time being API expects https URLs
-    if (input.indexOf("did:") != 0) {
-      if (input.indexOf("http") != 0) {
+    if (!input.startsWith("did:")) {
+      if (!input.startsWith("https://")) {
         input = `https://${input}`;
       }
     }
