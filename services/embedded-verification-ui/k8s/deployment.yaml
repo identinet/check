@@ -25,6 +25,7 @@ spec:
         - name: config
           configMap:
             name: embedded-verification-ui-config
+      automountServiceAccountToken: false
       containers:
         - name: embedded-verification-ui
           image: identinet/check-embedded-verification-ui

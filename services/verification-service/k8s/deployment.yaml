@@ -21,6 +21,7 @@ spec:
       labels:
         app: verification-service
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: verification-service
           image: identinet/check-verification-service

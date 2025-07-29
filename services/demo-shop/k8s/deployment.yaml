@@ -21,6 +21,7 @@ spec:
       labels:
         app: demo-shop
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: demo-shop
           image: identinet/check-demo-shop

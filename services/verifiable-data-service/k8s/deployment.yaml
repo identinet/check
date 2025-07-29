@@ -25,6 +25,7 @@ spec:
         - name: key
           secret:
             secretName: verifiable-data-service-key
+      automountServiceAccountToken: false
       containers:
         - name: verifiable-data-service
           image: identinet/check-verifiable-data-service
