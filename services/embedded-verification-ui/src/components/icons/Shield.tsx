@@ -11,7 +11,7 @@ const Shield: Component<Props> = (props) => {
   return (
     <svg
       classList={{
-        "cursor-pointer": props.action ? true : false,
+        "cursor-pointer": props.action,
       }}
       onclick={props.action}
       width={(props.size || props.width || 1) * 68}

@@ -12,6 +12,7 @@ const Minimized: Component<Props> = (props) => {
   const verified = verificationDetails()?.verified;
   return (
     <div
+      role="button"
       onclick={props.toggleView}
       onkeydown={props.toggleView}
       title={`Verification Status: ${verified ? "verified" : "failed"}`}

@@ -118,9 +118,9 @@ const knownTypes = Object.keys(credentialToRenderData);
  * Tests if a credendial has a known type that can be rendered.
  */
 export function hasKnownType(vc) {
-  for (let i = 0; i < knownTypes.length; i++) {
-    if (isType(vc, knownTypes[i])) {
-      return [true, knownTypes[i]];
+  for (let type of knownTypes) {
+    if (isType(vc, type)) {
+      return [true, type];
     }
   }
   return [false, null];
