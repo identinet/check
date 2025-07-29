@@ -41,6 +41,7 @@ spec:
             requests:
               cpu: 10m
               memory: 50Mi
+              ephemeral-storage: 10Mi
             limits:
               memory: 100Mi
           livenessProbe:
