@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env -S bash
 # Exit if any command in the script fails.
 set -e
+set -x
 
 # Allow issuing using a DID method other than did:jwk
 did_method=${DID_METHOD:-jwk}
@@ -33,8 +34,8 @@ print_json() {
 
 # didkit wrapper
 didkit_docker() {
-    args="$@"
-    docker run -i --rm -v ./:/tmp/:z -w /tmp identinet/didkit-cli:0.3.2-10 $args
+    didkit "${@}"
+    # docker run -i --rm -v ./:/tmp/:z -w /tmp identinet/didkit-cli:0.3.2-10 "$@"
 }
 
 dirs="credentials dids keys presentations did-configurations"
@@ -68,12 +69,12 @@ echo '### DID ###'
 printf 'holder: %s\n' "$holder_did"
 printf 'trust-party: %s\n' "$tp_did"
 echo
-echo $holder_did > dids/did-holder
-echo $tp_did > dids/did-trust-party
+echo "$holder_did" > dids/did-holder
+echo "$tp_did" > dids/did-trust-party
 
 echo '### DID document ###'
-didkit_docker did-resolve $holder_did | tee dids/did-doc-holder.json
-didkit_docker did-resolve $tp_did | tee dids/did-doc-trust-party.json
+didkit_docker did-resolve "$holder_did" | tee dids/did-doc-holder.json
+didkit_docker did-resolve "$tp_did" | tee dids/did-doc-trust-party.json
 echo
 
 # Get verificationMethod for keypair.
@@ -101,14 +102,13 @@ _issue_and_encode() {
     # standard input. DIDKit creates a linked data proof to add to the credential,
     # and outputs the resulting newly-issued verifiable credential on standard
     # output, which we save to a file.
-    didkit_docker "vc-issue-$vc_or_vp"\
+    didkit_docker "vc-issue-$vc_or_vp" \
              -k "$key_file" \
              -v "$verification_method" \
              -p assertionMethod \
              -f "$proof_format" \
              -t "$proof_type" \
-             < "$file" \
-             > "$file_signed"
+             < "$file" > "$file_signed"
 
     # Encode credential as JSON for presenting.
     printf '### Verifiable %s ###\n' "$vc_or_vp"
@@ -122,17 +122,15 @@ _issue_and_encode() {
     echo
 }
 issue_and_encode_vc() {
-    args="$@"
-    _issue_and_encode "credential" $args $vc_proof_format $vc_proof_type
+    _issue_and_encode "credential" "$@" "$vc_proof_format" "$vc_proof_type"
 }
 issue_and_encode_vp() {
-    args="$@"
-    _issue_and_encode "presentation" $args $vp_proof_format $vp_proof_type
+    _issue_and_encode "presentation" "$@" "$vp_proof_format" "$vp_proof_type"
 }
 
 # Issue credentials.
-vc_issuance_date=`date --utc +%FT%TZ`
-vc_id="urn:uuid:"`uuidgen`
+vc_issuance_date=$(date --utc +%FT%TZ)
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-self-issued <<EOF
 {
     "@context": "https://www.w3.org/2018/credentials/v1",
@@ -145,13 +143,26 @@ cat > credentials/credential-self-issued <<EOF
     }
 }
 EOF
-issue_and_encode_vc credentials/credential-self-issued keys/key-holder.jwk $verification_method_holder
+issue_and_encode_vc credentials/credential-self-issued keys/key-holder.jwk "$verification_method_holder"
 
-cat credentials/credential-self-issued.json\
-    | jq '.credentialSubject.id |= "did:example:foobar"'\
+vc_id="urn:uuid:$(uuidgen)"
+cat > credentials/credential-self-issued-no-id <<EOF
+{
+    "@context": "https://www.w3.org/2018/credentials/v1",
+    "id": "$vc_id",
+    "type": ["VerifiableCredential"],
+    "issuer": "$holder_did",
+    "issuanceDate": "$vc_issuance_date",
+    "credentialSubject": {}
+}
+EOF
+issue_and_encode_vc credentials/credential-self-issued-no-id keys/key-holder.jwk "$verification_method_holder"
+
+cat credentials/credential-self-issued.json \
+    | jq '.credentialSubject.id |= "did:example:foobar"' \
     > credentials/credential-self-issued-tampered.json
 
-vc_id="urn:uuid:"`uuidgen`
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-trust-party-issued-no-expiration-date <<EOF
 {
     "@context": "https://www.w3.org/2018/credentials/v1",
@@ -164,9 +175,9 @@ cat > credentials/credential-trust-party-issued-no-expiration-date <<EOF
     }
 }
 EOF
-issue_and_encode_vc credentials/credential-trust-party-issued-no-expiration-date keys/key-trust-party.jwk $verification_method_tp
+issue_and_encode_vc credentials/credential-trust-party-issued-no-expiration-date keys/key-trust-party.jwk "$verification_method_tp"
 
-vc_id="urn:uuid:"`uuidgen`
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-trust-party-issued-for-someone-else <<EOF
 {
     "@context": "https://www.w3.org/2018/credentials/v1",
@@ -179,9 +190,9 @@ cat > credentials/credential-trust-party-issued-for-someone-else <<EOF
     }
 }
 EOF
-issue_and_encode_vc credentials/credential-trust-party-issued-for-someone-else keys/key-trust-party.jwk $verification_method_tp
+issue_and_encode_vc credentials/credential-trust-party-issued-for-someone-else keys/key-trust-party.jwk "$verification_method_tp"
 
-vc_id="urn:uuid:"`uuidgen`
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-trust-party-issued-not-expired <<EOF
 {
     "@context": "https://www.w3.org/2018/credentials/v1",
@@ -195,9 +206,9 @@ cat > credentials/credential-trust-party-issued-not-expired <<EOF
     }
 }
 EOF
-issue_and_encode_vc credentials/credential-trust-party-issued-not-expired keys/key-trust-party.jwk $verification_method_tp
+issue_and_encode_vc credentials/credential-trust-party-issued-not-expired keys/key-trust-party.jwk "$verification_method_tp"
 
-vc_id="urn:uuid:"`uuidgen`
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-trust-party-issued-expired <<EOF
 {
     "@context": "https://www.w3.org/2018/credentials/v1",
@@ -211,13 +222,13 @@ cat > credentials/credential-trust-party-issued-expired <<EOF
     }
 }
 EOF
-issue_and_encode_vc credentials/credential-trust-party-issued-expired keys/key-trust-party.jwk $verification_method_tp
+issue_and_encode_vc credentials/credential-trust-party-issued-expired keys/key-trust-party.jwk "$verification_method_tp"
 
 
 # Create presentation embedding verifiable credential(s).
 # Prepare to present the verifiable credential by wrapping it in a
 # Verifiable Presentation. The id here is a random UUID.
-vp_id="urn:uuid:"`uuidgen`
+vp_id="urn:uuid:"$(uuidgen)
 cat > presentations/presentation-single-vc <<EOF
 {
     "@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -227,13 +238,13 @@ cat > presentations/presentation-single-vc <<EOF
     "verifiableCredential": $(cat credentials/credential-self-issued.json)
 }
 EOF
-issue_and_encode_vp presentations/presentation-single-vc keys/key-holder.jwk $verification_method_holder
+issue_and_encode_vp presentations/presentation-single-vc keys/key-holder.jwk "$verification_method_holder"
 
 cat presentations/presentation-single-vc.json \
-    | jq '.holder |= "did:example:foobar"'\
+    | jq '.holder |= "did:example:foobar"' \
     > presentations/presentation-tampered-holder.json
 
-vp_id="urn:uuid:"`uuidgen`
+vp_id="urn:uuid:"$(uuidgen)
 cat > presentations/presentation-tampered-vc <<EOF
 {
     "@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -243,9 +254,9 @@ cat > presentations/presentation-tampered-vc <<EOF
     "verifiableCredential": $(cat credentials/credential-self-issued-tampered.json)
 }
 EOF
-issue_and_encode_vp presentations/presentation-tampered-vc keys/key-holder.jwk $verification_method_holder
+issue_and_encode_vp presentations/presentation-tampered-vc keys/key-holder.jwk "$verification_method_holder"
 
-vp_id="urn:uuid:"`uuidgen`
+vp_id="urn:uuid:"$(uuidgen)
 cat > presentations/presentation-multiple-vc <<EOF
 {
     "@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -255,9 +266,9 @@ cat > presentations/presentation-multiple-vc <<EOF
     "verifiableCredential": [$(cat credentials/credential-self-issued.json), $(cat credentials/credential-trust-party-issued-no-expiration-date.json), $(cat credentials/credential-trust-party-issued-not-expired.json)]
 }
 EOF
-issue_and_encode_vp presentations/presentation-multiple-vc keys/key-holder.jwk $verification_method_holder
+issue_and_encode_vp presentations/presentation-multiple-vc keys/key-holder.jwk "$verification_method_holder"
 
-vp_id="urn:uuid:"`uuidgen`
+vp_id="urn:uuid:"$(uuidgen)
 cat > presentations/presentation-multiple-vc-expired <<EOF
 {
     "@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -267,9 +278,9 @@ cat > presentations/presentation-multiple-vc-expired <<EOF
     "verifiableCredential": [$(cat credentials/credential-self-issued.json), $(cat credentials/credential-trust-party-issued-expired.json)]
 }
 EOF
-issue_and_encode_vp presentations/presentation-multiple-vc-expired keys/key-holder.jwk $verification_method_holder
+issue_and_encode_vp presentations/presentation-multiple-vc-expired keys/key-holder.jwk "$verification_method_holder"
 
-vp_id="urn:uuid:"`uuidgen`
+vp_id="urn:uuid:"$(uuidgen)
 cat > presentations/presentation-multiple-vc-bad-subject-id <<EOF
 {
     "@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -279,12 +290,12 @@ cat > presentations/presentation-multiple-vc-bad-subject-id <<EOF
     "verifiableCredential": [$(cat credentials/credential-self-issued.json), $(cat credentials/credential-trust-party-issued-for-someone-else.json)]
 }
 EOF
-issue_and_encode_vp presentations/presentation-multiple-vc-expired keys/key-holder.jwk $verification_method_holder
+issue_and_encode_vp presentations/presentation-multiple-vc-expired keys/key-holder.jwk "$verification_method_holder"
 
 
 # Create DID Configurations
 echo '### DID configuration ###'
-vc_id="urn:uuid:"`uuidgen`
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-self-issued-domain-linkage <<EOF
 {
     "@context": [
@@ -306,7 +317,7 @@ EOF
 # manually sign the VC like
 # didkit credential issue -k ../check/services/verification-service/tests/keys/key-holder.jwk -v $verification_method -p assertionMethod -f ldp -t JsonWebSignature2020 < ../check/services/verification-service/tests/credentials/credential-self-issued-domain-linkage-fake-origin > ../check/services/verification-service/tests/credentials/credential-self-issued-domain-linkage-fake-origin.json
 
-domain_linkage_vc=`cat credentials/credential-self-issued-domain-linkage.json`
+domain_linkage_vc=$(cat credentials/credential-self-issued-domain-linkage.json)
 cat > did-configurations/did-config-holder <<EOF
 {
     "@context": "https://identity.foundation/.well-known/did-configuration/v1",
@@ -316,7 +327,7 @@ EOF
 print_json did-configurations/did-config-holder | tee did-configurations/did-config-holder.json
 
 
-vc_id="urn:uuid:"`uuidgen`
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-self-issued-domain-linkage-bad-subject-id <<EOF
 {
     "@context": [
@@ -335,7 +346,7 @@ cat > credentials/credential-self-issued-domain-linkage-bad-subject-id <<EOF
 EOF
 # issue_and_encode_vc credentials/credential-self-issued-domain-linkage keys/key-holder.jwk $verification_method_holder
 
-domain_linkage_vc=`cat credentials/credential-self-issued-domain-linkage-bad-subject-id.json`
+domain_linkage_vc=$(cat credentials/credential-self-issued-domain-linkage-bad-subject-id.json)
 cat > did-configurations/did-config-holder-bad-subject-id <<EOF
 {
     "@context": "https://identity.foundation/.well-known/did-configuration/v1",
@@ -345,7 +356,7 @@ EOF
 print_json did-configurations/did-config-holder-bad-subject-id | tee did-configurations/did-config-holder-bad-subject-id.json
 
 
-vc_id="urn:uuid:"`uuidgen`
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-self-issued-domain-linkage-fake-origin <<EOF
 {
     "@context": [
@@ -364,7 +375,7 @@ cat > credentials/credential-self-issued-domain-linkage-fake-origin <<EOF
 EOF
 # issue_and_encode_vc credentials/credential-self-issued-domain-linkage keys/key-holder.jwk $verification_method_holder
 
-domain_linkage_vc=`cat credentials/credential-self-issued-domain-linkage-fake-origin.json`
+domain_linkage_vc=$(cat credentials/credential-self-issued-domain-linkage-fake-origin.json)
 cat > did-configurations/did-config-holder-fake-origin <<EOF
 {
     "@context": "https://identity.foundation/.well-known/did-configuration/v1",
@@ -374,7 +385,7 @@ EOF
 print_json did-configurations/did-config-holder-fake-origin | tee did-configurations/did-config-holder-fake-origin.json
 
 
-vc_id="urn:uuid:"`uuidgen`
+vc_id="urn:uuid:$(uuidgen)"
 cat > credentials/credential-self-issued-domain-linkage-subject-is-not-issuer <<EOF
 {
     "@context": [
@@ -393,7 +404,7 @@ cat > credentials/credential-self-issued-domain-linkage-subject-is-not-issuer <<
 EOF
 # issue_and_encode_vc credentials/credential-self-issued-domain-linkage keys/key-holder.jwk $verification_method_holder
 
-domain_linkage_vc=`cat credentials/credential-self-issued-domain-linkage-subject-is-not-issuer.json`
+domain_linkage_vc=$(cat credentials/credential-self-issued-domain-linkage-subject-is-not-issuer.json)
 cat > did-configurations/did-config-holder-subject-is-not-issuer <<EOF
 {
     "@context": "https://identity.foundation/.well-known/did-configuration/v1",

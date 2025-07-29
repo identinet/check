@@ -1,4 +1,10 @@
 use super::dto::VerificationResult;
+#[cfg(not(test))]
+use ssi::dids::AnyDidMethod;
+#[cfg(test)]
+use ssi::dids::{self, StaticDIDResolver};
+#[cfg(test)]
+use ssi::prelude::DIDResolver;
 use ssi::{
     claims::{
         chrono::Utc,
@@ -11,6 +17,7 @@ use ssi::{
     verification_methods::AnyMethod,
 };
 use tokio::task::JoinSet;
+use url::Url;
 
 /// Verifies the given Verifiable Presentations. After verifying the proof of each presentation the nested Verifiable
 /// Credentials are verified, too. The VC verification process also includes validation - i.e. proofs are checked and
@@ -105,7 +112,7 @@ async fn verify_vp(
                 // it should be safe to unwrap the result as we just deserialized the whole VP
                 // => serializing the VC should work without errors
                 let vc_json = serde_json::to_string(&vc).unwrap();
-                match verify_vc(&vc_json, &holder_clone).await {
+                match verify_vc(&vc_json, &holder_clone, true).await {
                     Ok(r) => (i, r),
                     Err(r) => (i, r),
                 }
@@ -125,11 +132,13 @@ async fn verify_vp(
 /// Verifies the given VC and validates the contained claims.
 /// I.e. checks the cryptographic proof and verifies that the claims themselves
 /// are consistent and valid (e.g. expiration date has not passed, yet).
+/// Bearer credentials with credentialSubject.id are considered valid when allow_missing_subjectid is true.
 pub async fn verify_vc(
     vc_json: &String,
     expected_subject: &DIDBuf,
+    allow_missing_subjectid: bool,
 ) -> Result<VerificationResult, VerificationResult> {
-    let vc = match any_credential_from_json_str(&vc_json) {
+    let vc = match any_credential_from_json_str(vc_json) {
         Ok(c) => c,
         Err(e) => return Err(VerificationResult::vc_parse_error(e)),
     };
@@ -144,33 +153,39 @@ pub async fn verify_vc(
                 .get("id")
                 .next()
                 .and_then(|v| match v {
-                    Value::String(v) => ssi::dids::DIDBuf::new(v.as_bytes().to_vec()).ok(),
+                    Value::String(v) => dids::DIDBuf::new(v.as_bytes().to_vec()).ok(),
                     _ => None,
-                })
-                .ok_or(VerificationResult::VcValidationErrorOther(
-                    super::dto::VerificationResultPayload {
-                        message: "Validation failed.".to_string(),
-                        details: "Subject must be a DID".to_string(),
-                        verified: false,
-                    },
-                ))?;
-
-            // and the value MUST be equal to the Issuer of the Domain Linkage Credential.
-            if id != expected_subject {
-                Err(VerificationResult::VcValidationErrorSubjectMismatch(
-                    super::dto::VerificationResultPayload {
-                        message: "Validation failed due to unexpected subject.".to_string(),
-                        details: format!(
-                            "Expected '{}' but found '{}'",
-                            expected_subject.as_uri(),
-                            id.as_uri()
-                        )
-                        .to_string(),
-                        verified: false,
-                    },
-                ))
-            } else {
+                });
+            if allow_missing_subjectid && id.is_none() {
                 Ok(VerificationResult::vc_valid())
+            } else {
+                let id = id
+                    .clone()
+                    .ok_or(VerificationResult::VcValidationErrorOther(
+                        super::dto::VerificationResultPayload {
+                            message: "Validation failed.".to_string(),
+                            details: "Subject must be a DID".to_string(),
+                            verified: false,
+                        },
+                    ))?;
+
+                // and the value MUST be equal to the Issuer of the Domain Linkage Credential.
+                if id != *expected_subject {
+                    Err(VerificationResult::VcValidationErrorSubjectMismatch(
+                        super::dto::VerificationResultPayload {
+                            message: "Validation failed due to unexpected subject.".to_string(),
+                            details: format!(
+                                "Expected '{}' but found '{}'",
+                                expected_subject.as_uri(),
+                                id.as_uri()
+                            )
+                            .to_string(),
+                            verified: false,
+                        },
+                    ))
+                } else {
+                    Ok(VerificationResult::vc_valid())
+                }
             }
         }
         Ok(Err(e)) => Err(VerificationResult::from(e)),
@@ -185,11 +200,15 @@ pub async fn verify_vc(
 /// 2. credentialSubject.id MUST be equal to the issuer
 /// 3: credentialSubject.origin property MUST be present, and its value MUST match the origin the resource was requested
 /// from.
-pub async fn verify_did_config_vc(
-    did_config_json: &String,
+pub async fn verify_did_configuration_vc(
+    did_configuration_json: &String,
     url: &Url,
 ) -> Result<VerificationResult, VerificationResult> {
-    match serde_json::from_slice::<super::service::DidConfig>(&did_config_json.as_bytes()) {
+    // TODO: add support for JWT credentials
+    // TODO: what if multiple credentials are available, is this handled properly?
+    match serde_json::from_slice::<super::service::WellKnownDidConfig>(
+        &did_configuration_json.as_bytes(),
+    ) {
         Ok(config) => {
             let domain_linkage_vc_json = serde_json::to_string(&config.linked_dids[0]).unwrap();
 
@@ -198,7 +217,7 @@ pub async fn verify_did_config_vc(
                 VerificationResult::did_config_error("issuer is not a DID".to_string())
             })?;
 
-            match verify_vc(&domain_linkage_vc_json, &issuer_did).await {
+            match verify_vc(&domain_linkage_vc_json, &issuer_did, false).await {
                 Ok(_) => {
                     // The credentialSubject.origin property MUST be present,
                     // and its value MUST match the origin the resource was requested from.
@@ -238,33 +257,41 @@ pub async fn verify_did_config_vc(
     }
 }
 
-/// Creates a verifier for VCs and VPs that uses AnyDidMethod to resolve DIDs.
-/// The verifier will use the current date/time when validating dates.
-#[cfg(not(test))]
-fn create_verifier(
-) -> VerificationParameters<VerificationMethodDIDResolver<ssi::dids::AnyDidMethod, AnyMethod>> {
-    let resolver =
-        VerificationMethodDIDResolver::<_, AnyMethod>::new(ssi::dids::AnyDidMethod::default());
-
-    // Create a verifier using the verification method resolver
-    let v = VerificationParameters::from_resolver(resolver);
-    v.with_date_time(Utc::now())
+cfg_if::cfg_if! {
+     if #[cfg(test)] {
+        /// Creates a verifier for VCs and VPs that uses AnyDidMethod to resolve DIDs.
+        /// The verifier will use the current date/time when validating dates.
+        fn create_verifier(
+        ) -> VerificationParameters<VerificationMethodDIDResolver<StaticDIDResolver, AnyMethod>> {
+            let resolver = static_test_resovler();
+            // Create a verifier using the verification method resolver
+            let v = VerificationParameters::from_resolver(resolver);
+            v.with_date_time(Utc::now())
+        }
+    } else {
+        /// Creates a verifier for VCs and VPs that uses AnyDidMethod to resolve DIDs.
+        /// The verifier will use the current date/time when validating dates.
+        fn create_verifier(
+        ) -> VerificationParameters<VerificationMethodDIDResolver<AnyDidMethod, AnyMethod>> {
+            let resolver =
+                VerificationMethodDIDResolver::<_, AnyMethod>::new(dids::AnyDidMethod::default());
+            // Create a verifier using the verification method resolver
+            let v = VerificationParameters::from_resolver(resolver);
+            v.with_date_time(Utc::now())
+        }
+    }
 }
 
-#[cfg(test)]
-use ssi::prelude::DIDResolver;
-use url::Url;
 /// Creates a verifier for VCs and VPs that uses a static DID resolver which knows about the
 /// DIDs used in the credentials available in the tests/ directory.
 #[cfg(test)]
-fn create_verifier(
-) -> VerificationParameters<VerificationMethodDIDResolver<ssi::dids::StaticDIDResolver, AnyMethod>>
-{
+#[cfg(test)]
+fn static_test_resovler() -> VerificationMethodDIDResolver<StaticDIDResolver, AnyMethod> {
     let did_holder = include_str!("../../tests/dids/did-holder")
         .trim()
         .parse()
         .unwrap();
-    let did_doc_holder = ssi::dids::resolution::Output::from_content(
+    let did_doc_holder = dids::resolution::Output::from_content(
         include_bytes!("../../tests/dids/did-doc-holder.json").to_vec(),
         Some("application/did+json".to_owned()),
     );
@@ -273,29 +300,24 @@ fn create_verifier(
         .trim()
         .parse()
         .unwrap();
-    let did_doc_tp = ssi::dids::resolution::Output::from_content(
+    let did_doc_tp = dids::resolution::Output::from_content(
         include_bytes!("../../tests/dids/did-doc-trust-party.json").to_vec(),
         Some("application/did+json".to_owned()),
     );
 
     // Create a static DID resolver that resolves our test DID into a
     // static DID document
-    let mut did_resolver = ssi::dids::StaticDIDResolver::new();
+    let mut did_resolver = StaticDIDResolver::new();
     did_resolver.insert(did_holder, did_doc_holder);
     did_resolver.insert(did_tp, did_doc_tp);
 
     // Turn the DID resolver into a verification method resolver by setting
     // resolution options
-    let resolver = did_resolver.into_vm_resolver();
-
-    // Create a verifier using the verification method resolver
-    let v = VerificationParameters::from_resolver(resolver);
-    v.with_date_time(Utc::now())
+    did_resolver.into_vm_resolver()
 }
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use std::fs;
 
@@ -310,7 +332,7 @@ mod tests {
     async fn verify_vc_self_issued() {
         let vc_json = fs::read_to_string("tests/credentials/credential-self-issued.json").unwrap();
         assert!(matches!(
-            verify_vc(&vc_json, &holder_did()).await.unwrap(),
+            verify_vc(&vc_json, &holder_did(), false).await.unwrap(),
             VerificationResult::VcValid(_)
         ));
     }
@@ -320,8 +342,30 @@ mod tests {
         let vc_json = fs::read_to_string("tests/credentials/credential-self-issued.json").unwrap();
         let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
         assert!(matches!(
-            verify_vc(&vc_json, &did).await.unwrap_err(),
+            verify_vc(&vc_json, &did, false).await.unwrap_err(),
             VerificationResult::VcValidationErrorSubjectMismatch(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn verify_vc_self_issued_no_subjectid_disallowed() {
+        let vc_json =
+            fs::read_to_string("tests/credentials/credential-self-issued-no-id.json").unwrap();
+        let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
+        assert!(matches!(
+            verify_vc(&vc_json, &did, false).await.unwrap_err(),
+            VerificationResult::VcValidationErrorOther(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn verify_vc_self_issued_no_subjectid_allowed() {
+        let vc_json =
+            fs::read_to_string("tests/credentials/credential-self-issued-no-id.json").unwrap();
+        let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
+        assert!(matches!(
+            verify_vc(&vc_json, &did, true).await.unwrap(),
+            VerificationResult::VcValid(_)
         ));
     }
 
@@ -330,7 +374,7 @@ mod tests {
         let vc_json =
             fs::read_to_string("tests/credentials/credential-self-issued-tampered.json").unwrap();
         assert!(matches!(
-            verify_vc(&vc_json, &holder_did()).await.unwrap_err(),
+            verify_vc(&vc_json, &holder_did(), false).await.unwrap_err(),
             VerificationResult::VcProofErrorSignature(_)
         ));
     }
@@ -342,7 +386,7 @@ mod tests {
         )
         .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json, &holder_did()).await.unwrap(),
+            verify_vc(&vc_json, &holder_did(), false).await.unwrap(),
             VerificationResult::VcValid(_)
         ));
 
@@ -350,7 +394,7 @@ mod tests {
             fs::read_to_string("tests/credentials/credential-trust-party-issued-not-expired.json")
                 .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json, &holder_did()).await.unwrap(),
+            verify_vc(&vc_json, &holder_did(), false).await.unwrap(),
             VerificationResult::VcValid(_)
         ));
     }
@@ -361,7 +405,7 @@ mod tests {
             fs::read_to_string("tests/credentials/credential-trust-party-issued-expired.json")
                 .unwrap();
         assert!(matches!(
-            verify_vc(&vc_json, &holder_did()).await.unwrap_err(),
+            verify_vc(&vc_json, &holder_did(), false).await.unwrap_err(),
             VerificationResult::VcValidationErrorExpired(_)
         ));
     }
@@ -424,7 +468,9 @@ mod tests {
             fs::read_to_string("tests/did-configurations/did-config-holder.json").unwrap();
 
         let url = Url::parse("https://example.com").unwrap();
-        let x = verify_did_config_vc(&did_config_json, &url).await.unwrap();
+        let x = verify_did_configuration_vc(&did_config_json, &url)
+            .await
+            .unwrap();
         assert!(matches!(x, VerificationResult::VcValid(_)));
     }
 
@@ -435,7 +481,7 @@ mod tests {
                 .unwrap();
 
         let url = Url::parse("https://example.com").unwrap();
-        let x = verify_did_config_vc(&did_config_json, &url)
+        let x = verify_did_configuration_vc(&did_config_json, &url)
             .await
             .unwrap_err();
         assert!(matches!(x, VerificationResult::DidConfigError(_)));
@@ -456,7 +502,7 @@ mod tests {
         .unwrap();
 
         let url = Url::parse("https://example.com").unwrap();
-        let x = verify_did_config_vc(&did_config_json, &url)
+        let x = verify_did_configuration_vc(&did_config_json, &url)
             .await
             .unwrap_err();
         assert!(matches!(x, VerificationResult::DidConfigError(_)));
@@ -476,7 +522,7 @@ mod tests {
                 .unwrap();
 
         let url = Url::parse("https://example.com").unwrap();
-        let x = verify_did_config_vc(&did_config_json, &url)
+        let x = verify_did_configuration_vc(&did_config_json, &url)
             .await
             .unwrap_err();
         assert!(matches!(x, VerificationResult::DidConfigError(_)));

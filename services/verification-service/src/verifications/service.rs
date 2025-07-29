@@ -36,8 +36,10 @@ pub enum Error {
     DidConfigInvalid(String),
 }
 
+// Well Known DID Configuration Specification https://identity.foundation/.well-known/resources/did-configuration/
 #[derive(Debug, Deserialize)]
-pub struct DidConfig {
+pub struct WellKnownDidConfig {
+    // TODO: add support for Jwt credentials
     pub linked_dids: Vec<JsonCredential>,
 }
 
@@ -116,9 +118,11 @@ async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
     };
 
     // verify DID config VC
-    let config = match verification_service::verify_did_config_vc(&config_json, url).await {
-        Ok(_) => serde_json::from_slice::<super::service::DidConfig>(&config_json.as_bytes())
-            .map_err(|_| Error::Unexpected("".to_string())), // not expected as verify_did_config_vc would have failed already if DID config could not be parsed
+    let config = match verification_service::verify_did_configuration_vc(&config_json, url).await {
+        Ok(_) => {
+            serde_json::from_slice::<super::service::WellKnownDidConfig>(&config_json.as_bytes())
+                .map_err(|_| Error::Unexpected("".to_string()))
+        } // not expected as verify_did_config_vc would have failed already if DID config could not be parsed
         Err(e) => Err(match e {
             VerificationResult::DidConfigError(p) => Error::DidConfigInvalid(p.details),
             _ => Error::DidConfigInvalid(serde_json::to_string(&e).unwrap()),
@@ -145,7 +149,7 @@ async fn lookup_did_config(url: &Url) -> Result<String, ()> {
 
 /// Extracts all DIDs from the given DID config. If no DID is found or no DID is
 /// valid an empty vector is returned.
-fn config_to_dids(config: &DidConfig) -> Vec<DIDBuf> {
+fn config_to_dids(config: &WellKnownDidConfig) -> Vec<DIDBuf> {
     config
         .linked_dids
         .iter()
@@ -161,11 +165,16 @@ fn config_to_dids(config: &DidConfig) -> Vec<DIDBuf> {
 }
 
 /// Constructs the well-known config URL based on the given URL
-/// https://identity.foundation/specs/did-configuration/
+/// DIF Well Known DID Configuration specification https://identity.foundation/.well-known/resources/did-configuration/
 fn url_to_well_known_config_uri(url: &Url) -> Result<Url, ()> {
     let mut url = url.clone();
-    url.set_scheme("https")?;
+    url.set_scheme("https").unwrap();
     url.set_path(".well-known/did-configuration.json");
+    // remove all unused settings from the URL
+    url.set_query(None);
+    url.set_fragment(None);
+    url.set_port(None).unwrap();
+    url.set_password(None).unwrap();
     Ok(url)
 }
 
