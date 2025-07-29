@@ -1,4 +1,4 @@
-import { createEffect, ErrorBoundary, For, Show, Suspense } from "solid-js";
+import { createEffect, ErrorBoundary, Show, Suspense } from "solid-js";
 import {
   action,
   useAction,
@@ -104,8 +104,8 @@ const verifyUrlAction = action(async (formData: FormData) => {
     if (result.error) throw new Error(result.error);
 
     return result;
-  } catch (error) {
-    return error;
+  } catch (err) {
+    return err;
   }
 }, "verifyUrl");
 
@@ -144,7 +144,8 @@ export default function VerificationSearch() {
     try {
       const url = new URL(value);
       return (url.protocol != "https:") && "Please enter an entire valid URL.";
-    } catch (_e) {
+    } catch (err) {
+      console.error(err);
       return "Please enter an entire valid URL.";
     }
   };

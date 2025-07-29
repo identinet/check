@@ -34,93 +34,88 @@ export function CredentialCard(props): Component<PropsCard> {
   const [collapsed, setCollapsed] = createSignal(true);
   const toggleCardView = () => setCollapsed((collapsed) => !collapsed);
   const resultElement = ({ error, errorDetails }) => (
-    <>
-      <div
-        class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-        classList={{
-          "border-red-400": !props.verificationResult.verified,
-        }}
-      >
-        <div class="items-start justify-between border-b border-gray-100 pb-4 dark:border-gray-700 md:flex">
-          <div class="mb-4 justify-between sm:flex sm:items-center md:mb-0 md:block lg:mb-4 lg:flex xl:mb-0 xl:block">
-            <div class="items-center gap-4 flex">
-              <div
-                class="size-14"
-                classList={{
-                  "i-flowbite-file-check-solid ":
-                    props.verificationResult.verified,
-                  "i-flowbite-file-solid ": !props.verificationResult.verified,
-                  "text-gray-400": props.verificationResult.verified,
-                  "dark:text-gray-700": props.verificationResult.verified,
-                  "text-red-400": !props.verificationResult.verified,
-                  "dark:text-red-700": !props.verificationResult.verified,
-                }}
-              />
-              <div class="">
-                <div class="mb-2 items-center sm:flex sm:space-x-2">
-                  <a
-                    href="#"
-                    class="mb-2 block font-semibold text-gray-900 hover:underline dark:text-white sm:mb-0 sm:flex"
-                  >
-                    {titleFromCredentialType(props.credential)}
-                  </a>
-                  <span
-                    class="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-medium"
+    <div
+      class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+      classList={{
+        "border-red-400": !props.verificationResult.verified,
+      }}
+    >
+      <div class="items-start justify-between border-b border-gray-100 pb-4 dark:border-gray-700 md:flex">
+        <div class="mb-4 justify-between sm:flex sm:items-center md:mb-0 md:block lg:mb-4 lg:flex xl:mb-0 xl:block">
+          <div class="items-center gap-4 flex">
+            <div
+              class="size-14"
+              classList={{
+                "i-flowbite-file-check-solid ":
+                  props.verificationResult.verified,
+                "i-flowbite-file-solid ": !props.verificationResult.verified,
+                "text-gray-400": props.verificationResult.verified,
+                "dark:text-gray-700": props.verificationResult.verified,
+                "text-red-400": !props.verificationResult.verified,
+                "dark:text-red-700": !props.verificationResult.verified,
+              }}
+            />
+            <div>
+              <div class="mb-2 items-center sm:flex sm:space-x-2">
+                <h3 class="mb-2 block font-semibold text-gray-900 hover:underline dark:text-white sm:mb-0 sm:flex">
+                  {titleFromCredentialType(props.credential)}
+                </h3>
+                <span
+                  class="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-medium"
+                  classList={{
+                    "bg-green-100": props.verificationResult.verified,
+                    "text-green-800": props.verificationResult.verified,
+                    "dark:text-green-800": props.verificationResult.verified,
+                    "bg-red-100": !props.verificationResult.verified,
+                    "text-red-800": !props.verificationResult.verified,
+                    "dark:text-red-800": !props.verificationResult.verified,
+                  }}
+                >
+                  <div
+                    class="me-1 size-3"
                     classList={{
-                      "bg-green-100": props.verificationResult.verified,
-                      "text-green-800": props.verificationResult.verified,
-                      "dark:text-green-800": props.verificationResult.verified,
-                      "bg-red-100": !props.verificationResult.verified,
-                      "text-red-800": !props.verificationResult.verified,
-                      "dark:text-red-800": !props.verificationResult.verified,
+                      "i-flowbite-badge-check-solid":
+                        props.verificationResult.verified,
+                      "i-flowbite-close-circle-solid": !props
+                        .verificationResult
+                        .verified,
                     }}
-                  >
-                    <div
-                      class="me-1 size-3"
-                      classList={{
-                        "i-flowbite-badge-check-solid":
-                          props.verificationResult.verified,
-                        "i-flowbite-close-circle-solid": !props
-                          .verificationResult
-                          .verified,
-                      }}
-                    />
-                    {props.verificationResult.verified
-                      ? "Verified"
-                      : "Verification failed"}
-                  </span>
-                </div>
+                  />
+                  {props.verificationResult.verified
+                    ? "Verified"
+                    : "Verification failed"}
+                </span>
               </div>
             </div>
           </div>
-          <button
-            data-drawer-target="extend-warranty-drawer"
-            data-drawer-show="extend-warranty-drawer"
-            data-drawer-placement="right"
-            type="button"
-            onClick={toggleCardView}
-            class="w-full rounded-lg bg-primary-300 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none dark:bg-primary-600 dark:hover:bg-primary-300 md:w-auto"
-          >
-            {collapsed() ? "Show details" : "Hide details"}
-          </button>
         </div>
-        <Show
-          when={!error}
-          fallback={
-            <div class="p-2">
-              <div class="font-bold">{error}</div>
-              {!collapsed() && errorDetails && (
-                <div class="text-sm">{errorDetails}</div>
-              )}
-            </div>
-          }
+        <button
+          data-drawer-target="extend-warranty-drawer"
+          data-drawer-show="extend-warranty-drawer"
+          data-drawer-placement="right"
+          type="button"
+          onClick={toggleCardView}
+          class="w-full rounded-lg bg-primary-300 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none dark:bg-primary-600 dark:hover:bg-primary-300 md:w-auto"
         >
-          <div class="md:columns-2 p-2">
-            {credentialDetails(props.credential)}
-          </div>
-        </Show>
+          {collapsed() ? "Show details" : "Hide details"}
+        </button>
       </div>
-    </>
+      <Show
+        when={!error}
+        fallback={
+          <div class="p-2">
+            <div class="font-bold">{error}</div>
+            {!collapsed() && errorDetails && (
+              <div class="text-sm">{errorDetails}</div>
+            )}
+          </div>
+        }
+      >
+        <div class="md:columns-2 p-2">
+          {credentialDetails(props.credential)}
+        </div>
+      </Show>
+    </div>
   );
 
   const credentialDetails = (credential) => {
