@@ -28,7 +28,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: embedded-verification-ui
-          image: identinet/check-embedded-verification-ui
+          image: identinet/check-embedded-verification-ui:0.0.1
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: config

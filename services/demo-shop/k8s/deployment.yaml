@@ -24,7 +24,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: demo-shop
-          image: identinet/check-demo-shop
+          image: identinet/check-demo-shop:0.0.1
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:

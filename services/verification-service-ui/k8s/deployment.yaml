@@ -24,7 +24,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: verification-service-ui
-          image: identinet/check-verification-service-ui
+          image: identinet/check-verification-service-ui:0.0.1
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
