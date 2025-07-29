@@ -6,15 +6,11 @@
 .App {
   font-family: Inter, sans-serif;
   font-weight: 500;
-  /* text-align: center; */
   min-height: 4vmin;
-  /* max-height: 20vmax; */
   top: 14vh;
   right: 0;
   position: fixed;
   overflow: hidden;
-  /* background-color: #282c34; */
-  /* background-color: transparent; */
   z-index: 90;
 }
 
@@ -44,10 +40,7 @@
 }
 
 .verificationStatusIcon {
-  /* animation: logo-spin infinite 20s linear; */
   height: 4vmin;
-  /* height: 100%; */
-  /* pointer-events: none; */
 }
 
 @keyframes logo-spin {
