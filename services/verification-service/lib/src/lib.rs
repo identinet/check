@@ -1,4 +1,7 @@
-use super::dto::VerificationResult;
+pub mod dto;
+use dto::VerificationResult;
+use serde::Deserialize;
+use ssi::claims::vc::v1::JsonCredential;
 #[cfg(not(test))]
 use ssi::dids::AnyDidMethod;
 #[cfg(test)]
@@ -62,11 +65,11 @@ pub async fn verify_presentations(
 /// Verifies the given Verifiable Presentation and all included Verifiable
 /// Credentials.
 async fn verify_vp(
-    vp_json: &String,
+    vp_json: &str,
     expected_holder: &DIDBuf,
 ) -> Result<Vec<VerificationResult>, VerificationResult> {
     // Create DataIntegrity from JSON string
-    let vp: AnyDataIntegrity<JsonPresentation> = match serde_json::from_str(&vp_json) {
+    let vp: AnyDataIntegrity<JsonPresentation> = match serde_json::from_str(vp_json) {
         Ok(p) => p,
         Err(e) => return Err(VerificationResult::vp_parse_error(e)),
     };
@@ -134,7 +137,7 @@ async fn verify_vp(
 /// are consistent and valid (e.g. expiration date has not passed, yet).
 /// Bearer credentials with credentialSubject.id are considered valid when allow_missing_subjectid is true.
 pub async fn verify_vc(
-    vc_json: &String,
+    vc_json: &str,
     expected_subject: &DIDBuf,
     allow_missing_subjectid: bool,
 ) -> Result<VerificationResult, VerificationResult> {
@@ -153,7 +156,7 @@ pub async fn verify_vc(
                 .get("id")
                 .next()
                 .and_then(|v| match v {
-                    Value::String(v) => dids::DIDBuf::new(v.as_bytes().to_vec()).ok(),
+                    Value::String(v) => DIDBuf::new(v.as_bytes().to_vec()).ok(),
                     _ => None,
                 });
             if allow_missing_subjectid && id.is_none() {
@@ -162,7 +165,7 @@ pub async fn verify_vc(
                 let id = id
                     .clone()
                     .ok_or(VerificationResult::VcValidationErrorOther(
-                        super::dto::VerificationResultPayload {
+                        dto::VerificationResultPayload {
                             message: "Validation failed.".to_string(),
                             details: "Subject must be a DID".to_string(),
                             verified: false,
@@ -172,7 +175,7 @@ pub async fn verify_vc(
                 // and the value MUST be equal to the Issuer of the Domain Linkage Credential.
                 if id != *expected_subject {
                     Err(VerificationResult::VcValidationErrorSubjectMismatch(
-                        super::dto::VerificationResultPayload {
+                        dto::VerificationResultPayload {
                             message: "Validation failed due to unexpected subject.".to_string(),
                             details: format!(
                                 "Expected '{}' but found '{}'",
@@ -193,22 +196,27 @@ pub async fn verify_vc(
     }
 }
 
+// Well Known DID Configuration Specification https://identity.foundation/.well-known/resources/did-configuration/
+#[derive(Debug, Deserialize)]
+pub struct WellKnownDidConfig {
+    // TODO: add support for Jwt credentials
+    pub linked_dids: Vec<JsonCredential>,
+}
+
 /// Verifies the given DID configuration. First, the embedded DomainLinkage VC is verified. Then, the verification steps
 /// mentioned at https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification
 /// are executed:
+///
 /// 1. credentialSubject.id MUST be a DID
 /// 2. credentialSubject.id MUST be equal to the issuer
-/// 3: credentialSubject.origin property MUST be present, and its value MUST match the origin the resource was requested
-/// from.
+/// 3. credentialSubject.origin property MUST be present, and its value MUST match the origin the resource was requested from.
 pub async fn verify_did_configuration_vc(
     did_configuration_json: &String,
     url: &Url,
 ) -> Result<VerificationResult, VerificationResult> {
     // TODO: add support for JWT credentials
     // TODO: what if multiple credentials are available, is this handled properly?
-    match serde_json::from_slice::<super::service::WellKnownDidConfig>(
-        &did_configuration_json.as_bytes(),
-    ) {
+    match serde_json::from_slice::<WellKnownDidConfig>(did_configuration_json.as_bytes()) {
         Ok(config) => {
             let domain_linkage_vc_json = serde_json::to_string(&config.linked_dids[0]).unwrap();
 
@@ -226,7 +234,7 @@ pub async fn verify_did_configuration_vc(
                         .next()
                         .and_then(|v| match v {
                             Value::String(origin) => {
-                                if url.origin().ascii_serialization() != origin.to_string() {
+                                if *origin != url.origin().ascii_serialization() {
                                     None
                                 } else {
                                     Some(origin)
@@ -274,7 +282,7 @@ cfg_if::cfg_if! {
         fn create_verifier(
         ) -> VerificationParameters<VerificationMethodDIDResolver<AnyDidMethod, AnyMethod>> {
             let resolver =
-                VerificationMethodDIDResolver::<_, AnyMethod>::new(dids::AnyDidMethod::default());
+                VerificationMethodDIDResolver::<_, AnyMethod>::new(AnyDidMethod::default());
             // Create a verifier using the verification method resolver
             let v = VerificationParameters::from_resolver(resolver);
             v.with_date_time(Utc::now())
@@ -330,7 +338,8 @@ mod tests {
 
     #[tokio::test]
     async fn verify_vc_self_issued() {
-        let vc_json = fs::read_to_string("tests/credentials/credential-self-issued.json").unwrap();
+        let vc_json =
+            fs::read_to_string("../tests/credentials/credential-self-issued.json").unwrap();
         assert!(matches!(
             verify_vc(&vc_json, &holder_did(), false).await.unwrap(),
             VerificationResult::VcValid(_)
@@ -339,7 +348,8 @@ mod tests {
 
     #[tokio::test]
     async fn verify_vc_self_issued_bad_subject() {
-        let vc_json = fs::read_to_string("tests/credentials/credential-self-issued.json").unwrap();
+        let vc_json =
+            fs::read_to_string("../tests/credentials/credential-self-issued.json").unwrap();
         let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
         assert!(matches!(
             verify_vc(&vc_json, &did, false).await.unwrap_err(),
@@ -350,7 +360,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vc_self_issued_no_subjectid_disallowed() {
         let vc_json =
-            fs::read_to_string("tests/credentials/credential-self-issued-no-id.json").unwrap();
+            fs::read_to_string("../tests/credentials/credential-self-issued-no-id.json").unwrap();
         let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
         assert!(matches!(
             verify_vc(&vc_json, &did, false).await.unwrap_err(),
@@ -361,7 +371,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vc_self_issued_no_subjectid_allowed() {
         let vc_json =
-            fs::read_to_string("tests/credentials/credential-self-issued-no-id.json").unwrap();
+            fs::read_to_string("../tests/credentials/credential-self-issued-no-id.json").unwrap();
         let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
         assert!(matches!(
             verify_vc(&vc_json, &did, true).await.unwrap(),
@@ -372,7 +382,8 @@ mod tests {
     #[tokio::test]
     async fn verify_vc_self_issued_tampered() {
         let vc_json =
-            fs::read_to_string("tests/credentials/credential-self-issued-tampered.json").unwrap();
+            fs::read_to_string("../tests/credentials/credential-self-issued-tampered.json")
+                .unwrap();
         assert!(matches!(
             verify_vc(&vc_json, &holder_did(), false).await.unwrap_err(),
             VerificationResult::VcProofErrorSignature(_)
@@ -382,7 +393,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vc_tp_issued_no_expiration() {
         let vc_json = fs::read_to_string(
-            "tests/credentials/credential-trust-party-issued-no-expiration-date.json",
+            "../tests/credentials/credential-trust-party-issued-no-expiration-date.json",
         )
         .unwrap();
         assert!(matches!(
@@ -390,9 +401,10 @@ mod tests {
             VerificationResult::VcValid(_)
         ));
 
-        let vc_json =
-            fs::read_to_string("tests/credentials/credential-trust-party-issued-not-expired.json")
-                .unwrap();
+        let vc_json = fs::read_to_string(
+            "../tests/credentials/credential-trust-party-issued-not-expired.json",
+        )
+        .unwrap();
         assert!(matches!(
             verify_vc(&vc_json, &holder_did(), false).await.unwrap(),
             VerificationResult::VcValid(_)
@@ -402,7 +414,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vc_tp_issued_expired() {
         let vc_json =
-            fs::read_to_string("tests/credentials/credential-trust-party-issued-expired.json")
+            fs::read_to_string("../tests/credentials/credential-trust-party-issued-expired.json")
                 .unwrap();
         assert!(matches!(
             verify_vc(&vc_json, &holder_did(), false).await.unwrap_err(),
@@ -413,7 +425,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vp_single_vc() {
         let vp_json =
-            fs::read_to_string("tests/presentations/presentation-single-vc.json").unwrap();
+            fs::read_to_string("../tests/presentations/presentation-single-vc.json").unwrap();
         let x = verify_vp(&vp_json, &holder_did()).await.unwrap();
         assert_eq!(x.len(), 1);
         assert!(matches!(x[0], VerificationResult::VcValid(_)));
@@ -422,7 +434,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vp_multiple_vc() {
         let vp_json =
-            fs::read_to_string("tests/presentations/presentation-multiple-vc.json").unwrap();
+            fs::read_to_string("../tests/presentations/presentation-multiple-vc.json").unwrap();
         let x = verify_vp(&vp_json, &holder_did()).await.unwrap();
         assert_eq!(x.len(), 3);
         assert!(matches!(x[0], VerificationResult::VcValid(_)));
@@ -433,7 +445,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vp_multiple_vc_expired() {
         let vp_json =
-            fs::read_to_string("tests/presentations/presentation-multiple-vc-expired.json")
+            fs::read_to_string("../tests/presentations/presentation-multiple-vc-expired.json")
                 .unwrap();
         let x = verify_vp(&vp_json, &holder_did()).await.unwrap();
         assert_eq!(x.len(), 2);
@@ -447,7 +459,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vp_tampered_vc() {
         let vp_json =
-            fs::read_to_string("tests/presentations/presentation-tampered-vc.json").unwrap();
+            fs::read_to_string("../tests/presentations/presentation-tampered-vc.json").unwrap();
         let x = verify_vp(&vp_json, &holder_did()).await.unwrap();
         assert_eq!(x.len(), 1);
         assert!(matches!(x[0], VerificationResult::VcProofErrorSignature(_)));
@@ -456,7 +468,7 @@ mod tests {
     #[tokio::test]
     async fn verify_vp_bad_holder() {
         let vp_json =
-            fs::read_to_string("tests/presentations/presentation-tampered-vc.json").unwrap();
+            fs::read_to_string("../tests/presentations/presentation-tampered-vc.json").unwrap();
         let did = DIDBuf::new("did:example:foo".as_bytes().to_vec()).unwrap();
         let x = verify_vp(&vp_json, &did).await.unwrap_err();
         assert!(matches!(x, VerificationResult::VpVerificationError(_)));
@@ -465,7 +477,7 @@ mod tests {
     #[tokio::test]
     async fn verify_did_config() {
         let did_config_json =
-            fs::read_to_string("tests/did-configurations/did-config-holder.json").unwrap();
+            fs::read_to_string("../tests/did-configurations/did-config-holder.json").unwrap();
 
         let url = Url::parse("https://example.com").unwrap();
         let x = verify_did_configuration_vc(&did_config_json, &url)
@@ -477,7 +489,7 @@ mod tests {
     #[tokio::test]
     async fn verify_did_config_id_not_a_did() {
         let did_config_json =
-            fs::read_to_string("tests/did-configurations/did-config-holder-bad-subject-id.json")
+            fs::read_to_string("../tests/did-configurations/did-config-holder-bad-subject-id.json")
                 .unwrap();
 
         let url = Url::parse("https://example.com").unwrap();
@@ -497,7 +509,7 @@ mod tests {
     #[tokio::test]
     async fn verify_did_config_id_not_issuer() {
         let did_config_json = fs::read_to_string(
-            "tests/did-configurations/did-config-holder-subject-is-not-issuer.json",
+            "../tests/did-configurations/did-config-holder-subject-is-not-issuer.json",
         )
         .unwrap();
 
@@ -518,7 +530,7 @@ mod tests {
     #[tokio::test]
     async fn verify_did_config_origin_not_url() {
         let did_config_json =
-            fs::read_to_string("tests/did-configurations/did-config-holder-fake-origin.json")
+            fs::read_to_string("../tests/did-configurations/did-config-holder-fake-origin.json")
                 .unwrap();
 
         let url = Url::parse("https://example.com").unwrap();

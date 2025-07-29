@@ -1,7 +1,5 @@
-use reqwest;
-use serde::Deserialize;
 use serde_json::from_str;
-use ssi::claims::vc::v1::{JsonCredential, JsonPresentation};
+use ssi::claims::vc::v1::JsonPresentation;
 use ssi::dids::DIDResolver;
 use ssi::dids::{
     document::{service::Endpoint, Service},
@@ -12,8 +10,8 @@ use ssi::json_ld::syntax::Value;
 use tokio::task::JoinSet;
 use url::Url;
 
-use super::dto::{VerificationResponseDto, VerificationResult};
-use super::verification_service;
+use lib::dto::{VerificationResponseDto, VerificationResult};
+use lib::{verify_did_configuration_vc, verify_presentations, WellKnownDidConfig};
 
 type DidDocument = Output;
 
@@ -29,18 +27,11 @@ pub enum Error {
 
     /// Unable to resolve DID document
     #[error("DID could not be resolved")]
-    ResolutionError(#[from] ssi::dids::resolution::Error),
+    ResolutionFailure(#[from] ssi::dids::resolution::Error),
 
     /// Unable to verify DID configuration
     #[error("DID Configuration invalid: {0}")]
     DidConfigInvalid(String),
-}
-
-// Well Known DID Configuration Specification https://identity.foundation/.well-known/resources/did-configuration/
-#[derive(Debug, Deserialize)]
-pub struct WellKnownDidConfig {
-    // TODO: add support for Jwt credentials
-    pub linked_dids: Vec<JsonCredential>,
 }
 
 /// Verifies the given URL
@@ -93,8 +84,7 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
         }
 
         // verify VPs and nested VCs
-        let verification_results =
-            verification_service::verify_presentations(linked_presentations, &did_doc.id).await;
+        let verification_results = verify_presentations(linked_presentations, &did_doc.id).await;
         dto.results.extend(verification_results);
     }
 
@@ -118,11 +108,9 @@ async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
     };
 
     // verify DID config VC
-    let config = match verification_service::verify_did_configuration_vc(&config_json, url).await {
-        Ok(_) => {
-            serde_json::from_slice::<super::service::WellKnownDidConfig>(&config_json.as_bytes())
-                .map_err(|_| Error::Unexpected("".to_string()))
-        } // not expected as verify_did_config_vc would have failed already if DID config could not be parsed
+    let config = match verify_did_configuration_vc(&config_json, url).await {
+        Ok(_) => serde_json::from_slice::<WellKnownDidConfig>(config_json.as_bytes())
+            .map_err(|_| Error::Unexpected("".to_string())), // not expected as verify_did_config_vc would have failed already if DID config could not be parsed
         Err(e) => Err(match e {
             VerificationResult::DidConfigError(p) => Error::DidConfigInvalid(p.details),
             _ => Error::DidConfigInvalid(serde_json::to_string(&e).unwrap()),
@@ -132,7 +120,7 @@ async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
     // extract did from config
     match config_to_dids(&config) {
         // extraction failed, fall back to did web
-        v if v.len() == 0 => url_to_didweb(url),
+        v if v.is_empty() => url_to_didweb(url),
         v => Ok(v),
     }
 }
@@ -140,7 +128,7 @@ async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
 /// Downloads the DID well-known config from the given URL
 /// https://identity.foundation/specs/did-configuration/
 async fn lookup_did_config(url: &Url) -> Result<String, ()> {
-    let well_known_uri = url_to_well_known_config_uri(&url)?;
+    let well_known_uri = url_to_well_known_config_uri(url)?;
     // TODO: handle JWT proof format
     let response = reqwest::get(well_known_uri).await.map_err(|_| ())?;
     let config = response.text().await.map_err(|_| ())?;
@@ -189,8 +177,8 @@ fn url_to_didweb(url: &Url) -> Result<Vec<DIDBuf>, Error> {
     };
 
     let didweb = match url.port() {
-        Some(port) => format!("did:web:{}%3A{}", domain, port),
-        _ => format!("did:web:{}", domain),
+        Some(port) => format!("did:web:{domain}%3A{port}"),
+        _ => format!("did:web:{domain}"),
     };
 
     unsafe {
@@ -209,14 +197,14 @@ async fn resolve_did(did: &DIDBuf) -> Result<DidDocument, Error> {
     // Resolve the DID document (equal to the example document above).
     match resolver.resolve(did.as_did()).await {
         Ok(output) => Ok(output),
-        Err(e) => Err(Error::ResolutionError(e)),
+        Err(e) => Err(Error::ResolutionFailure(e)),
     }
 }
 
 /// Given a set of services returns all verifiable presentations. Only the "LinkedVerifiablePresentation" services are
 /// considered.
 /// https://identity.foundation/linked-vp/spec/v1.0.0/
-async fn fetch_all_linked_presentations(services: &Vec<Service>) -> Vec<JsonPresentation> {
+async fn fetch_all_linked_presentations(services: &[Service]) -> Vec<JsonPresentation> {
     let linked_vp_type = String::from("LinkedVerifiablePresentation");
 
     let linked_vp_services = services
@@ -225,9 +213,8 @@ async fn fetch_all_linked_presentations(services: &Vec<Service>) -> Vec<JsonPres
 
     let mut linked_presentations: Vec<JsonPresentation> = Vec::new();
     for svc in linked_vp_services {
-        match fetch_linked_presentation(svc).await {
-            Some(vp) => linked_presentations.push(vp),
-            None => {}
+        if let Some(vp) = fetch_linked_presentation(svc).await {
+            linked_presentations.push(vp)
         }
     }
 
@@ -249,7 +236,7 @@ async fn fetch_linked_presentation(service: &Service) -> Option<JsonPresentation
         }
     }
 
-    return None;
+    None
 }
 
 /// Downloads the body of the given endpoint

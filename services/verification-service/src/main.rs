@@ -16,7 +16,7 @@ fn get_config() -> (String, u16) {
         .and_then(|p| p.parse().ok())
         .unwrap_or(3000);
     let host = if host.contains(':') {
-        format!("[{}]", host)
+        format!("[{host}]")
     } else {
         host
     };
@@ -41,11 +41,11 @@ async fn main() {
     let app = create_app();
 
     let (host, port) = get_config();
-    let addr = format!("{}:{}", host, port)
+    let addr = format!("{host}:{port}")
         .parse::<SocketAddr>()
         .expect("Failed to parse address");
 
-    println!("Listening on {}", addr);
+    println!("Listening on {addr}");
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

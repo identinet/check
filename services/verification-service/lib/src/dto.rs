@@ -308,13 +308,13 @@ mod tests {
 
     #[test]
     fn url_validation() {
-        assert_eq!(is_valid_url("https://identinet.io"), true);
-        assert_eq!(is_valid_url("https://identinet.io/"), true);
-        assert_eq!(is_valid_url("https://identinet.io:3000/"), true);
-        assert_eq!(is_valid_url("https://localhost:3000/"), true);
+        assert!(is_valid_url("https://identinet.io"));
+        assert!(is_valid_url("https://identinet.io/"));
+        assert!(is_valid_url("https://identinet.io:3000/"));
+        assert!(is_valid_url("https://localhost:3000/"));
 
-        assert_eq!(is_valid_url("ftp://acme.co"), false);
-        assert_eq!(is_valid_url("http://acme.co"), false);
+        assert!(!is_valid_url("ftp://acme.co"));
+        assert!(!is_valid_url("http://acme.co"));
     }
 
     impl Debug for VerificationError {

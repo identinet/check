@@ -2,10 +2,8 @@ extern crate ssi;
 
 use url::Url;
 
-use super::{
-    dto::{VerificationError, VerificationRequestDto, VerificationResponse},
-    service::{self, Error},
-};
+use super::service::{self, Error};
+use lib::dto::{VerificationError, VerificationRequestDto, VerificationResponse};
 
 pub async fn verify_domain(
     params: VerificationRequestDto,
@@ -17,13 +15,15 @@ pub async fn verify_domain(
         .await
         .map_err(|err| match err {
             Error::UrlNotSupported(s) => VerificationError::bad_request_from(s),
-            Error::ResolutionError(error) => match error {
+            Error::ResolutionFailure(error) => match error {
                 ssi::dids::resolution::Error::NotFound => {
                     VerificationError::not_found_from(error.to_string())
                 }
                 _ => VerificationError::bad_request_from(error.to_string()),
             },
-            Error::DidConfigInvalid(details) => VerificationError::verification_impossible_from(details),
+            Error::DidConfigInvalid(details) => {
+                VerificationError::verification_impossible_from(details)
+            }
             _ => VerificationError::bad_request_from("Should not happen".to_string()),
         })?;
 
