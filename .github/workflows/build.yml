@@ -4,7 +4,9 @@ on:
     branches:
       - main
     paths:
-      - services
+      - .github/workflows/**
+      - services/**
+      - sonar-project.properties
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
