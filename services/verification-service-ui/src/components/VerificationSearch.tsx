@@ -110,9 +110,11 @@ const verifyUrlAction = action(async (formData: FormData) => {
 }, "verifyUrl");
 
 function ErrorMessage(props) {
-  <p class="mt-2 text-sm text-red-600 dark:text-red-500">
-    {props.error}
-  </p>;
+  return (
+    <p class="mt-2 text-sm text-red-600 dark:text-red-500">
+      {props.error}
+    </p>
+  );
 }
 
 export default function VerificationSearch() {
