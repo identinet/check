@@ -26,11 +26,7 @@ export const ConfigContext = createContext([
 
 export default function ConfigProvider(props) {
   function fetchConfig(_source, { value: _value, refetching: _refetching }) {
-    /* console.log("source", source); */
-    /* console.log("value", value); */
-    /* console.log("refetching", refetching); */
     if (isServer) return Promise.resolve(INITIAL_VALUE);
-    /* console.log("fetching for real"); */
     const url = new URL(import.meta.url);
     url.pathname = "config/config.json";
     url.search = "";
@@ -59,8 +55,6 @@ export default function ConfigProvider(props) {
       refetch,
     },
   ];
-
-  /* onMount(() => refetch()); */
 
   return (
     <ConfigContext.Provider value={config}>
