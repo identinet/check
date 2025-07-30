@@ -1,6 +1,6 @@
 use serde_json::from_str;
 use ssi::claims::vc::v1::JsonPresentation;
-use ssi::dids::DIDResolver;
+use ssi::dids::DIDResolver as _;
 use ssi::dids::{
     document::{service::Endpoint, Service},
     resolution::Output,
@@ -10,14 +10,14 @@ use ssi::json_ld::syntax::Value;
 use tokio::task::JoinSet;
 use url::Url;
 
-use lib::dto::{VerificationResponseDto, VerificationResult};
-use lib::{verify_did_configuration_vc, verify_presentations, WellKnownDidConfig};
+use verification_service::dto::{VerificationResponseDto, VerificationResult};
+use verification_service::{verify_did_configuration_vc, verify_presentations, WellKnownDidConfig};
 
 type DidDocument = Output;
 
 /// Verification error.
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum ServiceError {
     /// URL is not supported
     #[error("URL not supported: {0}")]
     UrlNotSupported(String),
@@ -35,7 +35,7 @@ pub enum Error {
 }
 
 /// Verifies the given URL
-pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> {
+pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, ServiceError> {
     let dids = match url.scheme() {
         "did" => DIDBuf::from_string(url.to_string())
             .map(|did| vec![did])
@@ -45,7 +45,7 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
 
     let tasks: JoinSet<_> = dids
         .into_iter()
-        .map(|did| async move { resolve_did(&did).await })
+        .map(|did| async move { return resolve_did(&did).await })
         .collect();
 
     let results = tasks.join_all().await;
@@ -57,7 +57,7 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
     if oks.is_empty() {
         let e = match errs.into_iter().next() {
             Some(r) => r.err().unwrap(), // unwrapping is safe as `errs` partition contains only Err
-            None => Error::Unexpected("Neither results nor errors found".to_string()), // return general error in case there are also no error results
+            None => ServiceError::Unexpected("Neither results nor errors found".to_owned()), // return general error in case there are also no error results
         };
         return Err(e);
     }
@@ -99,21 +99,21 @@ pub async fn verify_by_url(url: &Url) -> Result<VerificationResponseDto, Error> 
 /// Performs a DID document lookup based on the DIDs attached to the given URL
 /// We check if there is a DID well-known config at the given URL to lookup the
 /// DID. If this fails we fall back to did:web representation of the given URL.
-async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
+async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, ServiceError> {
     // test if there's a well-known DID config for given url
     let config_json = match lookup_did_config(url).await {
         Ok(config) => config,
         // lookup failed, fall back to did web
-        Err(_) => return url_to_didweb(url),
+        Err(()) => return url_to_didweb(url),
     };
 
     // verify DID config VC
     let config = match verify_did_configuration_vc(&config_json, url).await {
         Ok(_) => serde_json::from_slice::<WellKnownDidConfig>(config_json.as_bytes())
-            .map_err(|_| Error::Unexpected("".to_string())), // not expected as verify_did_config_vc would have failed already if DID config could not be parsed
+            .map_err(|_| ServiceError::Unexpected(String::new())), // not expected as verify_did_config_vc would have failed already if DID config could not be parsed
         Err(e) => Err(match e {
-            VerificationResult::DidConfigError(p) => Error::DidConfigInvalid(p.details),
-            _ => Error::DidConfigInvalid(serde_json::to_string(&e).unwrap()),
+            VerificationResult::DidConfigError(p) => ServiceError::DidConfigInvalid(p.details),
+            _ => ServiceError::DidConfigInvalid(serde_json::to_string(&e).unwrap()),
         }),
     }?;
 
@@ -126,7 +126,7 @@ async fn lookup_dids(url: &Url) -> Result<Vec<DIDBuf>, Error> {
 }
 
 /// Downloads the DID well-known config from the given URL
-/// https://identity.foundation/specs/did-configuration/
+/// <https://identity.foundation/specs/did-configuration>/
 async fn lookup_did_config(url: &Url) -> Result<String, ()> {
     let well_known_uri = url_to_well_known_config_uri(url)?;
     // TODO: handle JWT proof format
@@ -153,7 +153,7 @@ fn config_to_dids(config: &WellKnownDidConfig) -> Vec<DIDBuf> {
 }
 
 /// Constructs the well-known config URL based on the given URL
-/// DIF Well Known DID Configuration specification https://identity.foundation/.well-known/resources/did-configuration/
+/// DIF Well Known DID Configuration specification <https://identity.foundation/.well-known/resources/did-configuration>/
 fn url_to_well_known_config_uri(url: &Url) -> Result<Url, ()> {
     let mut url = url.clone();
     url.set_scheme("https").unwrap();
@@ -168,12 +168,16 @@ fn url_to_well_known_config_uri(url: &Url) -> Result<Url, ()> {
 
 /// Transforms the given URL to a did:web string. Only the domain and the port
 /// of the URL are considered.
-/// https://w3c-ccg.github.io/did-method-web/
-fn url_to_didweb(url: &Url) -> Result<Vec<DIDBuf>, Error> {
+/// <https://w3c-ccg.github.io/did-method-web>/
+fn url_to_didweb(url: &Url) -> Result<Vec<DIDBuf>, ServiceError> {
     // Extract the domain name
     let domain = match url.domain() {
         Some(domain) => domain,
-        _ => return Err(Error::UrlNotSupported("URL has no domain name".to_owned())),
+        _ => {
+            return Err(ServiceError::UrlNotSupported(
+                "URL has no domain name".to_owned(),
+            ))
+        }
     };
 
     let didweb = match url.port() {
@@ -190,20 +194,20 @@ fn url_to_didweb(url: &Url) -> Result<Vec<DIDBuf>, Error> {
 }
 
 /// Resolves the DID document from the given DID
-async fn resolve_did(did: &DIDBuf) -> Result<DidDocument, Error> {
+async fn resolve_did(did: &DIDBuf) -> Result<DidDocument, ServiceError> {
     // Setup the DID resolver.
     let resolver = AnyDidMethod::default();
 
     // Resolve the DID document (equal to the example document above).
     match resolver.resolve(did.as_did()).await {
         Ok(output) => Ok(output),
-        Err(e) => Err(Error::ResolutionFailure(e)),
+        Err(e) => Err(ServiceError::ResolutionFailure(e)),
     }
 }
 
-/// Given a set of services returns all verifiable presentations. Only the "LinkedVerifiablePresentation" services are
+/// Given a set of services returns all verifiable presentations. Only the "`LinkedVerifiablePresentation`" services are
 /// considered.
-/// https://identity.foundation/linked-vp/spec/v1.0.0/
+/// <https://identity.foundation/linked-vp>
 async fn fetch_all_linked_presentations(services: &[Service]) -> Vec<JsonPresentation> {
     let linked_vp_type = String::from("LinkedVerifiablePresentation");
 
@@ -214,7 +218,7 @@ async fn fetch_all_linked_presentations(services: &[Service]) -> Vec<JsonPresent
     let mut linked_presentations: Vec<JsonPresentation> = Vec::new();
     for svc in linked_vp_services {
         if let Some(vp) = fetch_linked_presentation(svc).await {
-            linked_presentations.push(vp)
+            linked_presentations.push(vp);
         }
     }
 
@@ -232,7 +236,7 @@ async fn fetch_linked_presentation(service: &Service) -> Option<JsonPresentation
                 Ok(presentation) => return presentation,
                 Err(_) => continue,
             },
-            Err(_) => continue,
+            Err(()) => continue,
         }
     }
 
@@ -293,7 +297,7 @@ mod tests {
             "did:web:w3c-ccg.github.io"
         );
 
-        assert!(url_to_didweb(&Url::parse("https://127.0.0.1").unwrap()).is_err());
+        url_to_didweb(&Url::parse("https://127.0.0.1").unwrap()).unwrap_err();
 
         assert_eq!(
             url_to_didweb(&Url::parse("https://example.com:3000").unwrap()).unwrap()[0],

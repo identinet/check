@@ -2,29 +2,29 @@ extern crate ssi;
 
 use url::Url;
 
-use super::service::{self, Error};
-use lib::dto::{VerificationError, VerificationRequestDto, VerificationResponse};
+use super::service::{self, ServiceError};
+use verification_service::dto::{VerificationError, VerificationRequest, VerificationResponse};
 
 pub async fn verify_domain(
-    params: VerificationRequestDto,
+    params: VerificationRequest,
 ) -> Result<VerificationResponse, VerificationError> {
-    // save to unwrap, URL has been parsed during DTO validation already
+    // safe to unwrap, URL has been parsed during DTO validation already
     let url = Url::parse(&params.q).unwrap();
 
     let dto = service::verify_by_url(&url)
         .await
         .map_err(|err| match err {
-            Error::UrlNotSupported(s) => VerificationError::bad_request_from(s),
-            Error::ResolutionFailure(error) => match error {
+            ServiceError::UrlNotSupported(s) => VerificationError::bad_request_from(s),
+            ServiceError::ResolutionFailure(error) => match error {
                 ssi::dids::resolution::Error::NotFound => {
                     VerificationError::not_found_from(error.to_string())
                 }
                 _ => VerificationError::bad_request_from(error.to_string()),
             },
-            Error::DidConfigInvalid(details) => {
+            ServiceError::DidConfigInvalid(details) => {
                 VerificationError::verification_impossible_from(details)
             }
-            _ => VerificationError::bad_request_from("Should not happen".to_string()),
+            _ => VerificationError::bad_request_from("Should not happen".to_owned()),
         })?;
 
     Ok(VerificationResponse::OK(dto))

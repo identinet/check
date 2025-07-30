@@ -2234,19 +2234,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lib"
-version = "0.0.1"
-dependencies = [
- "axum",
- "cfg-if",
- "serde",
- "serde_json",
- "ssi",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.174"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4988,7 +4975,6 @@ dependencies = [
  "axum",
  "cfg-if",
  "http-body-util",
- "lib",
  "reqwest 0.12.22",
  "serde",
  "serde_json",

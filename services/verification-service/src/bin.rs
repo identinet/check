@@ -3,14 +3,14 @@
 
 use axum::routing::get;
 use axum::Router;
+use core::net::SocketAddr;
 use std::env;
-use std::net::SocketAddr;
 
 mod verifications;
 
 // Function to get configuration from environment variables with defaults
 fn get_config() -> (String, u16) {
-    let host = env::var("HOST").unwrap_or_else(|_| "::".to_string());
+    let host = env::var("HOST").unwrap_or_else(|_| "::".to_owned());
     let port = env::var("PORT")
         .ok()
         .and_then(|p| p.parse().ok())
@@ -25,7 +25,7 @@ fn get_config() -> (String, u16) {
 
 /// Liveness check
 async fn health_check() -> String {
-    "Ok".to_string()
+    "Ok".to_owned()
 }
 
 pub fn create_app() -> Router {

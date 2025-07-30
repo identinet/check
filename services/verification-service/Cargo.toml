@@ -8,15 +8,21 @@ keywords = ["ssi", "http"]
 name = "verification-service"
 repository = "https://github.com/identinet/check"
 version = "0.0.1"
+readme = "README.md"
+license = "Apache-2.0"
 
-[workspace]
-members = ["lib"]
+[lib]
+name = "verification_service"
+path = "src/lib.rs"
+
+[[bin]]
+name = "verification-service"
+path = "src/bin.rs"
 
 [features]
 fail-on-warnings = []
 
 [dependencies]
-lib = { path = "./lib" }
 axum = "^0.8.4"
 cfg-if = "1.0.1"
 reqwest = { version = "0.12.15", features = ["json"] }

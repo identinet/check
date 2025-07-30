@@ -41,9 +41,9 @@ paths:
         credentials and the verification result are returned.
 
         Related specifications:
-        - DIF Well-Known DID Configuration <https://identity.foundation/.well-known/resources/did-configuration/>
+        - DIF Well-Known DID Configuration <https://identity.foundation/.well-known/resources/did-configuration>
         - W3C DID Resolution <https://www.w3.org/TR/did-1.0/#did-resolution>
-        - DIF Linked Verifiable Presentation <https://identity.foundation/linked-vp/>
+        - DIF Linked Verifiable Presentation <https://identity.foundation/linked-vp>
       parameters:
         - name: q
           in: query
