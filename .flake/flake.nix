@@ -34,7 +34,10 @@
           cloudflared # Cloudflare Tunnel daemon https://www.cloudflare.com/products/tunnel
           just # Simple make replacement https://just.systems/
           mkcert # Locally trusted development certificates https://github.com/FiloSottile/mkcert
-          unstable.nushell # Nu Shell https://www.nushell.sh/
+          nushell # Nu Shell https://www.nushell.sh/
+          # performance testing
+          vegeta
+          uroboros
         ];
         linuxOnlyPackages = [
           # datree # kubernetes configuration validation and verification https://datree.io/
