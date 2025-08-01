@@ -12,7 +12,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - https://github.com/identinet/check//services/verifiable-data-service/k8s&ref=main
+  - https://github.com/identinet/check//verifiable-data-service&ref=main
 
 patches:
   # Set host name.

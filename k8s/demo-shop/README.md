@@ -1,7 +1,8 @@
 # Kubernetes Configuration
 
-This Kubernetes configuration is meant to be used with [kustomize](https://kustomize.io/) to give you full control over
-the deployed resources.
+This Kubernetes configuration is meant to be used with
+[kustomize](https://kustomize.io/) to give you full control over the deployed
+resources.
 
 Minimum configuration via your `kustomization.yaml`:
 
@@ -11,7 +12,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - https://github.com/identinet/check//services/demo-shop/k8s&ref=main
+  - https://github.com/identinet/check//k8s/demo-shop&ref=main
 
 patches:
   # Set host name.
@@ -30,7 +31,8 @@ secretGenerator:
       - demo-shop.env
 ```
 
-The configuration of the service is done via environment variables. Example environment file `demo-shop.env`:
+The configuration of the service is done via environment variables. Example
+environment file `demo-shop.env`:
 
 ```dotenv
 # External hostname

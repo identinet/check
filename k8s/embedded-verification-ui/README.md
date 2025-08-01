@@ -1,7 +1,8 @@
 # Kubernetes Configuration
 
-This Kubernetes configuration is meant to be used with [kustomize](https://kustomize.io/) to give you full control over
-the deployed resources.
+This Kubernetes configuration is meant to be used with
+[kustomize](https://kustomize.io/) to give you full control over the deployed
+resources.
 
 Minimum configuration via your `kustomization.yaml`:
 
@@ -11,7 +12,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - https://github.com/identinet/check//services/embedded-verification-ui/k8s&ref=main
+  - https://github.com/identinet/check//embedded-verification-ui&ref=main
 
 patches:
   # Set host name.
@@ -34,8 +35,8 @@ secretGenerator:
       - embedded-verification-ui.env
 ```
 
-The configuration of the Embedded Verification UI is done via a configuration file. Example configuration file
-`config.json`:
+The configuration of the Embedded Verification UI is done via a configuration
+file. Example configuration file `config.json`:
 
 ```json
 {
@@ -44,8 +45,8 @@ The configuration of the Embedded Verification UI is done via a configuration fi
 }
 ```
 
-The configuration of the underlaying HTTP server is done via environment variables. Example environment file
-`embedded-verification-ui.env`:
+The configuration of the underlaying HTTP server is done via environment
+variables. Example environment file `embedded-verification-ui.env`:
 
 ```dotenv
 # Documentation of available variables: https://static-web-server.net/configuration/environment-variables/
