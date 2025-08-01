@@ -22,7 +22,7 @@ pkgs.rustPlatform.buildRustPackage {
     # INFO: sometimes the hash is missing for some packages, not sure why.
     # Enable the fake hash to get the value that's required here
     # "did-ethr-0.3.1" = pkgs.lib.fakeSha256;
-    "did-ethr-0.3.1" = "sha256-a0xbvelrc6Rv+8hyDOuzT6deInTwhU6JGM3dpJLjOGw=";
+    # "did-ethr-0.3.1" = "sha256-a0xbvelrc6Rv+8hyDOuzT6deInTwhU6JGM3dpJLjOGw=";
   };
   src = pkgs.lib.sources.cleanSourceWith {
     src = gitignoreSource ./.;
