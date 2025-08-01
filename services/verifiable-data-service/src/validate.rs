@@ -61,6 +61,11 @@ fn get_holder_id(matching_inputs: &MatchingInputs<'_, Value>) -> Result<String, 
         }
     };
     for input in matching_inputs.inputs.iter() {
+        // Convert String value to JSON
+        let value = match input.value.clone() {
+            Value::String(s) => serde_json::from_str(&s).unwrap_or(input.value.clone()),
+            _ => input.value.clone(),
+        };
         match input.format {
             ClaimFormatDesignation::JwtVpJson => {
                 // TODO: add support for JwtVps
@@ -68,7 +73,7 @@ fn get_holder_id(matching_inputs: &MatchingInputs<'_, Value>) -> Result<String, 
             }
             ClaimFormatDesignation::LdpVp => {
                 // determine holder ID
-                match holder_path.query(&input.value).exactly_one() {
+                match holder_path.query(&value).exactly_one() {
                     Ok(node) => match serde_json::from_value(node.clone()) {
                         Ok(value) => {
                             return Ok(value);
@@ -105,10 +110,10 @@ fn get_jws_payload(jws_string: String) -> Result<(JwsBuf, String), FromUtf8Error
 /// It looks like there's no defined behavior for when the validation fails. Therefore, we'll have to create an
 /// implementation specific response.
 pub async fn validate(session: Session, response: AuthorizationResponse) -> Outcome {
-    println!("validate");
+    // println!("validate");
     let outcome = match session.presentation_definition {
         Some(presentation_definition) => {
-            println!("presentation_definition {}", serde_json::to_string(&presentation_definition).unwrap());
+            // println!("presentation_definition {}", serde_json::to_string(&presentation_definition).unwrap());
             match response {
                 AuthorizationResponse::Unencoded(data) => {
                     // 1. Determine the number of VPs returned in the VP Token and identify in which VP which requested VC is
@@ -116,7 +121,7 @@ pub async fn validate(session: Session, response: AuthorizationResponse) -> Outc
 
                     // Basic verification of to ensure that definition and submission fit
                     let presentation_submission = data.presentation_submission();
-                    println!("presetation_submission: {}", serde_json::to_value(presentation_submission).unwrap());
+                    // println!("presetation_submission: {}", serde_json::to_value(presentation_submission).unwrap());
                     if !presentation_submission.definition_id().eq(presentation_definition.id()) {
                         Outcome::Failure {
                             reason: format!(
@@ -170,7 +175,7 @@ pub async fn validate(session: Session, response: AuthorizationResponse) -> Outc
                 }
                 AuthorizationResponse::Jwt(data) => {
                     // TODO: implement support for JWT submissions
-                    println!("response, jwt {:?}", data.response);
+                    // println!("response, jwt {:?}", data.response);
                     Outcome::Error { cause: "JWT submissions not supported".into() }
                 }
             }
@@ -189,12 +194,22 @@ async fn verify_submission(
     let mut results = vec![];
     // verify all matching inputs
     for input in matching_inputs.inputs.iter() {
+        // Convert String value to JSON
+        let value = match input.value.clone() {
+            Value::String(s) => serde_json::from_str(&s).unwrap_or(input.value.clone()),
+            _ => input.value.clone(),
+        };
+        // if a matching input is an array, look at the first element
+        let value = match value.clone() {
+            Value::Array(values) => values.first().cloned().unwrap_or(value.clone()),
+            _ => value.clone(),
+        };
         match input.format {
             ClaimFormatDesignation::JwtVpJson | ClaimFormatDesignation::JwtVcJson => {
                 // TODO: add support for JwtVps and JwtVcs
                 results.push(VerificationResult::vp_proof_error("JwtVpJson is not supported".into()))
             }
-            ClaimFormatDesignation::LdpVp => match verify_vp(&input.value.to_string(), expected_id, false).await {
+            ClaimFormatDesignation::LdpVp => match verify_vp(&value.to_string(), expected_id, false).await {
                 Ok(v) => {
                     if v.len() == 1 {
                         results.push(v[0].clone());
@@ -207,7 +222,7 @@ async fn verify_submission(
                 Err(e) => results.push(e),
             },
             ClaimFormatDesignation::LdpVc => {
-                match verify_vc(&input.value.to_string(), expected_id, allow_missing_subjectid).await {
+                match verify_vc(&value.to_string(), expected_id, allow_missing_subjectid).await {
                     Ok(r) => results.push(r),
                     Err(r) => results.push(r),
                 }

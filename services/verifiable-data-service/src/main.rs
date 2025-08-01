@@ -288,7 +288,7 @@ fn build_presentation_definition() -> presentation_definition::PresentationDefin
 
 /// Retrieves the OpenID4VP Authorization Request and sends it to the wallet.
 async fn authorize_get(State(state): State<AppState>, Path(request_id): Path<Uuid>) -> impl IntoResponse {
-    println!("authorize_get {request_id}");
+    // println!("authorize_get {request_id}");
     let status = state.verifier.poll_status(request_id).await.unwrap();
     assert!(
         status == Status::SentRequest || status == Status::SentRequestByReference, // FIXME: for some unknown reason, this endpoint gets called twice, not sure why
@@ -307,7 +307,7 @@ async fn authorize_submit(
     // Form(payload): Form<UnencodedAuthorizationResponse>, // FIXME: For some unknown reason, decoding fails. It works when the structure is decoded in the handler
     Form(payload): Form<AuthRequestSubmission>,
 ) -> (StatusCode, Json<PostRedirection>) {
-    println!("authorize_submit {request_id}");
+    // println!("authorize_submit {request_id}");
     assert!(
         state.verifier.poll_status(request_id).await.unwrap() == Status::SentRequest,
         "Authorization request status doesn't match expecation"
@@ -473,7 +473,7 @@ async fn authrequest_get(
     State(state): State<AppState>,
     Path(request_id): Path<Uuid>,
 ) -> (StatusCode, Json<AuthRequestObjectResponse>) {
-    println!("authrequest_get");
+    // println!("authrequest_get");
     let status = state.verifier.poll_status(request_id).await.unwrap();
     // state.session_store.remove_session(request_id).await.unwrap();
     let mut cache = state.data_cache.lock().await;

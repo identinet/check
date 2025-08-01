@@ -15,8 +15,7 @@ license = "Apache-2.0"
 fail-on-warnings = []
 
 [dependencies]
-verification-service = { path = "../verification-service" }
-# verification-service = { git = "https://github.com/identinet/check.git", branch = "main" }
+verification-service = { git = "https://github.com/identinet/check.git", branch = "main" }
 axum = "0.8.4"
 openid4vp = { version = "0.1.0" }
 openid4vp-frontend = { version = "0.1.0" }
@@ -44,3 +43,4 @@ http-body-util = "0.1.0"
 # openid4vp-frontend = { git = "https://github.com/identinet/openid4vp.git", rev = "3b09382449e0c1cbec958fde2ea59f23d4f6aa5e" }
 openid4vp = { git = "https://github.com/spruceid/openid4vp.git", branch = "main" }
 openid4vp-frontend = { git = "https://github.com/spruceid/openid4vp.git", branch = "main" }
+# verification-service = { path = "../verification-service" }

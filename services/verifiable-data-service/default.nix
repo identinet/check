@@ -22,7 +22,7 @@ pkgs.rustPlatform.buildRustPackage {
     # INFO: sometimes the hash is missing for some packages, not sure why.
     # Enable the fake hash to get the value that's required here
     # "did-ethr-0.3.1" = pkgs.lib.fakeSha256;
-    "did-ethr-0.3.1" = "sha256-a0xbvelrc6Rv+8hyDOuzT6deInTwhU6JGM3dpJLjOGw=";
+    # "did-ethr-0.3.1" = "sha256-a0xbvelrc6Rv+8hyDOuzT6deInTwhU6JGM3dpJLjOGw=";
     # "openid4vp-0.1.0" = pkgs.lib.fakeSha256;
     "openid4vp-0.1.0" = "sha256-Fv+1QP/vTGqoUzpSDIo1H8XvzU3g5GE8KCY38lyJjpY=";
   };
