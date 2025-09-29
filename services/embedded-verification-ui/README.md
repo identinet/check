@@ -3,20 +3,6 @@
 Widget that integrates the [Verification Service](../verification-service/) into
 third-party websites.
 
-## Usage
-
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via
-`pnpm up -Lri`.
-
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package
-manager will work. This file can be safely be removed once you clone a template.
-
-```bash
-$ just install
-```
-
-# Verification Service - User Interface
-
 ## Development
 
 ### Install dependencies
@@ -25,8 +11,50 @@ $ just install
 just install
 ```
 
-### Run
+### Start development server
+
+This server is meant to develop the UI independently, not integrated with a
+third-party website:
 
 ```shell
 just dev
+```
+
+Another development server can be started that serves the current version of the
+UI as a widget to other services, e.g. the [demo shop](../demo-shop/):
+
+```shell
+just serve
+```
+
+## Build application
+
+Builds the application, not the container image:
+
+```shell
+just build
+```
+
+Builds the container image. Requires Nix/NixOS!
+
+```shell
+just docker-build
+just docker-load
+```
+
+## Release
+
+- INFO: Requires Nix/NixOS
+- INFO: Requires privileged access to the github repository
+
+### Update version number
+
+```shell
+just bump
+```
+
+### Build release
+
+```shell
+just release
 ```
