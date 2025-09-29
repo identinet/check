@@ -10,6 +10,12 @@ default:
 
 alias d := dev
 
+# Run and build application for development purposes once
+[group('development')]
+dev-start: githooks
+    #!/usr/bin/env nu
+    cargo run
+
 # Continuously run and build application for development purposes
 [group('development')]
 dev: githooks
