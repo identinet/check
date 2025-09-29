@@ -1,17 +1,24 @@
 # Demo Shop
 
-Everything you need to build a Solid project, powered by
-[`solid-start`](https://start.solidjs.com);
+Demo shop that integrates the
+[Embedded Verification UI](../embedded-verification-ui/) and the
+[Verifiable Data Service](../verifiable-data-service).
 
-## Developing
+## Development
 
-Start a development server:
+### Install dependencies
+
+```shell
+just install
+```
+
+### Start development server
 
 ```bash
 just dev
 ```
 
-## Building
+## Build application
 
 Solid apps are built with _presets_, which optimise your project for deployment
 to different environments.
@@ -22,4 +29,28 @@ By default, `just build` will generate a Node app that you can run with
 
 ```bash
 just build
+```
+
+Builds the container image. Requires Nix/NixOS!
+
+```shell
+just docker-build
+just docker-load
+```
+
+## Release
+
+- INFO: Requires Nix/NixOS
+- INFO: Requires privileged access to the github repository
+
+### Update version number
+
+```shell
+just bump
+```
+
+### Build release
+
+```shell
+just release
 ```

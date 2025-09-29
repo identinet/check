@@ -1,5 +1,8 @@
 # Verifiable Data Service
 
+Backend service that provides OpenID4VP functionality to third-party services
+like web shops.
+
 ## Usage
 
 [Full example](https://doc.wallet-provider.io/wallet/verifier-configuration#full-verifier-flow-example)
@@ -60,17 +63,55 @@
 Source:
 [sequence_customer_credential_sharing.mmd](../../docs/architecture/figures/sequence_customer_credential_sharing.mmd)
 
-## Developing
-
-`just dev`
-
-## Building
-
-`just build`
-
-## OpenAPI Endpoint Specification
+### OpenAPI Endpoint Specification
 
 [openapi.yaml](./openapi.yaml)
+
+## Development
+
+### Install dependencies
+
+```shell
+just install
+```
+
+### Start development server
+
+```shell
+just dev
+```
+
+## Build application
+
+Builds the application, not the container image:
+
+```shell
+just build
+```
+
+Builds the container image. Requires Nix/NixOS!
+
+```shell
+just docker-build
+just docker-load
+```
+
+## Release
+
+- INFO: Requires Nix/NixOS
+- INFO: Requires privileged access to the github repository
+
+### Update version number
+
+```shell
+just bump
+```
+
+### Build release
+
+```shell
+just release
+```
 
 ## Resoruces
 

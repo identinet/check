@@ -1,6 +1,6 @@
-# Verification Service - User Interface
+# Verification Service
 
-Web frontend for the [Verification Service](../verification-service/).
+Backend service that verifies the identity of a website or DID.
 
 ## Development
 

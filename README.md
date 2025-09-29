@@ -24,7 +24,7 @@ Check provides the following 4 core services:
   Verifiable Credentials from customer wallets and providing the verified data
   to the web shop.
 
-## Demo Deployment
+## Demo deployment
 
 ### Frontend services with user interfaces
 
@@ -75,22 +75,56 @@ Check provides the following 4 core services:
 
 ### Setup
 
-1. Allow direnv to install dependencies automatically: `direnv allow .`
-2. Request a cloudflare tunnel configuration so services like the Verifiable
-   Data Service can be developed locally while being accessible from the
-   Internet.
-3. Store configuration in the current directory at `.cloudflared/tunnel.json`.
-4. Set the tunnel user in file `.env.local`:
+1. Clone this repository, including submodules:
+   `git clone --recurse-submodules https://github.com/identinet/check.git`
+2. Install all [depedencies](#dependencies)
+   - On [Nix/NixOS](https://nixos.org): direnv installs all dependencies
+     automatically via: `direnv allow` directory and the service directories
+     view `direnv allow`
+3. Integrate [direnv](https://direnv.net/) with your shell and grant it access
+   to the root directory of the repository and all
+   [serivce directories](./services)
+   - INFO: If you don't use Nix/NixOS, you'll receive get an error that
+     `use flake` doesn't work. Direnv will still load the necessary environment
+     variables. To silence the error, you can safely remove the line starting
+     with `use flake` in the `.envrc` files.
+4. Install a develpoment CA and register it in your browser via
+   [mkcert](https://github.com/FiloSottile/mkcert)
+5. (Optional) [Request](mailto:support@identinet.io) a cloudflare tunnel
+   configuration so that services like the
+   [Verifiable Data Service](./services/verifiable-data-service/) can be
+   developed locally while being accessible from the Internet and communicate
+   with mobile wallets.
+   - Store the configuration in the root of the repository at
+     `.cloudflared/tunnel.json`.
+   - Set the tunnel user in file `.env.local`:
 
 ```dotenv
 TUNNEL_USER=<your_username>
 ```
 
-### Start Services
+#### Dependencies
+
+- (CI) [Nix](https://nixos.org)
+- (CI) [Skopeo](https://github.com/containers/skopeo)
+- (CI) [git-cliff](https://github.com/orhun/git-cliff)
+- (CI) [Github CLI](https://cli.github.com/)
+- [Caddy reverse proxy](https://caddy.com/)
+- [Deno](https://deno.com/)
+- [Docker](https://docker.com/)
+- [Just task runnner](https://just.systems/)
+- [Nodejs 22](https://nodejs.org/)
+- [Nushell](https://nushell.sh/)
+- [Rust toolchain](https://rust-lang.github.io/)
+- [direnv environment loader](https://direnv.net/)
+- [mkcert development CA](https://github.com/FiloSottile/mkcert)
+
+### Start services
 
 1. Start caddy reverse proxy: `just dev`
-2. (Optional) Start tunnel: `just tunnel`
+2. (Optional) Start cloudflare tunnel: `just tunnel`
 3. Start services, e.g. `cd ./services/demo-shop; just dev`
+4. Access services (At the start, caddy prints all available URLs)
 
 ## Acknowledgments
 
