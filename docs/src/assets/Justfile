@@ -3,6 +3,7 @@
 #
 # To override the value of SOME_VERSION, run: just --set SOME_VERSION 1.2.4 TARGET_NAME
 # See https://hub.docker.com/r/minlag/mermaid-cli/tags
+# set dotenv-load := true
 
 MERMAID_IMAGE := "minlag/mermaid-cli"
 MERMAID_TAG := "11.4.3"

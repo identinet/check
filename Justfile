@@ -1,8 +1,10 @@
 #!/usr/bin/env -S just --justfile
 # Documentation: https://just.systems/man/en/
-# Documentation: https://www.nushell.sh/book/
 
 import 'justlib/default.just'
+
+# set dotenv-load := true
+# set dotenv-filename := [".env", ".env.local"] # waiting for https://github.com/casey/just/issues/1748
 
 # Print this help
 default:
