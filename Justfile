@@ -76,7 +76,7 @@ dev: githooks
               listen: [$":($http_port)"]
               routes: ($services | each {|service|
                 {
-                  match: ($service | getHosts | each {|hostname| {host: [$hostname]}})
+                  match: ($service | getHosts --no-tunnel=($env | get -i USE_TUNNEL | $in != "1") | each {|hostname| {host: [$hostname]}})
                   handle: [
                     {
                       handler: "headers"
@@ -144,7 +144,7 @@ dev: githooks
     } | save -f $"($certs_directory)/../caddy.json"
     print "Caddy is up and running. Visit:"
     print ($services | each {|service|
-      let hosts = $service | getHosts
+      let hosts = $service | getHosts --no-tunnel=($env | get -i USE_TUNNEL | $in != "1")
       $hosts | each {|hostname| $"https://($hostname)(if $https_port != 443 {$":($https_port)"})" } | fill -c ' ' -w 40 | str join "or " | prepend "-" | str join " "
     } | str join "\n")
     print ""
@@ -154,11 +154,15 @@ dev: githooks
 [group('development')]
 tunnel:
     #!/usr/bin/env nu
-    # Steps to create tunnel
+    # Steps to create a tunnel
     # cloudflared tunnel login
     # cloudflared tunnel create $env.TUNNEL_USER
     # cloudflared tunnel route dns $env.TUNNEL_USER $"shop-($env.TUNNEL_USER).($env.TUNNEL_DOMAIN)"
     # cloudflared tunnel route dns $env.TUNNEL_USER $"vds-($env.TUNNEL_USER).($env.TUNNEL_DOMAIN)"
+    if ($env | get -i USE_TUNNEL | $in != "1") or ($env | get -i TUNNEL_USER | is-empty) or ($env | get -i TUNNEL_DOMAIN | is-empty) {
+      print -e "Tunnel not active, set the following variables in .env and .env.local to activate the tunnel:\nUSE_TUNNEL=1\nTUNNEL_USER=<USERNAME>\nTUNNEL_DOMAIN=<DOMAINNAME>\n"
+      exit 1
+    }
     cloudflared tunnel run --cred-file .cloudflared/tunnel.json --url $"http://localhost:80" $env.TUNNEL_USER
 
 # Run tests - currently none
