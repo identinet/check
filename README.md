@@ -75,22 +75,26 @@ Check provides the following 4 core services:
 
 ### Setup
 
+1. Ensure services that bind IPv6 addresses are also bound to IPv4 addresses.
+   `sysctl net.ipv6.bindv6only` must return `net.ipv6.bindv6only = 0`.
+   - Add `net.ipv6.bindv6only = 0` to `/etc/sysctl.conf` if a different value is
+     returned.
 1. Clone this repository, including submodules:
    `git clone --recurse-submodules https://github.com/identinet/check.git`
-2. Install all [depedencies](#dependencies)
+1. Install all [depedencies](#dependencies)
    - On [Nix/NixOS](https://nixos.org): direnv installs all dependencies
      automatically via: `direnv allow` directory and the service directories
      view `direnv allow`
-3. Integrate [direnv](https://direnv.net/) with your shell and grant it access
+1. Integrate [direnv](https://direnv.net/) with your shell and grant it access
    to the root directory of the repository and all
    [serivce directories](./services)
    - INFO: If you don't use Nix/NixOS, you'll receive get an error that
      `use flake` doesn't work. Direnv will still load the necessary environment
      variables. To silence the error, you can safely remove the line starting
      with `use flake` in the `.envrc` files.
-4. Install a develpoment CA and register it in your browser via
+1. Install a develpoment CA and register it in your browser via
    [mkcert](https://github.com/FiloSottile/mkcert)
-5. (Optional) [Request](mailto:support@identinet.io) a cloudflare tunnel
+1. (Optional) [Request](mailto:support@identinet.io) a cloudflare tunnel
    configuration so that services like the
    [Verifiable Data Service](./services/verifiable-data-service/) can be
    developed locally while being accessible from the Internet and communicate
