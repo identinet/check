@@ -1,8 +1,8 @@
 #!/usr/bin/env -S just --justfile
 # Documentation: https://just.systems/man/en/
 
-import '../justlib/nix.just'
-import '../justlib/default.just'
+import '../.justlib/nix.just'
+import '../.justlib/default.just'
 
 # set dotenv-load := true
 # set dotenv-filename := ["../.env", "../.env.local", ".env", ".env.local" ] # waiting for https://github.com/casey/just/issues/1748

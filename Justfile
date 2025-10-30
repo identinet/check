@@ -1,18 +1,19 @@
 #!/usr/bin/env -S just --justfile
 # Documentation: https://just.systems/man/en/
 
-import 'justlib/default.just'
+import '.justlib/monorepo.just'
 
 # set dotenv-load := true
 # set dotenv-filename := [".env", ".env.local"] # waiting for https://github.com/casey/just/issues/1748
 
 # Print this help
+[group('internal')]
 default:
     @just -l
 
 # Start caddyserver for local development
 [group('development')]
-dev: githooks
+serve: githooks
     #!/usr/bin/env nu
     let certs_directory = ".caddy/certs"
     mkdir $certs_directory
@@ -166,4 +167,5 @@ tunnel:
     cloudflared tunnel run --cred-file .cloudflared/tunnel.json --url $"http://localhost:80" $env.TUNNEL_USER
 
 # Run tests - currently none
+[group('development')]
 test:
