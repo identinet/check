@@ -53,11 +53,11 @@
           nativeBuildInputs = with pkgs; [
             static-web-server
             deno
-            nodejs_22
+            nodejs_24
             gh
             git-cliff
             just
-            nushell
+            unstable.nushell
             skopeo
           ];
         };

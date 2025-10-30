@@ -58,7 +58,7 @@
             gh
             git-cliff
             just
-            nushell
+            unstable.nushell
             skopeo
           ];
           env = {

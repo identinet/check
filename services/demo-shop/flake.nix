@@ -30,7 +30,7 @@
         };
         default_pkg = pkgs.callPackage ./default.nix {
           inherit pkgs;
-          nodejs = pkgs.nodejs_22;
+          nodejs = pkgs.nodejs_24;
         };
         manifest = pkgs.lib.importJSON ./manifest.json;
         version = manifest.version;
@@ -42,11 +42,11 @@
           name = manifest.name;
           nativeBuildInputs = with pkgs; [
             deno
-            nodejs_22
+            nodejs_24
             gh
             git-cliff
             just
-            nushell
+            unstable.nushell
             skopeo
             # valkey
             # default_pkg.nativeBuildInputs

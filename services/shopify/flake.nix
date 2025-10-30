@@ -30,7 +30,7 @@
         };
         default_pkg = pkgs.callPackage ./default.nix {
           inherit pkgs;
-          nodejs = pkgs.nodejs_22;
+          nodejs = pkgs.nodejs_24;
         };
 
       in
@@ -38,7 +38,7 @@
         # Development environment: nix develop
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
-            nodejs_22
+            nodejs_24
             shopify-cli
           ];
         };

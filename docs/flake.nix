@@ -41,9 +41,9 @@
           ];
           nativeBuildInputs = with pkgs; [
             deno
-            nodejs_22
+            nodejs_24
             just
-            nushell
+            unstable.nushell
           ];
         };
         env = {

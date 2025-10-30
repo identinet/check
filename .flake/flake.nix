@@ -34,7 +34,7 @@
           cloudflared # Cloudflare Tunnel daemon https://www.cloudflare.com/products/tunnel
           just # Simple make replacement https://just.systems/
           mkcert # Locally trusted development certificates https://github.com/FiloSottile/mkcert
-          nushell # Nu Shell https://www.nushell.sh/
+          unstable.nushell # Nu Shell https://www.nushell.sh/
           # performance testing
           vegeta
           uroboros

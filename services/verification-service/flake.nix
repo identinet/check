@@ -56,7 +56,7 @@
             git-cliff
             just
             cargo-watch
-            nushell
+            unstable.nushell
             skopeo
             default_pkg.nativeBuildInputs
           ];
