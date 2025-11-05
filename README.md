@@ -1,6 +1,6 @@
 # CHECK
 
-## Overiew
+## Overview
 
 Check provides the following 4 core services:
 
